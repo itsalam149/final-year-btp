@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch/Transformers checkpoints & weights
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.ckpt
+phase1/results/*/
+
+# Datasets and cache
+.cache/
+data/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+
+# Mac OS
+.DS_Store

@@ -1,0 +1,30 @@
+# BTech Final Year Project — LLM PTQ Framework
+# Faqre Alam · Guneet Toppo · Ekansh Agrawal | DTU 2026-27
+#
+# Install with:  pip install -r requirements.txt
+
+# Core deep learning
+torch>=2.1.0
+torchvision>=0.16.0
+
+# HuggingFace ecosystem
+transformers>=4.40.0
+accelerate>=0.28.0
+datasets>=2.18.0
+huggingface-hub>=0.22.0
+tokenizers>=0.15.0
+
+# Evaluation harness (pinned minor version for reproducibility)
+lm-eval==0.4.3
+
+# Numerics
+numpy>=1.26.0
+scipy>=1.12.0
+
+# Configuration & utilities
+pyyaml>=6.0
+tqdm>=4.66.0
+pandas>=2.2.0
+
+# Optional: faster Hadamard transform
+# fast-hadamard-transform>=1.0.4
