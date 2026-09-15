@@ -3,7 +3,7 @@
 \usepackage{geometry}
 \geometry{a4paper, margin=1in}
 \usepackage{graphicx}
-\usepackage[hidelinks]{hyperref}
+
 \usepackage{setspace}
 \usepackage{titlesec}
 \usepackage{booktabs}
@@ -18,6 +18,8 @@
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
 \titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{1em}{}
+
+\usepackage[hidelinks]{hyperref}
 
 \begin{document}
 
@@ -119,7 +121,7 @@ Currently, no existing framework explores whether the exact minimization of this
 \subsection{Project Objectives}
 \begin{enumerate}
     \item \textbf{Framework Development:} To engineer an architecture-agnostic PyTorch framework that intercepts forward passes via \texttt{nn.Module} hooks to extract calibration activations on CPU memory, supporting seamless quantization across any Hugging Face model architecture.
-    \item \textbf{Cross-Architecture Ablation Study:} To execute a rigorously controlled 27-run ablation grid. The study will cross-evaluate 3 core PTQ methods (RTN, GPTQ, GPTQ+Hadamard) $\times$ 3 bit-widths (2, 3, 4) $\times$ 3 distinct architectures (Qwen2.5-0.5B, Llama-3.2-1B, TinyLlama-1.1B).
+    \item \textbf{Cross-Architecture Ablation Study:} To execute a rigorously controlled 27-run ablation grid. The study will cross-evaluate 3 core PTQ methods (RTN, GPTQ, GPTQ+Hadamard) $\times$ 3 bit-widths (2, 3, 4) $\times$ 3 distinct architectures (Qwen2.5-0.5B, Llama-3.2-1B, Pythia-1.4B).
     \item \textbf{Algorithm Innovation:} To formulate, implement, and validate the \textit{Hessian-Diagonal Mixed-Precision Allocation} algorithm. By utilizing the score $\hat{s}_j = \mathbf{H}_{jj} \cdot \mathrm{Var}(\mathbf{W}_{:,j})$, we will rank the sensitivity of individual weight columns.
     \item \textbf{Performance Validation:} To empirically demonstrate that allocating $\{2, 4\}$-bit mixed-precision based on our proposed metric yields superior WikiText-2 perplexity retention compared to a strict uniform 3-bit baseline.
 \end{enumerate}

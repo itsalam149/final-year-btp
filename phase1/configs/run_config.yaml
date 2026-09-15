@@ -18,8 +18,8 @@ models:
     short_name: "qwen2.5-0.5b"
   - id: "meta-llama/Llama-3.2-1B"
     short_name: "llama-3.2-1b"
-  - id: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-    short_name: "tinyllama-1.1b"
+  - id: "EleutherAI/pythia-1.4b"
+    short_name: "pythia-1.4b"
 
 # ── Quantization methods ─────────────────────────────────────────
 methods:

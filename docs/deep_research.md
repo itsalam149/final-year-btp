@@ -36,7 +36,7 @@ Every decoder-only LLM is fundamentally memory-bandwidth-bound during inference 
 | Model Size | FP16 Memory | 4-bit INT4 | 2-bit INT2 |
 |:---|:---|:---|:---|
 | 0.5B (Qwen2.5) | ~1 GB | ~250 MB | ~125 MB |
-| 1.1B (TinyLlama) | ~2.2 GB | ~550 MB | ~275 MB |
+| 1.4B (Pythia) | ~2.8 GB | ~700 MB | ~350 MB |
 | 1B (Llama-3.2) | ~2 GB | ~500 MB | ~250 MB |
 | 7B | ~14 GB | ~3.5 GB | ~1.75 GB |
 | 70B | ~140 GB | ~35 GB | ~17.5 GB |
@@ -243,25 +243,25 @@ Points 1–3 together form your technical contribution. Point 4 is your empirica
 
 ### 5.1 Why These Three?
 
-| Property | TinyLlama-1.1B | Llama-3.2-1B | Qwen2.5-0.5B |
+| Property | Pythia-1.4B | Llama-3.2-1B | Qwen2.5-0.5B |
 |:---|:---|:---|:---|
-| Architecture base | Llama-2 style | Llama-3 style | Alibaba/Qwen |
+| Architecture base | GPT-NeoX style | Llama-3 style | Alibaba/Qwen |
 | GQA | No (MHA) | Yes | Yes |
-| Attention heads | 32 (KV=32) | 32 (KV=8) | 14 (KV=2) |
-| FFN activation | SiLU (SwiGLU) | SiLU (SwiGLU) | SiLU (SwiGLU) |
-| Norm | RMSNorm | RMSNorm | RMSNorm |
+| Attention heads | 16 (KV=16) | 32 (KV=8) | 14 (KV=2) |
+| FFN activation | GELU | SiLU (SwiGLU) | SiLU (SwiGLU) |
+| Norm | LayerNorm | RMSNorm | RMSNorm |
 | Positional encoding | RoPE | RoPE | RoPE |
-| Tie embeddings | Yes | No | Yes |
+| Tie embeddings | No | No | Yes |
 | Hidden size | 2048 | 2048 | 896 |
-| Intermediate size | 5632 | 8192 | 4864 |
-| # Layers | 22 | 16 | 24 |
-| Parameters | 1.1B | 1.24B | 0.5B |
+| Intermediate size | 8192 | 8192 | 4864 |
+| # Layers | 24 | 16 | 24 |
+| Parameters | 1.4B | 1.24B | 0.5B |
 | License | Apache 2.0 | Llama Community | Apache 2.0 |
 
 ### 5.2 Key Architectural Divergences (This is what makes your cross-architecture study non-trivial)
 
 **Attention type:**
-- **TinyLlama:** Full multi-head attention (MHA) → 32 KV heads → large KV weight matrices
+- **Pythia:** Full multi-head attention (MHA) → 16 KV heads → large KV weight matrices
 - **Llama-3.2:** Grouped-query attention (GQA, 4:1 ratio) → fewer KV params → different weight sensitivity profile
 - **Qwen2.5:** Aggressive GQA (7:1 ratio) → very few KV params → extreme concentration of attention load in Q/K projections
 
@@ -293,7 +293,7 @@ Your core table is a 3×3×3 design:
 ```
 Methods:      {RTN, GPTQ, GPTQ+Hadamard}
 Bits:         {2, 3, 4}
-Families:     {Qwen2.5-0.5B, Llama-3.2-1B, TinyLlama-1.1B}
+Families:     {Qwen2.5-0.5B, Llama-3.2-1B, Pythia-1.4B}
 ```
 
 This gives **27 quantization runs** + 3 FP16 baselines = 30 model evaluations.
@@ -334,11 +334,11 @@ for i in range(CALIBRATION_NSAMPLES):
 |:---|:---|:---|:---|:---|
 | Qwen2.5-0.5B | ~2 min | ~5 sec | 24 × 7 linears | ~15 min |
 | Llama-3.2-1B | ~3 min | ~8 sec | 16 × 7 linears | ~15 min |
-| TinyLlama-1.1B | ~4 min | ~10 sec | 22 × 7 linears | ~25 min |
+| Pythia-1.4B | ~5 min | ~12 sec | 24 × 6 linears | ~30 min |
 
 **Per run: ~30–45 minutes on T4.** 27 runs = ~15–20 GPU-hours. Well within Kaggle's 30 hr/week limit.
 
-**Memory:** T4 has 16GB. FP16 TinyLlama-1.1B ≈ 2.2GB. Calibration activations (128 × 2048 × 2048 dims) ≈ ~2GB in FP16. Total ≈ 4–5GB — comfortable.
+**Memory:** T4 has 16GB. FP16 Pythia-1.4B ≈ 2.8GB. Calibration activations (128 × 2048 × 2048 dims) ≈ ~2GB in FP16. Total ≈ 4–5GB — comfortable.
 
 ### 6.4 What "Transfer" Means in Your Study
 
@@ -538,7 +538,7 @@ lm_eval --model hf \
 **Key engineering considerations:**
 - Store calibration activations on CPU (not GPU) to avoid OOM
 - Process layers sequentially, loading each to GPU only when needed
-- For TinyLlama with 22 layers × 7 linears = 154 modules, ensure your loop is correct
+- For Pythia with 24 layers × 6 linears = 144 modules, ensure your loop is correct
 - Validate each quantized layer's output matches unquantized (within expected error bounds) before moving to next
 
 ### 9.2 Phase 2: Mixed-Precision Allocation (Jan–Feb 2027)

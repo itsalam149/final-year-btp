@@ -92,7 +92,7 @@ python -m phase1.framework.quantize
 |:---|:---|:---:|:---|
 | `qwen2.5-0.5b` | `Qwen/Qwen2.5-0.5B` | 0.5B | GQA 7:1, 24 layers |
 | `llama-3.2-1b` | `meta-llama/Llama-3.2-1B` | 1.24B | GQA 4:1, 16 layers |
-| `tinyllama-1.1b` | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | 1.1B | Full MHA, 22 layers |
+| `pythia-1.4b` | `EleutherAI/pythia-1.4b` | 1.4B | Full MHA, 24 layers |
 
 ---
 
@@ -148,7 +148,7 @@ methods: [rtn, gptq, gptq_hadamard]
 
 ```mermaid
 flowchart TD
-    A(["🤖 Pretrained LLM\nFP16 weights  •  0.5B–1.1B params\nQwen2.5-0.5B / Llama-3.2-1B / TinyLlama-1.1B"])
+    A(["🤖 Pretrained LLM\nFP16 weights  •  0.5B–1.4B params\nQwen2.5-0.5B / Llama-3.2-1B / Pythia-1.4B"])
 
     subgraph CAL["STEP 1 — Calibration"]
         B["Load 128 sequences\n× 2048 tokens from WikiText-2 train"]
@@ -404,7 +404,7 @@ flowchart LR
     subgraph MODELS["3 Model Families"]
         M1["Qwen2.5-0.5B\nAlibaba · GQA 7:1 · 24 layers"]
         M2["Llama-3.2-1B\nMeta · GQA 4:1 · 16 layers"]
-        M3["TinyLlama-1.1B\nOpen · Full MHA · 22 layers"]
+        M3["Pythia-1.4B\nEleutherAI · Full MHA · 24 layers"]
     end
 
     subgraph METHODS["3 Quantization Methods"]
@@ -485,8 +485,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph TINYLLAMA["TinyLlama-1.1B  ·  Llama-2 style"]
-        T1["Params: 1.1B\nHidden dim: 2048\nLayers: 22\nFFN hidden: 5632\nAttention: 32 Q-heads / 32 KV-heads  (Full MHA)\nNo GQA  →  every head has its own K, V\nEmbedding: tied\nRoPE + RMSNorm + SwiGLU"]
+    subgraph PYTHIA["Pythia-1.4B  ·  GPT-NeoX style"]
+        T1["Params: 1.4B\nHidden dim: 2048\nLayers: 24\nFFN hidden: 8192\nAttention: 16 Q-heads / 16 KV-heads  (Full MHA)\nNo GQA  →  every head has its own K, V\nEmbedding: not tied\nRoPE + LayerNorm + GELU"]
     end
 
     subgraph LLAMA["Llama-3.2-1B  ·  Llama-3 style"]
@@ -499,12 +499,12 @@ flowchart TD
 
     SHARED["All 3 share:\nDecoder-only transformer  ·  RoPE  ·  RMSNorm  ·  SwiGLU  ·  Apache 2.0\nAll loaded via  AutoModelForCausalLM.from_pretrained()\nAll quantized by the EXACT SAME hook-based framework\n→ proves architecture-agnostic claim"]
 
-    TINYLLAMA --> SHARED
+    PYTHIA --> SHARED
     LLAMA --> SHARED
     QWEN --> SHARED
 
     style SHARED fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
-    style TINYLLAMA fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
+    style PYTHIA fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
     style LLAMA fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
     style QWEN fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
 ```
@@ -525,12 +525,12 @@ flowchart LR
         G3["Quota: 30 GPU-hrs / week"]
     end
 
-    subgraph MEM["Memory breakdown per run\n(TinyLlama worst case)"]
+    subgraph MEM["Memory breakdown per run\n(Pythia worst case)"]
         direction TB
-        M1["Model weights FP16: 2.2 GB on GPU"]
+        M1["Model weights FP16: 2.8 GB on GPU"]
         M2["GPTQ Hessian per layer: ~64 MB on GPU\n(loaded one layer at a time)"]
         M3["Calibration activations: ~2 GB on CPU\n(offloaded — never on GPU all at once)"]
-        M4["Peak GPU usage: ~5 GB out of 16 GB  ✅"]
+        M4["Peak GPU usage: ~6 GB out of 16 GB  ✅"]
     end
 
     subgraph TIME["Timing per run"]
@@ -552,7 +552,7 @@ flowchart LR
 |:---|:---:|:---:|:---:|:---:|
 | Qwen2.5-0.5B | 2 min | 15 min | 15 min | **~32 min** |
 | Llama-3.2-1B | 3 min | 15 min | 20 min | **~38 min** |
-| TinyLlama-1.1B | 4 min | 25 min | 20 min | **~49 min** |
+| Pythia-1.4B | 5 min | 30 min | 20 min | **~55 min** |
 | **27 runs total** | | | | **~18 GPU-hours ✅** |
 
 ---

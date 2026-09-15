@@ -12,7 +12,7 @@ Usage
     python phase1/run.py --model qwen2.5-0.5b --method rtn --bits 4
 
     # Run all methods for one model:
-    python phase1/run.py --model tinyllama-1.1b
+    python phase1/run.py --model pythia-1.4b
 
     # Dry-run (list planned experiments without executing):
     python phase1/run.py --dry-run
