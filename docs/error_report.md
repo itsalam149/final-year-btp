@@ -85,3 +85,8 @@ orig_device = module.weight.device
 W = module.weight.data.float().to(orig_device)
 ```
 **Result:** The code now natively supports multi-GPU scaling without dispatch errors.
+
+---
+
+## Current Status (September 15, 2026)
+With all three of these system-breaking bugs resolved, the hardware and environment barriers have been completely removed. We are currently actively executing the full **27-run ablation grid** on Kaggle seamlessly, successfully capturing memory-efficient Hessians and logging `lm-evaluation-harness` metrics without crashing.
