@@ -185,8 +185,8 @@ def run_one(
             skip_layer_names=cfg.get("skip_layer_names", []),
             device=device,
         )
-        # Move model back to GPU (capture_layer_inputs may shift it)
-        model.to(device)
+        # We don't move model back to device here. capture_layer_inputs no longer moves it,
+        # and model.to(device) breaks accelerate's device_map="auto" for multi-GPU.
 
     # ── 3. Quantize ──────────────────────────────────────────────────────
     print(f"\n[run] Quantizing ({method}, {bits}-bit)...")

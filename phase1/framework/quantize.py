@@ -363,8 +363,9 @@ def quantize_model(
             continue
 
         # ── Load weight and Hessian ───────────────────────────────────
-        W = module.weight.data.float().to(device)
-        H = activations[name].float().to(device)      # [d_in, d_in]
+        orig_device = module.weight.device
+        W = module.weight.data.float().to(orig_device)
+        H = activations[name].float().to(orig_device)      # [d_in, d_in]
 
         # ── Apply chosen method ─────────────────────────────────────────
         if method == "rtn":
@@ -372,14 +373,14 @@ def quantize_model(
 
         elif method == "gptq":
             W_dq, scales, zeros = gptq_quantize(
-                W, X, bits,
+                W, H, bits,
                 dampening=dampening,
                 block_size=block_size,
             )
 
         elif method == "gptq_hadamard":
             W_dq, scales, zeros, _ = hadamard_gptq_quantize(
-                W, X, bits,
+                W, H, bits,
                 hadamard_seed=hadamard_seed,
                 dampening=dampening,
                 block_size=block_size,
@@ -390,7 +391,7 @@ def quantize_model(
                              "Choose from: rtn | gptq | gptq_hadamard")
 
         # ── Replace weight in-place ──────────────────────────────────────
-        module.weight.data = W_dq.to(module.weight.dtype)
+        module.weight.data = W_dq.to(dtype=module.weight.dtype, device=orig_device)
 
         # ── Free GPU tensors ─────────────────────────────────────────────
         del W, H, W_dq

@@ -142,12 +142,15 @@ def capture_layer_inputs(
 
     # ── Run forward passes ───────────────────────────────────────────────────
     model.eval()
-    model.to(device)
+    
+    # When using device_map="auto", model is already distributed across GPUs.
+    # We must NOT call model.to(device). Instead, find where the first layer is.
+    first_device = next(model.parameters()).device
 
     print(f"[calibrate] Running {len(calibration_samples)} forward passes...")
     with torch.no_grad():
         for sample in tqdm(calibration_samples, desc="Calibration forward", unit="seq"):
-            input_ids = sample.to(device)
+            input_ids = sample.to(first_device)
             try:
                 model(input_ids)
             except Exception as e:
