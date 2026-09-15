@@ -16,7 +16,11 @@ The code was storing the full, raw FP32 activation tensors in a giant dictionary
 ```python
 activation_store[layer_name].append(x.cpu())
 ```
-For a 1.4B parameter model with ~160 linear layers, this required storing over 10GB of floating-point data in CPU RAM simultaneously, instantly breaching Kaggle's 16GB limit.
+Let's do the math for the smallest model (Qwen2.5-0.5B): 
+- 128 sequences × 2048 tokens = 262,144 tokens.
+- For a typical attention layer ($D_{in} = 896$), each layer requires $262,144 \times 896 \times 4 \text{ bytes (FP32)} \approx \textbf{940 MB}$.
+- Across all **168 linear layers**, this requires a staggering **$168 \times 940 \text{ MB} \approx 158 \text{ GB}$ of CPU RAM** simultaneously!
+Kaggle only provides 16 GB of CPU RAM, meaning the memory limit was instantly breached by over 10x, causing a hard crash.
 
 ### Resolution
 **Incremental Hessian Accumulation.** 
