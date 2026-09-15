@@ -12,6 +12,53 @@ This repository implements a unified, architecture-agnostic **Post-Training Quan
 1. Which PTQ components transfer across model families, and which are architecture-specific?
 2. Can a cheap, closed-form Hessian-diagonal sensitivity score allocate bits better than uniform precision at equal memory budget?
 
+### 🗺️ End-to-End Pipeline
+
+```mermaid
+flowchart TD
+    A(["🤖 Pretrained LLM\nFP16 weights  •  0.5B–1.1B params\nQwen2.5-0.5B / Llama-3.2-1B / TinyLlama-1.1B"])
+
+    subgraph CAL["STEP 1 — Calibration"]
+        B["Load 128 sequences\n× 2048 tokens from WikiText-2 train"]
+        C["Register forward hooks\non every nn.Linear in the model"]
+        D["Run one forward pass\n→ capture input activation X\nfor each linear layer"]
+        E[("X per layer\nstored on CPU RAM")]
+        B --> C --> D --> E
+    end
+
+    subgraph QUANT["STEP 2 — Quantization  (choose method + bits)"]
+        F["RTN\n2 / 3 / 4 bit"]
+        G["GPTQ\n2 / 3 / 4 bit"]
+        H["GPTQ + Hadamard\n2 / 3 / 4 bit"]
+        I["Mixed-Precision\nHessian-Diagonal {2,4}-bit\n⭐ Novel Contribution"]
+    end
+
+    subgraph OUT["STEP 3 — Quantized Model"]
+        J["Layer weights replaced\nINT2 / INT3 / INT4\nModel size: 125 MB – 550 MB"]
+    end
+
+    subgraph EVAL["STEP 4 — Evaluation  via lm-evaluation-harness"]
+        K["WikiText-2 Perplexity\n(language quality)"]
+        L["ARC-Easy  0-shot\n(factual knowledge)"]
+        M["HellaSwag  0-shot\n(language coherence)"]
+        N["WinoGrande  0-shot\n(commonsense reasoning)"]
+    end
+
+    R(["📋 Results Table\n3 methods × 3 bits × 3 families = 27 runs\n+ Mixed-Precision sweep"])
+
+    A --> CAL
+    CAL --> QUANT
+    E -. activations used by .-> QUANT
+    F & G & H & I --> J
+    J --> EVAL
+    K & L & M & N --> R
+
+    style A fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
+    style R fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
+    style I fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
+    style J fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
+```
+
 ---
 
 ## 📚 Documentation
