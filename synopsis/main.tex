@@ -1,0 +1,191 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{enumitem}
+\usepackage{pgfgantt}
+
+\setstretch{1.2}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{1em}{}
+
+\begin{document}
+
+% ----------------------------------------------------------------------
+% TITLE PAGE
+% ----------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    
+    {\Large \textbf{PROJECT SYNOPSIS}} \\[0.3cm]
+    {\large \textbf{B.Tech Computer Engineering --- Major Project}} \\[1cm]
+    
+    \rule{\linewidth}{0.5mm} \\[0.3cm]
+    {\LARGE \textbf{Architecture-Agnostic Layer-Wise Post-Training Quantization of Large Language Models:}} \\[0.2cm]
+    {\Large \textbf{A Controlled Cross-Architecture Study with Hessian-Diagonal Mixed-Precision Allocation}} \\[0.3cm]
+    \rule{\linewidth}{0.5mm} \\[1cm]
+    
+    \textbf{Submitted by:} \\[0.2cm]
+    \begin{tabular}{ll}
+        Faqre Alam & (Roll No: 23/CS/150) \\
+        Ekansh Agrawal & (Roll No: 23/CS/149) \\
+        Guneet Toppo & (Roll No: 23/CS/160)
+    \end{tabular} \\[1cm]
+    
+    \textbf{Under the Supervision of:} \\[0.2cm]
+    \textbf{Ms. Gull Kaur} \\ 
+    Assistant Professor, Department of Computer Engineering
+    
+    \vfill
+    
+    \includegraphics[width=4cm]{dtu_logo_hd.png} \\[0.4cm]
+    
+    {\large \textbf{Department of Computer Engineering}} \\[0.1cm]
+    {\Large \textbf{Delhi Technological University}} \\[0.1cm]
+    {\normalsize (Formerly Delhi College of Engineering)} \\[0.1cm]
+    {\normalsize Bawana Road, Delhi - 110042} \\[0.3cm]
+    {\large \textbf{Session 2026--27}}
+    
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ----------------------------------------------------------------------
+% 1. INTRODUCTION AND MOTIVATION
+% ----------------------------------------------------------------------
+\section{Introduction and Motivation}
+
+The exponential scaling of Large Language Models (LLMs) over the past few years has led to unprecedented capabilities in natural language understanding, reasoning, and generation. However, this scaling introduces severe deployment bottlenecks. Modern autoregressive generation is fundamentally memory-bandwidth bound rather than compute-bound. For instance, a 1-billion-parameter LLM requires approximately 2 GB of memory just to store its weights at standard 16-bit floating-point (FP16) precision. Consequently, deploying these models on resource-constrained edge devices (e.g., smartphones, local laptops, embedded systems) is computationally prohibitive.
+
+To democratize access to LLMs, Post-Training Quantization (PTQ) has emerged as the most deployment-ready paradigm. PTQ algorithms aim to compress pre-trained weights from 16 bits down to 2--4 bits without executing any expensive backpropagation or model retraining. This drastically reduces the memory footprint by up to $8\times$, enabling models that previously required server-grade GPUs to run on consumer hardware.
+
+Despite recent advancements in PTQ, two significant challenges remain unresolved. First, the evaluation of quantization algorithms in the literature is heavily fragmented. Different methods are tested on disparate legacy architectures, leaving a critical knowledge gap regarding how architectural variations---such as the ratio of Grouped Query Attention (GQA) or the width of the hidden dimensions---affect a model's resilience to quantization error. Second, while mixed-precision quantization (assigning different bit-widths to different layers or channels) is known to be superior to uniform precision, existing mixed-precision strategies rely heavily on computationally expensive Integer Linear Programming (ILP) solvers or sub-optimal first-order heuristics.
+
+This project proposes the development of a unified, architecture-agnostic PTQ framework to conduct a rigorously controlled cross-architecture study. Furthermore, we introduce a novel, mathematically principled mechanism: the \textbf{Hessian-Diagonal Sensitivity Score}. This closed-form, second-order metric allocates bit-precision at the channel level, striving to deliver superior perplexity retention compared to state-of-the-art uniform quantization, all within the exact same memory budget.
+
+% ----------------------------------------------------------------------
+% 2. LITERATURE SURVEY
+% ----------------------------------------------------------------------
+\section{Literature Survey}
+
+The domain of LLM quantization has seen rapid evolution. We categorize the existing literature based on the mathematical approaches utilized to mitigate quantization loss.
+
+\subsection{First-Order and Zero-Shot Quantization}
+Early approaches to PTQ relied on basic affine transformations.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Round-To-Nearest (RTN):} The baseline naive quantization method. It projects FP16 weights onto an integer grid based purely on the min/max range of the weight tensor. While it requires no calibration data, it results in catastrophic degradation at sub-4-bit levels due to its inability to compensate for the quantization error introduced to sensitive outlier weights.
+    \item \textbf{AWQ (Activation-aware Weight Quantization):} Proposed by Lin et al. (2024), AWQ improves upon RTN by observing that not all weights are equally important. It protects a small fraction ($1\%$) of salient weights based on the activation magnitude of the corresponding input channels. However, AWQ relies on a first-order heuristic and grid search rather than minimizing the exact mathematical reconstruction error.
+\end{itemize}
+
+\subsection{Second-Order Error Compensation}
+To push compression down to 3 and 4 bits, researchers began employing second-order Taylor approximations of the loss function.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{GPTQ (Frantar et al., 2023):} GPTQ formulates layer-wise quantization as an Optimal Brain Quantization (OBQ) problem. By computing the inverse Hessian matrix $\mathbf{H}^{-1} = (2\mathbf{X}^T\mathbf{X})^{-1}$ using a calibration set of activations $\mathbf{X}$, GPTQ quantizes weights column-by-column, adjusting unquantized weights to explicitly cancel out the error introduced by previous steps. This enables near-lossless 4-bit quantization.
+\end{itemize}
+
+\subsection{Incoherence Processing for Sub-3-Bit Quantization}
+At 2-bit levels, even GPTQ fails because the presence of massive outlier columns breaks the integer grid.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{QuIP and QuIP\# (Chee et al., 2023; Tseng et al., 2024):} These methods introduce the concept of randomized Hadamard transformations. By multiplying the weight matrix by an orthogonal Walsh-Hadamard matrix, the outlier weights are mathematically smeared uniformly across all channels (computational incoherence). Applying GPTQ on these rotated weights stabilizes the process, enabling functional 2-bit quantization.
+\end{itemize}
+
+\subsection{Gaps in Existing Literature}
+While HAWQ (Dong et al., 2020) explored mixed-precision allocation, it utilized the trace of the Hessian to assign bits per \textit{layer}, requiring an expensive ILP solver. Our research bridges the gap between AWQ's channel-level granularity and GPTQ's second-order mathematical rigor by proposing a closed-form, per-channel allocator that bypasses the need for ILP solvers altogether.
+
+% ----------------------------------------------------------------------
+% 3. PROBLEM FORMULATION & OBJECTIVES
+% ----------------------------------------------------------------------
+\section{Problem Statement and Objectives}
+
+\subsection{Problem Formulation}
+Let a linear layer be defined by weight $\mathbf{W}$ and input activation $\mathbf{X}$. The objective of layer-wise quantization is to find a quantized weight matrix $\mathbf{\hat{W}}$ that minimizes the squared reconstruction error:
+\begin{equation}
+    \min_{\mathbf{\hat{W}}} ||\mathbf{W}\mathbf{X} - \mathbf{\hat{W}}\mathbf{X}||_2^2
+\end{equation}
+Currently, no existing framework explores whether the exact minimization of this error behaves consistently across modern variations in LLM architecture (e.g., standard Multi-Head Attention vs. Grouped Query Attention). Furthermore, assigning a fixed average bit budget $\bar{b}$ efficiently across the matrix dimensions without resorting to brute-force grid search remains an open challenge.
+
+\subsection{Project Objectives}
+\begin{enumerate}
+    \item \textbf{Framework Development:} To engineer an architecture-agnostic PyTorch framework that intercepts forward passes via \texttt{nn.Module} hooks to extract calibration activations on CPU memory, supporting seamless quantization across any Hugging Face model architecture.
+    \item \textbf{Cross-Architecture Ablation Study:} To execute a rigorously controlled 27-run ablation grid. The study will cross-evaluate 3 core PTQ methods (RTN, GPTQ, GPTQ+Hadamard) $\times$ 3 bit-widths (2, 3, 4) $\times$ 3 distinct architectures (Qwen2.5-0.5B, Llama-3.2-1B, TinyLlama-1.1B).
+    \item \textbf{Algorithm Innovation:} To formulate, implement, and validate the \textit{Hessian-Diagonal Mixed-Precision Allocation} algorithm. By utilizing the score $\hat{s}_j = \mathbf{H}_{jj} \cdot \mathrm{Var}(\mathbf{W}_{:,j})$, we will rank the sensitivity of individual weight columns.
+    \item \textbf{Performance Validation:} To empirically demonstrate that allocating $\{2, 4\}$-bit mixed-precision based on our proposed metric yields superior WikiText-2 perplexity retention compared to a strict uniform 3-bit baseline.
+\end{enumerate}
+
+% ----------------------------------------------------------------------
+% 4. PROPOSED METHODOLOGY
+% ----------------------------------------------------------------------
+\section{Proposed Methodology}
+
+The project is structured into three highly coupled technical modules:
+
+\subsection{Module 1: Activation Capture and Calibration}
+Quantization algorithms require an accurate estimation of the data distribution. We will use 128 sequences of 2048 tokens sampled deterministically from the WikiText-2 training split. Rather than hardcoding architecture-specific forward passes, we will dynamically inject PyTorch forward hooks into all \texttt{nn.Linear} modules during runtime. This captures the input activations $\mathbf{X}$ for each layer, safely offloading them to the CPU RAM to prevent GPU Out-Of-Memory (OOM) errors during the subsequent quantization phases.
+
+\subsection{Module 2: The Core PTQ Implementations}
+We will implement three baseline algorithms from scratch to ensure a controlled environment:
+\begin{itemize}
+    \item \textbf{RTN:} Affine asymmetric quantization utilizing basic scale $s = \frac{\max - \min}{2^b - 1}$ and zero-point $z$.
+    \item \textbf{GPTQ:} We will build the Hessian proxy $\mathbf{H} = 2\mathbf{X}^T\mathbf{X}$, apply damping for numerical stability, and invert it via Cholesky factorization. A column-by-column loop will quantize weights and distribute the resulting error $\Delta \mathbf{W}$ to remaining columns.
+    \item \textbf{QuIP (GPTQ+H):} We will generate randomized Walsh-Hadamard matrices $\mathbf{Q}$ utilizing fixed seeds, executing the rotation $\mathbf{W}' = \mathbf{W}\mathbf{Q}^T$ prior to GPTQ processing to ensure column incoherence.
+\end{itemize}
+
+\subsection{Module 3: Hessian-Diagonal Mixed Precision (The Novelty)}
+Using the second-order Taylor expansion, the expected loss introduced by quantizing column $j$ is proportional to the diagonal element of the Hessian and the variance of the weights in that column. We propose computing the sensitivity score:
+\begin{equation}
+    \hat{s}_j = \mathbf{H}_{jj} \cdot \mathrm{Var}(\mathbf{W}_{:,j})
+\end{equation}
+This operation is $\mathcal{O}(m \cdot n)$ and requires no matrix inversion. We will rank all columns by $\hat{s}_j$. For a target average budget of 3 bits, the top $50\%$ most sensitive columns will be assigned 4-bit precision, while the bottom $50\%$ will be aggressively quantized to 2 bits. We will apply GPTQ separately to these two partitions.
+
+\subsection{Module 4: Evaluation Protocol}
+The quantized checkpoints will be loaded into the EleutherAI \texttt{lm-evaluation-harness}. We will evaluate:
+\begin{itemize}
+    \item \textbf{WikiText-2 Perplexity (PPL):} The gold standard for measuring raw language modeling degradation.
+    \item \textbf{Zero-Shot Reasoning Tasks:} Accuracy on ARC-Easy (factual knowledge), HellaSwag (sentence completion), and WinoGrande (commonsense reasoning).
+\end{itemize}
+
+% ----------------------------------------------------------------------
+% 5. EXPECTED OUTCOMES
+% ----------------------------------------------------------------------
+\section{Expected Outcomes and Deliverables}
+\begin{enumerate}
+    \item \textbf{Empirical Proof of Architecture Transferability:} A comprehensive $3 \times 3 \times 3$ ablation table revealing whether advanced PTQ techniques like Hadamard rotation benefit all models equally, or if they are heavily dependent on underlying architectural traits like GQA.
+    \item \textbf{Validation of Mixed-Precision Theory:} Concrete evidence that our $O(mn)$ Hessian-diagonal allocator outperforms standard uniform 3-bit quantization, offering a much faster alternative to traditional solver-based allocators.
+    \item \textbf{Open Source Framework:} A fully modular, heavily documented PyTorch framework hosted on GitHub, allowing the open-source community to effortlessly apply our quantization pipeline to future LLM architectures.
+\end{enumerate}
+
+% ----------------------------------------------------------------------
+% 6. TIMELINE & WORK PLAN
+% ----------------------------------------------------------------------
+\section{Timeline and Project Management}
+
+\textit{Note: A structured timeline is essential to track milestones across the academic year and ensure timely completion of major deliverables.}
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{@{}p{3cm} p{3.5cm} p{8cm}@{}}
+    \toprule
+    \textbf{Phase} & \textbf{Timeframe} & \textbf{Key Milestones} \\
+    \midrule
+    \textbf{Phase 0} & Sep 2026 & Mathematical proofs of quantization bounds, extensive literature review, and NumPy-based POC implementation. \\
+    \textbf{Phase 1} & Oct -- Dec 2026 & Implementation of PyTorch framework (Calibrate, Quantize, Evaluate). Execution of the massive 27-run ablation study on Kaggle T4 GPUs. \\
+    \textbf{Phase 2} & Jan -- Feb 2027 & Formulation and implementation of the novel Hessian-diagonal mixed-precision allocation logic. Sweeping the parameter budget. \\
+    \textbf{Phase 3} & Mar -- May 2027 & Generation of final comparative graphs, synthesis of results, drafting the final project report, and preparation for the viva voce. \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\end{document}

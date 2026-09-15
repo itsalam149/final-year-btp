@@ -14,6 +14,13 @@ This repository implements a unified, architecture-agnostic **Post-Training Quan
 
 ---
 
+## 📚 Documentation
+
+- [**Full Project Flowchart**](flowchart.md): Visualizes the exact data flow and pipeline structure for Phase 1.
+- [**Deep Research Reference**](docs/deep_research.md): The comprehensive master document covering the memory wall problem, quantization mathematics, literature survey, experimental design, and the novel Hessian-Diagonal methodology.
+
+---
+
 ## Repository Structure
 
 ```
