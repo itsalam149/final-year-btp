@@ -98,9 +98,9 @@ def capture_layer_inputs(
 
     Returns
     -------
-    Dict mapping each quantizable layer's full dotted name to its stacked
-    input activation tensor X of shape [N_total, d_in], stored on CPU.
-    N_total = n_samples × seq_len (all positions flattened).
+    Dict mapping each quantizable layer's full dotted name to its Hessian
+    matrix H of shape [d_in, d_in], stored on CPU.
+    H is scaled by 2.0 / N_total.
     """
     if skip_layer_names is None:
         skip_layer_names = ["embed_tokens", "lm_head", "embed_positions"]
@@ -117,10 +117,8 @@ def capture_layer_inputs(
     print(f"[calibrate] Found {len(target_layers)} nn.Linear layers to quantize.")
 
     # ── Storage buffers ─────────────────────────────────────────────────────
-    # Each entry accumulates a list of [seq_len, d_in] tensors (on CPU)
-    activation_store: Dict[str, List[torch.Tensor]] = {
-        name: [] for name in target_layers
-    }
+    hessian_store: Dict[str, torch.Tensor] = {}
+    N_store: Dict[str, int] = {name: 0 for name in target_layers}
 
     # ── Register hooks ───────────────────────────────────────────────────────
     hooks = []
@@ -130,7 +128,12 @@ def capture_layer_inputs(
             # inp[0] shape: [batch, seq_len, d_in]  (batch=1)
             x = inp[0].detach().float()          # cast to FP32 for stability
             x = x.reshape(-1, x.shape[-1])       # flatten to [seq_len, d_in]
-            activation_store[layer_name].append(x.cpu())
+            H_batch = x.T @ x
+            if layer_name not in hessian_store:
+                hessian_store[layer_name] = H_batch.cpu()
+            else:
+                hessian_store[layer_name] += H_batch.cpu()
+            N_store[layer_name] += x.shape[0]
         return hook
 
     for name, module in target_layers.items():
@@ -157,18 +160,18 @@ def capture_layer_inputs(
         h.remove()
     print("[calibrate] Hooks removed.")
 
-    # ── Concatenate per-layer tensors ────────────────────────────────────────
+    # ── Compute final scaled Hessians ────────────────────────────────────────
     activations: Dict[str, torch.Tensor] = {}
-    for name, tensors in activation_store.items():
-        if len(tensors) == 0:
+    for name, H_sum in hessian_store.items():
+        N = N_store[name]
+        if N == 0:
             print(f"[calibrate] WARNING: no activations captured for '{name}' — skipping.")
             continue
-        X = torch.cat(tensors, dim=0)  # [N_total, d_in]
-        activations[name] = X
-        del tensors  # free memory
+        H = (2.0 / N) * H_sum
+        activations[name] = H
 
     total_mb = sum(x.element_size() * x.nelement() for x in activations.values()) / 1e6
-    print(f"[calibrate] Activation store: {len(activations)} layers, "
+    print(f"[calibrate] Hessian store: {len(activations)} layers, "
           f"{total_mb:.1f} MB on CPU.")
 
     return activations
@@ -193,6 +196,6 @@ if __name__ == "__main__":
     samples = get_calibration_data(tokenizer, n_samples=4, seq_len=512, seed=42)
     activations = capture_layer_inputs(model, samples, device="cuda" if torch.cuda.is_available() else "cpu")
 
-    for name, X in list(activations.items())[:3]:
-        print(f"  {name:60s}  X.shape={tuple(X.shape)}")
+    for name, H in list(activations.items())[:3]:
+        print(f"  {name:60s}  H.shape={tuple(H.shape)}")
     print("\nCalibration self-test passed ✅")

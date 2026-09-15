@@ -55,7 +55,7 @@ eval:
     - arc_easy            # 0-shot accuracy
     - hellaswag           # 0-shot accuracy
     - winogrande          # 0-shot accuracy
-  batch_size: 8
+  batch_size: "auto"
   device: "auto"          # auto = mps (Apple Silicon) | cuda | cpu
 
 # ── Layers to skip quantization ──────────────────────────────────────────
