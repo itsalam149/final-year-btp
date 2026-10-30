@@ -158,9 +158,27 @@ def run_evaluation(
         bufsize=1,
     )
 
-    for line in iter(proc.stdout.readline, ""):
-        print(line, end="", flush=True)
-        log_lines.append(line)
+    is_prev_progress = False
+    for raw_line in iter(proc.stdout.readline, ""):
+        log_lines.append(raw_line)
+        line = raw_line.rstrip("\r\n")
+        
+        # Detect tqdm progress bar updates to keep them on a single line
+        is_progress = ("%|" in line) or ("it/s" in line and "/" in line) or ("s/it" in line and "/" in line)
+        if is_progress:
+            # Overwrite line in-place in Jupyter notebook / console
+            sys.stdout.write(f"\r{line[:115]:<115}")
+            sys.stdout.flush()
+            is_prev_progress = True
+        else:
+            if is_prev_progress:
+                sys.stdout.write("\n")
+                is_prev_progress = False
+            sys.stdout.write(f"{line}\n")
+            sys.stdout.flush()
+
+    if is_prev_progress:
+        sys.stdout.write("\n")
 
     proc.stdout.close()
     returncode = proc.wait()
