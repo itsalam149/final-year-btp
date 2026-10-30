@@ -122,7 +122,7 @@ def run_evaluation(
         print(f"[evaluator] Note: 'batch_size: auto' requires CUDA; setting batch_size=4 for device '{device}'.")
 
     cmd = [
-        sys.executable, "-m", "lm_eval",
+        sys.executable, "-m", "src.harness_runner",
         "--model", "hf",
         "--model_args", model_args,
         "--tasks", tasks_arg,
