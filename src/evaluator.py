@@ -27,7 +27,6 @@ from datetime import datetime
 
 PRIMARY_METRICS = {
     "wikitext": ["word_perplexity", "byte_perplexity"],
-    "c4": ["word_perplexity", "byte_perplexity"],
     "arc_easy": ["acc_norm,none", "acc,none"],
     "hellaswag": ["acc_norm,none", "acc_none"],
     "winogrande": ["acc,none"],

@@ -144,14 +144,6 @@ tasks:
     num_fewshot: 0
     apply_chat_template: false
 
-  - id: "c4"
-    name: "C4 Perplexity (Control)"
-    category: "language_modeling_control"
-    metric: "word_perplexity"
-    direction: "lower_is_better"
-    num_fewshot: 0
-    apply_chat_template: false
-
   - id: "arc_easy"
     name: "ARC-Easy"
     category: "factual_recall"
