@@ -47,12 +47,10 @@ def build_lm_eval_model_args(variant_cfg: Dict[str, Any], device: str = "auto") 
             args_list.append("load_in_4bit=True")
             args_list.append("bnb_4bit_quant_type=nf4")
             args_list.append("bnb_4bit_compute_dtype=float16")
-    elif loader == "gptq":
-        # Pre-quantized GPTQ checkpoint
-        args_list.append("gptq=True")
-    elif loader == "awq":
-        # Pre-quantized AWQ checkpoint
-        args_list.append("awq=True")
+    elif loader in ["gptq", "awq"]:
+        # Pre-quantized GPTQ/AWQ checkpoints contain quantization_config in config.json.
+        # Transformers AutoModelForCausalLM automatically handles them natively.
+        pass
         
     return ",".join(args_list)
 

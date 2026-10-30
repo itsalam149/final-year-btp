@@ -4,10 +4,10 @@
 
 # Core deep learning & Hugging Face ecosystem
 torch>=2.2.0
-transformers>=4.40.0,<4.45.0  # Pinned to ensure compatibility with lm-eval 0.4.3
+transformers>=4.40.0
 accelerate>=0.28.0
-datasets>=2.18.0
-huggingface-hub>=0.22.0
+datasets==2.21.0
+huggingface-hub>=0.22.0,<0.29.0
 tokenizers>=0.15.0
 
 # Quantization backends (for evaluation of pre-quantized released checkpoints)
