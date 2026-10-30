@@ -19,7 +19,8 @@ optimum>=1.19.0               # GPTQ & AWQ model loading integration
 
 # Pinned evaluation harness (strict reproducibility)
 lm-eval==0.4.3
-# Note for IFEval: run `pip install langdetect immutabledict` if evaluating ifeval
+langdetect>=1.0.9
+immutabledict>=4.0.0
 
 # Data analysis, statistics & bootstrap estimation
 numpy>=1.26.0

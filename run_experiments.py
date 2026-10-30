@@ -131,25 +131,53 @@ def main():
 
         model_args = build_lm_eval_model_args(v_cfg, device=device)
         
-        # Auto-detect chat template requirement for generative benchmarks
-        use_chat_template = args.chat_template
-        if not use_chat_template:
-            generative_tasks = {"gsm8k", "ifeval"}
-            if any(t in generative_tasks for t in selected_tasks):
-                use_chat_template = True
-                print("[runner] Generative task detected: auto-enabling --apply_chat_template.")
-
         try:
-            eval_results = run_evaluation(
-                model_args=model_args,
-                tasks=selected_tasks,
-                output_dir=output_dir,
-                run_id=run_id,
-                batch_size=args.batch_size,
-                device=device,
-                limit=args.limit,
-                apply_chat_template=use_chat_template,
-            )
+            combined_eval_results = {}
+            total_eval_time = 0.0
+            overall_status = "SUCCESS"
+            error_msg = ""
+
+            # Intelligent Task Partitioning:
+            # - Standard loglikelihood tasks (wikitext, arc_easy, hellaswag, winogrande, mmlu) run without chat template
+            # - Generative reasoning & instruction following (gsm8k, ifeval) run with chat template
+            generative_tasks = {"gsm8k", "ifeval"}
+
+            if args.chat_template:
+                sub_batches = [(selected_tasks, True)]
+            else:
+                std_tasks = [t for t in selected_tasks if t not in generative_tasks]
+                gen_tasks = [t for t in selected_tasks if t in generative_tasks]
+                sub_batches = []
+                if std_tasks:
+                    sub_batches.append((std_tasks, False))
+                if gen_tasks:
+                    sub_batches.append((gen_tasks, True))
+
+            for sub_tasks, use_chat in sub_batches:
+                if not sub_tasks:
+                    continue
+                tag = "Chat-Template" if use_chat else "Standard"
+                print(f"[runner] Running {tag} batch: {', '.join(sub_tasks)}")
+                sub_results = run_evaluation(
+                    model_args=model_args,
+                    tasks=sub_tasks,
+                    output_dir=output_dir,
+                    run_id=run_id,
+                    batch_size=args.batch_size,
+                    device=device,
+                    limit=args.limit,
+                    apply_chat_template=use_chat,
+                )
+                total_eval_time += sub_results.get("eval_time_s", 0.0)
+                if sub_results.get("status") != "SUCCESS":
+                    overall_status = "FAILED"
+                    error_msg = sub_results.get("error_message", "")
+                combined_eval_results.update(sub_results)
+
+            combined_eval_results["eval_time_s"] = round(total_eval_time, 2)
+            combined_eval_results["status"] = overall_status
+            if error_msg:
+                combined_eval_results["error_message"] = error_msg
 
             row = {
                 "timestamp": datetime.now().isoformat(),
@@ -160,10 +188,10 @@ def main():
                 "loader": v_cfg["loader"],
                 "hf_id": v_cfg["hf_id"],
                 "seed": args.seed,
-                **eval_results
+                **combined_eval_results
             }
             log_result_row(results_csv, row)
-            if eval_results.get("status") == "SUCCESS":
+            if overall_status == "SUCCESS":
                 completed += 1
             else:
                 failed += 1
