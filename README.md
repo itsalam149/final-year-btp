@@ -1,723 +1,157 @@
-# Architecture-Agnostic Layer-Wise Post-Training Quantization of LLMs
-### BTech Final Year Project | Faqre Alam · Guneet Toppo · Ekansh Agrawal
-**Delhi Technological University | 2026–27**
+# Task-Conditioned Evaluation of Quantized Small LLMs: Accuracy Degradation, the Reliability of Perplexity as a Proxy, and Practical Bit-Budget Guidelines
+
+### Delhi Technological University | B.Tech Major Project (Session 2026–27)
+**Group ID:** `DTU/CSE/BTP/GP159`  
+**Supervising Faculty:** Ms. Gull Kaur, Assistant Professor, Department of Computer Science & Engineering  
+**Team Members:**
+- Ekansh Agarwal (`23/CS/149`)
+- Faqre Alam (`23/CS/150`)
+- Guneet Toppo (`23/CS/160`)
 
 ---
 
-## Project Summary
+## 1. Project Overview & Research Problem
 
-This repository implements a unified, architecture-agnostic **Post-Training Quantization (PTQ)** framework for decoder-only Large Language Models and conducts a controlled cross-architecture ablation study.
+Post-training quantization (PTQ) compresses large language model weights from 16-bit floating point down to 8-bit or 4-bit integers to reduce memory-bandwidth pressure on consumer and edge hardware. In compression literature, **Perplexity (PPL)** is frequently reported as a primary proxy metric because it is cheap and fast to evaluate. Survey papers (e.g., Jin et al., ACL Findings 2024) have suggested that perplexity correlates well with general benchmark performance.
 
-**Research questions:**
-1. Which PTQ components transfer across model families, and which are architecture-specific?
-2. Can a cheap, closed-form Hessian-diagonal sensitivity score allocate bits better than uniform precision at equal memory budget?
+However, modern edge deployments demand specialized capabilities: exact arithmetic computation, multi-step logical deduction, and strict constraint adherence. Relying on an aggregate language-modeling loss may mask severe, localized capability degradation in reasoning or instruction compliance. Furthermore, prior empirical studies focus predominantly on models $\ge 3\text{B}$ parameters. Small sub-1B models (`Qwen2.5-0.5B-Instruct` and `Llama-3.2-1B-Instruct`) that realistically run on edge devices remain under-studied.
 
----
-
-## 📚 Documentation
-
-- [**Full Project Flowchart**](flowchart.md): Visualizes the exact data flow and pipeline structure for Phase 1.
-- [**Deep Research Reference**](docs/deep_research.md): The comprehensive master document covering the memory wall problem, quantization mathematics, literature survey, experimental design, and the novel Hessian-Diagonal methodology.
+### The Three Core Research Questions (RQs)
+1. **RQ1 (Task-Conditioned Degradation):** How much does post-training quantization degrade distinct capability axes (factual recall, commonsense reasoning, domain knowledge, multi-step arithmetic, and instruction following), quantified via **Paired Bootstrap 95% Confidence Intervals (10,000 iterations)**?
+2. **RQ2 (Reliability of Perplexity as a Proxy):** Does perplexity track accuracy degradation across tasks, or does it hide localized damage? Evaluated using **Spearman's rank correlation ($\rho$)** with bootstrap CIs, leave-one-out sensitivity diagnostics, and a secondary out-of-domain control corpus (C4).
+3. **RQ3 (Practical Bit-Budget Guidelines):** What is the minimum acceptable bit-width for each task type under a noise-aware acceptance criterion ($\le 3.0\text{ pp}$ loss bound)?
 
 ---
 
-## Repository Structure
+## 2. Models & Quantization Formats
+
+> **Specification Rule:** Per the approved departmental problem statement, we write **no custom quantization kernels**. We empirically evaluate official vendor and community released Hugging Face checkpoints.
+
+| Model Family | Variant | Target Bits | Method | Checkpoint Repository ID | Publisher |
+|:---|:---|:---:|:---|:---|:---:|
+| **Qwen2.5-0.5B-Instruct** | `fp16` | 16 | Baseline | `Qwen/Qwen2.5-0.5B-Instruct` | Official |
+| | `bnb_int8` | 8 | BitsAndBytes | `Qwen/Qwen2.5-0.5B-Instruct` (`load_in_8bit`) | Official |
+| | `gptq_int8` | 8 | GPTQ | `Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8` | Official |
+| | `bnb_nf4` | 4 | BitsAndBytes | `Qwen/Qwen2.5-0.5B-Instruct` (NF4) | Official |
+| | `gptq_int4` | 4 | GPTQ | `Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int4` | Official |
+| | `awq_int4` | 4 | AWQ | `Qwen/Qwen2.5-0.5B-Instruct-AWQ` | Official |
+| **Llama-3.2-1B-Instruct** | `fp16` | 16 | Baseline | `meta-llama/Llama-3.2-1B-Instruct` | Official (Gated) |
+| | `bnb_int8` | 8 | BitsAndBytes | `meta-llama/Llama-3.2-1B-Instruct` (`load_in_8bit`) | Official |
+| | `bnb_nf4` | 4 | BitsAndBytes | `meta-llama/Llama-3.2-1B-Instruct` (NF4) | Official |
+| | `gptq_int4` | 4 | GPTQ | `shuyuej/Llama-3.2-1B-Instruct-GPTQ` | Community |
+| | `awq_int4` | 4 | AWQ | `ciCic/llama-3.2-1B-Instruct-AWQ` | Community |
+
+All checkpoint provenance details (group size, symmetric/asymmetric scheme, act-order, calibration sets, commit hashes) are formally audited in [`configs/checkpoints.yaml`](configs/checkpoints.yaml).
+
+---
+
+## 3. Benchmark Suite & Evaluation Protocol
+
+Evaluations are conducted through a single pinned harness (`lm-evaluation-harness==0.4.3`) to guarantee identical prompts, demonstrator shots, and scoring rules:
+
+| Task Name | Capability Axis | Primary Metric | Few-Shot | Sample Size ($N$) | Approx. 1-SE |
+|:---|:---|:---|:---:|---:|---:|
+| `wikitext` | Language Modeling (Primary Proxy) | `word_perplexity` | 0-shot | Document-level | — |
+| `c4` | Language Modeling (Control Proxy) | `word_perplexity` | 0-shot | 1,000 samples | — |
+| `arc_easy` | Factual Recall | `acc_norm` | 0-shot | 2,376 | $\sim 1.0\text{ pp}$ |
+| `hellaswag` | Commonsense Reasoning | `acc_norm` | 0-shot | 10,042 | $\sim 0.5\text{ pp}$ |
+| `winogrande` | Coreference Resolution | `acc` | 0-shot | 1,267 | $\sim 1.4\text{ pp}$ |
+| `mmlu` | Broad Domain Knowledge | `acc` | 5-shot | 14,042 | $\sim 0.4\text{ pp}$ |
+| `gsm8k` | Multi-step Arithmetic | `exact_match` (strict & flexible) | 5-shot | 1,319 | $\sim 1.3\text{ pp}$ |
+| `ifeval` | Instruction Following | `prompt_level_strict_acc` | 0-shot | 541 | $\sim 2.1\text{ pp}$ |
+
+### Stanford CRFM HELM-Inspired Multi-Metric Layer
+In alignment with Stanford CRFM HELM principles (Liang et al., TMLR 2023), we augment accuracy with two empirical dimensions:
+1. **Calibration (ECE & Brier Score):** Evaluated over multiple-choice option likelihoods to detect whether 4-bit quantization damages confidence reliability (`src/metrics/calibration.py`).
+2. **Operational Efficiency:** Measures disk footprint (MB), peak VRAM allocated (`torch.cuda.max_memory_allocated`), inference latency, and tokens/sec throughput (`src/metrics/efficiency.py`).
+
+---
+
+## 4. Repository Structure
 
 ```
 final-year-btp/
-├── requirements.txt
-├── flowchart.md               ← full project flowchart (Mermaid)
+├── BUILD_PLAN.md               # Master Build & Execution Plan v2
+├── README.md                   # Project overview, specification & usage guide
+├── PROJECT_LOG.md              # Running chronological engineering log
+├── requirements.txt            # Pinned reproducible dependencies
+├── run_experiments.py          # Primary evaluation orchestrator CLI
+├── run_analysis.py             # Statistical analysis CLI (bootstrap CIs, Spearman, budget)
 │
-├── phase0/                    ✅ Complete — NumPy proofs-of-concept
+├── configs/
+│   ├── eval_config.yaml        # Evaluation grid, tasks, and runtime parameters
+│   └── checkpoints.yaml        # Checkpoint provenance audit table
 │
-├── phase1/                    🔄 Active — PyTorch ablation grid
-│   ├── run.py                 ← ENTRY POINT — run this
-│   ├── configs/
-│   │   └── run_config.yaml   ← all experiment settings
-│   ├── framework/
-│   │   ├── calibrate.py      ← WikiText-2 activation capture
-│   │   ├── quantize.py       ← RTN + GPTQ + GPTQ+Hadamard
-│   │   └── evaluate.py       ← lm-eval wrapper + CSV logger
-│   └── results/
-│       └── ablation_table.csv
+├── src/
+│   ├── model_loader.py         # Universal model loader (FP16, BnB, GPTQ, AWQ)
+│   ├── evaluator.py            # lm-evaluation-harness wrapper with sample logging
+│   ├── metrics/
+│   │   ├── calibration.py      # ECE and Brier score calculators
+│   │   └── efficiency.py       # VRAM, disk footprint, and token latency profiler
+│   └── analysis/
+│       ├── degradation.py      # Paired bootstrap CIs (10k iterations) on ΔAcc
+│       ├── spearman_proxy.py   # Spearman ρ with bootstrap CI and LOO diagnostic
+│       ├── bit_budget.py       # Noise-aware acceptance rule and sensitivity sweep
+│       └── failure_modes.py    # Item-level flip dynamics and GSM8K/IFEval error analysis
 │
-├── phase2/                    📅 Jan–Feb 2027
-└── phase3/                    📅 Mar–May 2027
+├── results/
+│   ├── raw/                    # Untouched JSON outputs and per-sample logs
+│   ├── results_master.csv      # Primary experimental results table
+│   └── *.md                    # Generated analytical markdown reports
+│
+├── docs/                       # Research specifications, HELM deep-dive, and notes
+├── papers/
+│   ├── 1_GPTQ.pdf ...          # 9 Foundational PTQ literature papers
+│   └── helm/                   # 6 Stanford CRFM HELM benchmark papers
+│
+└── synopsis/
+    └── main.tex                # Formal DTU synopsis LaTeX source
 ```
 
 ---
 
-## Quick Start
+## 5. Quick Start & Execution Commands
 
-### 1. Install dependencies
+### 1. Installation
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Dry-run — see all planned experiments
+### 2. Verify planned grid without compute (Dry Run)
 ```bash
-python phase1/run.py --dry-run
+python run_experiments.py --dry-run
 ```
 
-### 3. Single quick test (Qwen 0.5B, RTN, 4-bit — ~32 min on T4)
+### 3. Local smoke test (Mac / CPU, 50 samples per task)
 ```bash
-python phase1/run.py --model qwen2.5-0.5b --method rtn --bits 4
+python run_experiments.py --model qwen2.5-0.5b --variant fp16 --tasks wikitext,arc_easy --limit 50
 ```
 
-### 4. Full ablation grid (27 runs, ~18 GPU-hours)
+### 4. GPU execution runs (Kaggle T4 / Google Colab)
 ```bash
-python phase1/run.py
+# Run baseline models
+python run_experiments.py --variant fp16
+
+# Run complete Qwen2.5-0.5B-Instruct grid
+python run_experiments.py --model qwen2.5-0.5b
+
+# Run complete Llama-3.2-1B-Instruct grid
+python run_experiments.py --model llama-3.2-1b
 ```
 
-### 5. Validate quantize.py works correctly (no GPU needed)
+### 5. Statistical Analysis & Decision Reports
 ```bash
-python -m phase1.framework.quantize
+python run_analysis.py --csv results/results_master.csv --bootstrap 10000
 ```
+This generates:
+- `results/degradation_report.md` (ΔAcc with 95% paired bootstrap CIs)
+- `results/spearman_proxy_report.md` (Spearman rank correlation, bootstrap CIs, LOO range)
+- `results/bit_budget_guidelines.md` (Noise-aware minimum precision matrix and sensitivity sweep)
 
 ---
 
-## Methods Implemented
-
-| Method | Description | Calibration needed? |
-|:---|:---|:---:|
-| `rtn` | Per-channel affine Round-To-Nearest | No |
-| `gptq` | Second-order Hessian error compensation (Frantar et al., ICLR 2023) | Yes |
-| `gptq_hadamard` | Randomised Hadamard rotation + GPTQ (QuIP/QuIP#) | Yes |
-
----
-
-## Models Tested
-
-| Short name | HuggingFace ID | Params | Architecture |
-|:---|:---|:---:|:---|
-| `qwen2.5-0.5b` | `Qwen/Qwen2.5-0.5B` | 0.5B | GQA 7:1, 24 layers |
-| `llama-3.2-1b` | `meta-llama/Llama-3.2-1B` | 1.24B | GQA 4:1, 16 layers |
-| `pythia-1.4b` | `EleutherAI/pythia-1.4b` | 1.4B | Full MHA, 24 layers |
-
----
-
-## Evaluation
-
-Results are measured via [EleutherAI lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) v0.4.3:
-
-| Metric | Task | Direction |
-|:---|:---|:---:|
-| WikiText-2 Perplexity | Language modelling | ↓ lower is better |
-| ARC-Easy 0-shot | Factual knowledge | ↑ higher is better |
-| HellaSwag 0-shot | Language coherence | ↑ higher is better |
-| WinoGrande 0-shot | Commonsense reasoning | ↑ higher is better |
-
----
-
-## Key Configuration (phase1/configs/run_config.yaml)
-
-```yaml
-calibration:
-  dataset: "wikitext"
-  n_samples: 128      # sequences
-  seq_len: 2048       # tokens per sequence
-  seed: 42            # fixed for reproducibility
-
-bits: [2, 3, 4]
-methods: [rtn, gptq, gptq_hadamard]
-```
-
----
-
-## References
-
-1. Frantar et al. — **GPTQ**, ICLR 2023. arXiv:2210.17323
-2. Dettmers et al. — **LLM.int8()**, NeurIPS 2022. arXiv:2208.07339
-3. Lin et al. — **AWQ**, MLSys 2024. arXiv:2306.00978
-4. Chee et al. — **QuIP**, NeurIPS 2023. arXiv:2307.13304
-5. Tseng et al. — **QuIP#**, ICML 2024. arXiv:2402.04396
-6. Dong et al. — **HAWQ-V2**, NeurIPS 2020. arXiv:1911.03852
-7. Yao et al. — **HAWQ-V3**, ICML 2021. arXiv:2011.10680
-
-
----
-
-# 🗺️ Project Flowchart — Architecture-Agnostic Layer-Wise PTQ of LLMs
-### BTech Final Year Project | Faqre Alam · Guneet Toppo · Ekansh Agrawal | DTU | 2026–27
-
----
-
-## 1. Big Picture — End-to-End Project Flow
-
-> The complete pipeline from a pretrained model to the final results table.
-
-```mermaid
-flowchart TD
-    A(["🤖 Pretrained LLM\nFP16 weights  •  0.5B–1.4B params\nQwen2.5-0.5B / Llama-3.2-1B / Pythia-1.4B"])
-
-    subgraph CAL["STEP 1 — Calibration"]
-        B["Load 128 sequences\n× 2048 tokens from WikiText-2 train"]
-        C["Register forward hooks\non every nn.Linear in the model"]
-        D["Run one forward pass\n→ capture input activation X\nfor each linear layer"]
-        E[("X per layer\nstored on CPU RAM")]
-        B --> C --> D --> E
-    end
-
-    subgraph QUANT["STEP 2 — Quantization  (choose method + bits)"]
-        F["RTN\n2 / 3 / 4 bit"]
-        G["GPTQ\n2 / 3 / 4 bit"]
-        H["GPTQ + Hadamard\n2 / 3 / 4 bit"]
-        I["Mixed-Precision\nHessian-Diagonal {2,4}-bit\n⭐ Novel Contribution"]
-    end
-
-    subgraph OUT["STEP 3 — Quantized Model"]
-        J["Layer weights replaced\nINT2 / INT3 / INT4\nModel size: 125 MB – 550 MB"]
-    end
-
-    subgraph EVAL["STEP 4 — Evaluation  via lm-evaluation-harness"]
-        K["WikiText-2 Perplexity\n(language quality)"]
-        L["ARC-Easy  0-shot\n(factual knowledge)"]
-        M["HellaSwag  0-shot\n(language coherence)"]
-        N["WinoGrande  0-shot\n(commonsense reasoning)"]
-    end
-
-    R(["📋 Results Table\n3 methods × 3 bits × 3 families = 27 runs\n+ Mixed-Precision sweep"])
-
-    A --> CAL
-    CAL --> QUANT
-    E -. activations used by .-> QUANT
-    F & G & H & I --> J
-    J --> EVAL
-    K & L & M & N --> R
-
-    style A fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
-    style R fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
-    style I fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
-    style J fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
----
-
-## 2. Calibration Data Pipeline
-
-> Captures the per-layer activations X that ALL quantization methods depend on.
-
-```mermaid
-flowchart TD
-    A["WikiText-2  — Train Split\n~2 million tokens  (plain text)"]
-    B["Model Tokenizer\n(loaded separately per model family)"]
-    C["Long Token Tensor\nshape: [1 × total_tokens]"]
-    D["Random Window Sampler\npick 128 non-overlapping windows\neach of length 2048 tokens\nusing fixed seed=42"]
-    E["Calibration Tensor\nshape: [128 × 2048]\ndtype: int64  (token IDs)"]
-    F["Register Forward Hook\non every nn.Linear\nhook records:  input[0]  → X"]
-    G["Single Forward Pass\nthrough the full model\ntorch.no_grad()  —  no gradients"]
-    H["Hook fires for each layer\ncollects X_layer on CPU"]
-    I[("Activation Store\ndict:  layer_name → X\nX shape: [128×2048 × d_in]\nkept on CPU to save GPU RAM")]
-    J["Remove all hooks\n(clean up before quantization)"]
-
-    A --> B --> C --> D --> E
-    E --> F
-    F --> G --> H --> I
-    I --> J
-
-    style A fill:#1c3a5e,color:#bae6fd,stroke:#38bdf8
-    style I fill:#1c3a5e,color:#bae6fd,stroke:#38bdf8
-    style J fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
-> **Why WikiText-2?** Domain-neutral, universally used, fixes the calibration distribution — so all 27 runs are directly comparable. Different calibration data shifts perplexity by 0.1–0.5 points.
-
----
-
-## 3. Method 1 — RTN  (Round-To-Nearest Baseline)
-
-> The simplest possible quantization — no calibration data used at all.
-
-```mermaid
-flowchart TD
-    A["Input:\nWeight Matrix W\nshape [d_out × d_in]  dtype FP16"]
-
-    subgraph PER["Per-channel  (repeat for each output channel row)"]
-        B["Find range:\nw_min = min(W[i,:])  •  w_max = max(W[i,:])"]
-        C["Compute scale:\ns = (w_max − w_min) / (2^b − 1)"]
-        D["Compute zero-point:\nz = round(−w_min / s)\nclipped to [0, 2^b−1]"]
-        E["Quantize:\nW_q = clamp( round(W / s) + z,  0,  2^b−1 )\ndtype: UINT2 / UINT3 / UINT4"]
-        B --> C --> D --> E
-    end
-
-    F["Store compressed weights:\n• W_q  as packed INT\n• scale s  as FP16  (one per channel)\n• zero-point z  as INT8"]
-    G["At inference — dequantize on-the-fly:\nW̃ = s × (W_q − z)  back to FP16\nthen compute  Y = W̃ · X  normally"]
-
-    A --> PER --> F --> G
-
-    style A fill:#3b1f00,color:#fde68a,stroke:#f59e0b
-    style F fill:#3b1f00,color:#fde68a,stroke:#f59e0b
-    style G fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
-```
-
-**Properties:**
-| | |
-|:---|:---|
-| ✅ No calibration data | Zero-shot compression |
-| ✅ O(d_out × d_in) | Fastest method |
-| ❌ No error correction | Brutal at 2-bit |
-| ❌ Quant error = s²/12 | Grows fast as bits decrease |
-
----
-
-## 4. Method 2 — GPTQ  (Second-Order Error Compensation)
-
-> Uses calibration activations to build a Hessian, then compensates for each column's quantization error by adjusting remaining unquantized columns.
-
-```mermaid
-flowchart TD
-    A["Input:\nWeight W [d_out × d_in]  FP16\nCalibration activations X [N × d_in]"]
-
-    subgraph HESS["Hessian Construction  (one-time per layer)"]
-        B["H = 2 · Xᵀ · X\nshape [d_in × d_in]\nThis is the Fisher information proxy"]
-        C["Add dampening for numerical stability:\nH ← H + ε·I\nwhere ε = 0.01 × mean(diag H)"]
-        D["Cholesky decomposition:\nH = L · Lᵀ\nInvert H column-by-column via back-substitution\n→ avoids full O(n³) inversion,  numerically stable"]
-        B --> C --> D
-    end
-
-    subgraph LOOP["Column-wise Quantization Loop  j = 1 … d_in"]
-        E["Quantize column j:\nFind scale s_j from W[:,j] range\nW_q[:,j] = round(W[:,j] / s_j) × s_j"]
-        F["Compute quantization error:\nerr[:,j] = W[:,j] − W_q[:,j]"]
-        G["Compensate ALL remaining columns j+1 … d_in:\nW[:, j+1:] −= err[:,j] · H⁻¹[j, j+1:] / H⁻¹[j,j]\n(exact minimizer of residual reconstruction loss)"]
-        H{"j = d_in\n?"}
-        E --> F --> G --> H
-        H -->|"No — next column"| E
-    end
-
-    I["Output:\nQuantized W with minimal\nreconstruction error\nAll compensation done in FP16"]
-
-    A --> HESS --> LOOP
-    H -->|"Yes — done"| I
-
-    style B fill:#1a3a1a,color:#bbf7d0,stroke:#4ade80
-    style D fill:#1a3a1a,color:#bbf7d0,stroke:#4ade80
-    style G fill:#1a3a1a,color:#bbf7d0,stroke:#4ade80
-    style I fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
-> **Key insight:** Quantizing column j introduces error `err`. The update `W[:, j+1:] -= err · H⁻¹[j, j+1:] / H⁻¹[j,j]` is the *exact* closed-form solution that minimises the residual squared reconstruction error for all future columns simultaneously.
-
----
-
-## 5. Method 3 — GPTQ + Hadamard Incoherence
-
-> Before applying GPTQ, rotate the weight matrix so that no column is an outlier. This spreads quantization pain uniformly — critical for 2-bit.
-
-```mermaid
-flowchart TD
-    A["Input:\nWeight W [d_out × d_in]\nCalibration activations X [N × d_in]"]
-
-    subgraph WHY["Why rotation is needed"]
-        B["Inspect column norms:\nsome columns have ‖W[:,j]‖ >> average\nthese outlier columns absorb disproportionate\nquantization error at 2-bit"]
-    end
-
-    subgraph ROT["Randomised Hadamard Rotation  (offline, one-time)"]
-        C["Sample random sign vector s ∈ {±1}^d_in\nForm randomised Hadamard matrix:\nQ = (1/√d_in) · Diag(s) · H_Walsh"]
-        D["Rotate weights:\nW' = W · Qᵀ\nColumn norms now ≈ uniform\nNo single column dominates"]
-        E["Rotate calibration activations:\nX' = X · Q\n(mathematically equivalent:  W·X = W'·X')"]
-        C --> D --> E
-    end
-
-    subgraph APPLY["Apply standard GPTQ on rotated tensors"]
-        F["Run GPTQ on (W', X')\nas described in Method 2\nQuantized result: W'_q"]
-    end
-
-    subgraph STORE["Storage & Inference"]
-        G["Store:\n• Quantized W'_q  (INT2/3/4)\n• Rotation seed only  (not the full Q matrix!)"]
-        H["At inference time:\nReconstruct Q from seed\nApply X' = X · Q  before matmul\nCost: O(d_in log d_in) — negligible"]
-    end
-
-    A --> WHY --> ROT --> APPLY --> STORE
-
-    style C fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
-    style D fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
-    style G fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
-**Effect of Hadamard rotation:**
-```
-BEFORE  col7: [0.003, 0.002, ..., 148.7, 0.001]   ← outlier!
-AFTER   col7: [0.81,  0.79,  ...,  0.82, 0.80 ]   ← uniform ✅
-
-Guarantee:  E[max_j ‖W'[:,j]‖²]  ≈  ‖W‖²_F / d_in   (concentration bound)
-```
-
----
-
-## 6. ⭐ Novel Contribution — Hessian-Diagonal Mixed-Precision Allocation
-
-> Assign different bit-widths to different weight columns based on their *quantization sensitivity* — all within a fixed average bit budget.
-
-```mermaid
-flowchart TD
-    A["Input:\nW [d_out × d_in]  +  X [N × d_in]\nTarget average bits: b̄ = 3\nBit choices: {2-bit, 4-bit}"]
-
-    subgraph SENS["Sensitivity Scoring  (O(N·d_in) — no matrix inversion!)"]
-        B["Hessian diagonal:\nH_jj = 2 · Σ_n X[n,j]²\nMeasures: how much output changes when column j shifts"]
-        C["Column weight variance:\nVar_j = Var(W[:,j])\nMeasures: how hard column j is to quantize"]
-        D["Sensitivity score:\nŝ_j = H_jj × Var_j\nfor each j = 1 … d_in\n\nDerived from 2nd-order Taylor expansion:\nE[ΔLoss_j] ∝ H_jj × Var_j / 4^b"]
-        B --> D
-        C --> D
-    end
-
-    subgraph ALLOC["Bit Allocation (Reverse Water-Filling)"]
-        E["Sort all d_in columns by ŝ_j  (descending)"]
-        F["At b̄=3 with {2,4}-bit only:\nt = d_in / 2  columns get 4-bit\n(d_in − t) columns get 2-bit\n→ average = (4t + 2(d_in−t)) / d_in = 3 ✅"]
-        G{"Sweep:\nvary t from\n10% to 90%\nof d_in"}
-        E --> F --> G
-    end
-
-    subgraph QSTEP["Quantize Each Group"]
-        H["Apply GPTQ on top-t columns\nusing 4-bit precision"]
-        I["Apply GPTQ on bottom-(d_in−t) columns\nusing 2-bit precision"]
-        H & I --> J
-    end
-
-    J["Output:\nMixed-precision quantized W\nSame memory as uniform 3-bit\nLower reconstruction error than uniform 3-bit"]
-
-    A --> SENS --> ALLOC --> QSTEP
-
-    style D fill:#4a1942,color:#f5d0fe,stroke:#d946ef
-    style F fill:#4a1942,color:#f5d0fe,stroke:#d946ef
-    style J fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
-**The budget comparison at equal average bits:**
-```
-Config                 Bits per column              Avg bits   Memory
-─────────────────────────────────────────────────────────────────────
-All 2-bit              [2, 2, 2, 2, 2, 2, 2, 2]     2.0 bits   ~125 MB
-Uniform 3-bit  ←base   [3, 3, 3, 3, 3, 3, 3, 3]     3.0 bits   ~190 MB
-Your method    ←novel   [4, 4, 4, 4, 2, 2, 2, 2]     3.0 bits   ~190 MB  ✅ better PPL
-All 4-bit              [4, 4, 4, 4, 4, 4, 4, 4]     4.0 bits   ~250 MB
-                        ↑ sensitive     ↑ insensitive
-```
-
----
-
-## 7. The 27-Run Ablation Grid
-
-> The controlled cross-architecture study that is the core empirical contribution.
-
-```mermaid
-flowchart LR
-    subgraph MODELS["3 Model Families"]
-        M1["Qwen2.5-0.5B\nAlibaba · GQA 7:1 · 24 layers"]
-        M2["Llama-3.2-1B\nMeta · GQA 4:1 · 16 layers"]
-        M3["Pythia-1.4B\nEleutherAI · Full MHA · 24 layers"]
-    end
-
-    subgraph METHODS["3 Quantization Methods"]
-        T1["RTN\n(no calibration)"]
-        T2["GPTQ\n(Hessian compensation)"]
-        T3["GPTQ + Hadamard\n(rotation + compensation)"]
-    end
-
-    subgraph BITS["3 Bit-widths"]
-        B1["2-bit  (8 levels)"]
-        B2["3-bit  (8→16 eff. with group)"]
-        B3["4-bit  (16 levels)"]
-    end
-
-    CROSS{"3 × 3 × 3\n= 27 runs\n+ 3 FP16 baselines"}
-
-    subgraph METRICS["4 Metrics per run"]
-        R1["WikiText-2 PPL ↓"]
-        R2["ARC-Easy Acc ↑"]
-        R3["HellaSwag Acc ↑"]
-        R4["WinoGrande Acc ↑"]
-    end
-
-    MODELS --> CROSS
-    METHODS --> CROSS
-    BITS --> CROSS
-    CROSS --> METRICS
-
-    style CROSS fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
-```
-
-**Expected quality ordering at each bit-width:**
-
-| Bit-width | RTN | GPTQ | GPTQ+H |
-|:---:|:---:|:---:|:---:|
-| 4-bit | ⚠️ slight drop | ✅ near-lossless | ✅ near-lossless |
-| 3-bit | ❌ noticeable | ✅ good | ✅ good |
-| 2-bit | 💀 catastrophic | ⚠️ structured loss | ✅ best (~13% better than GPTQ) |
-
----
-
-## 8. Evaluation Pipeline
-
-> How each of the 27 quantized models is measured after compression.
-
-```mermaid
-flowchart TD
-    A["Quantized Model saved to disk\nmodel.save_pretrained(path)\nweights: INT2/3/4 + scale metadata"]
-
-    B["Load model into HuggingFace pipeline\nAutoModelForCausalLM.from_pretrained(path)\ndequantize on-the-fly at runtime"]
-
-    C["EleutherAI lm-evaluation-harness  v0.4.x\n(pinned version for reproducibility)\nlm_eval --model hf --model_args pretrained=path"]
-
-    subgraph TASKS["Parallel Task Evaluation"]
-        direction LR
-        D1["wikitext\n─────────\nMetric: Perplexity\nexp(−mean log P)\nTest split, stride=512\nLower = better ↓"]
-        D2["arc_easy\n─────────\nMetric: 0-shot Accuracy\n2 answer choices\nNormalized log-likelihood\nHigher = better ↑"]
-        D3["hellaswag\n─────────\nMetric: 0-shot Accuracy\n4 sentence completions\nNormalized log-likelihood\nHigher = better ↑"]
-        D4["winogrande\n─────────\nMetric: 0-shot Accuracy\n2-way pronoun resolution\nHigher = better ↑"]
-    end
-
-    E["JSON output per config:\n{ model, method, bits, ppl, arc, hellaswag, winogrande }"]
-
-    F["Aggregate all 27 JSONs\n→ Final Results Table CSV"]
-
-    A --> B --> C --> TASKS
-    D1 & D2 & D3 & D4 --> E --> F
-
-    style C fill:#1e3a5f,color:#bfdbfe,stroke:#60a5fa
-    style F fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
----
-
-## 9. Architecture Comparison — Why These 3 Families?
-
-> Each family differs in how attention is structured, making them non-trivial to compare.
-
-```mermaid
-flowchart TD
-    subgraph PYTHIA["Pythia-1.4B  ·  GPT-NeoX style"]
-        T1["Params: 1.4B\nHidden dim: 2048\nLayers: 24\nFFN hidden: 8192\nAttention: 16 Q-heads / 16 KV-heads  (Full MHA)\nNo GQA  →  every head has its own K, V\nEmbedding: not tied\nRoPE + LayerNorm + GELU"]
-    end
-
-    subgraph LLAMA["Llama-3.2-1B  ·  Llama-3 style"]
-        L1["Params: 1.24B\nHidden dim: 2048\nLayers: 16\nFFN hidden: 8192\nAttention: 32 Q-heads / 8 KV-heads  (GQA 4:1)\n4 query heads share 1 KV head\nEmbedding: not tied\nRoPE + RMSNorm + SwiGLU"]
-    end
-
-    subgraph QWEN["Qwen2.5-0.5B  ·  Alibaba"]
-        Q1["Params: 0.5B\nHidden dim: 896\nLayers: 24\nFFN hidden: 4864\nAttention: 14 Q-heads / 2 KV-heads  (GQA 7:1)\n7 query heads share 1 KV head  (very aggressive)\nEmbedding: tied\nRoPE + RMSNorm + SwiGLU"]
-    end
-
-    SHARED["All 3 share:\nDecoder-only transformer  ·  RoPE  ·  RMSNorm  ·  SwiGLU  ·  Apache 2.0\nAll loaded via  AutoModelForCausalLM.from_pretrained()\nAll quantized by the EXACT SAME hook-based framework\n→ proves architecture-agnostic claim"]
-
-    PYTHIA --> SHARED
-    LLAMA --> SHARED
-    QWEN --> SHARED
-
-    style SHARED fill:#1a1a2e,color:#e0e0ff,stroke:#7c83fd
-    style PYTHIA fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
-    style LLAMA fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
-    style QWEN fill:#1c2a1c,color:#bbf7d0,stroke:#4ade80
-```
-
-**Research question encoded here:**
-> GQA ratio (7:1 vs 4:1 vs none) changes the parameter count and activation profile of `k_proj` and `v_proj`. Does the Hessian-diagonal sensitivity score correctly identify these differences — without any architecture-specific code?
-
----
-
-## 10. Memory & Compute Budget on Kaggle T4
-
-```mermaid
-flowchart LR
-    subgraph GPU["Kaggle T4  (Free)"]
-        direction TB
-        G1["VRAM: 16 GB"]
-        G2["Compute: ~8 TFLOPS FP32"]
-        G3["Quota: 30 GPU-hrs / week"]
-    end
-
-    subgraph MEM["Memory breakdown per run\n(Pythia worst case)"]
-        direction TB
-        M1["Model weights FP16: 2.8 GB on GPU"]
-        M2["GPTQ Hessian per layer: ~64 MB on GPU\n(loaded one layer at a time)"]
-        M3["Calibration activations: ~2 GB on CPU\n(offloaded — never on GPU all at once)"]
-        M4["Peak GPU usage: ~6 GB out of 16 GB  ✅"]
-    end
-
-    subgraph TIME["Timing per run"]
-        direction TB
-        T1["Calibration forward pass: 2–4 min"]
-        T2["GPTQ layer-wise loop: 15–25 min"]
-        T3["lm-eval 4 tasks: 15–20 min"]
-        T4e["Total per run: ~35–50 min"]
-        T5["27 runs total: ~18 GPU-hours  ✅\nfits in Kaggle weekly quota"]
-    end
-
-    GPU --> MEM
-    GPU --> TIME
-
-    style GPU fill:#1c3a5e,color:#bae6fd,stroke:#38bdf8
-```
-
-| Model | Calibration | GPTQ | Eval | **Total/run** |
-|:---|:---:|:---:|:---:|:---:|
-| Qwen2.5-0.5B | 2 min | 15 min | 15 min | **~32 min** |
-| Llama-3.2-1B | 3 min | 15 min | 20 min | **~38 min** |
-| Pythia-1.4B | 5 min | 30 min | 20 min | **~55 min** |
-| **27 runs total** | | | | **~18 GPU-hours ✅** |
-
----
-
-## 11. Complete Low-Level Implementation Data Flow
-
-> Exact code-level execution order for Phase 1.
-
-```mermaid
-flowchart TD
-    A(["HuggingFace Hub\nmodel checkpoint"])
-
-    subgraph LOAD["Model Loading"]
-        B["AutoModelForCausalLM.from_pretrained\ndtype=torch.float16\ndevice_map=auto"]
-    end
-
-    subgraph CALIB["Calibration Phase"]
-        C["For each nn.Linear in model:\nmodule.register_forward_hook(capture_fn)\ncapture_fn saves input[0] to dict on CPU"]
-        D["Run all 128 calibration sequences\nthrough model.forward()  no gradients"]
-        E["For each module:\nstack collected inputs → X_layer\nshape [N_total × d_in]"]
-        F["Remove all hooks\nclean up memory"]
-        C --> D --> E --> F
-    end
-
-    subgraph QLOOP["Layer-wise Quantization Loop"]
-        G["for name, module in model.named_modules():"]
-        H{"module is\nnn.Linear ?"}
-        SKIP["skip — do nothing\n(embeddings, norms, etc.)"]
-        I["Load X = activation_store[name] to GPU"]
-        J["Compute H = 2 · Xᵀ · X  on GPU"]
-        K["Apply chosen method:\nRTN(W, bits)\nor GPTQ(W, H, bits)\nor GPTQ_H(W, H, bits)"]
-        L["module.weight.data ← W_quantized\nin-place replacement"]
-        M["del X, H  — free GPU memory"]
-        N["continue to next module"]
-        G --> H
-        H -->|"No"| SKIP --> N
-        H -->|"Yes"| I --> J --> K --> L --> M --> N
-        N -->|"more modules"| G
-    end
-
-    subgraph SAVE["Save & Evaluate"]
-        O["model.save_pretrained(output_path)\ntokenizer.save_pretrained(output_path)"]
-        P["lm_eval --model hf\n--model_args pretrained=output_path\n--tasks wikitext,arc_easy,hellaswag,winogrande\n--device cuda:0  --batch_size 8"]
-        Q["Parse JSON results\nappend row to ablation_table.csv"]
-        O --> P --> Q
-    end
-
-    A --> LOAD --> CALIB --> QLOOP
-    N -->|"all done"| SAVE
-
-    style J fill:#1a3a1a,color:#bbf7d0,stroke:#4ade80
-    style K fill:#1a3a1a,color:#bbf7d0,stroke:#4ade80
-    style Q fill:#0d3b2e,color:#d4f5e9,stroke:#34d399
-```
-
----
-
-## 12. Your Novel Method vs. Prior Work
-
-```mermaid
-flowchart LR
-    subgraph HAWQ["HAWQ-V2 / V3  (Prior Art)"]
-        H1["Sensitivity: Hessian TRACE  (layer-level)\nGranularity: per LAYER\nSolver: ILP  (expensive)\nDomain: CNNs only\nCross-arch: ❌ No"]
-    end
-
-    subgraph AWQ["AWQ  (Prior Art)"]
-        A1["Sensitivity: activation MAGNITUDE  (1st-order)\nGranularity: per CHANNEL\nSolver: grid search\nDomain: Llama-centric\nCross-arch: ❌ No"]
-    end
-
-    subgraph QBERT["Q-BERT  (Prior Art)"]
-        QB1["Sensitivity: Hessian  (layer-level)\nGranularity: per LAYER\nDomain: BERT encoder only\nDecoder: ❌ No"]
-    end
-
-    subgraph YOURS["⭐ YOUR METHOD  (Novel)"]
-        Y1["Sensitivity: Hessian DIAGONAL × weight Var  (2nd-order)\nGranularity: per CHANNEL  (finer than HAWQ)\nSolver: NONE  — closed-form O(mn)\nDomain: Decoder LLMs\nCross-arch: ✅ 3 families tested\nBit format: software-only INT {2,4}"]
-    end
-
-    HAWQ -->|"+ finer granularity\n+ no ILP solver\n+ LLM domain"| YOURS
-    AWQ -->|"+ 2nd-order math\n+ principled vs heuristic"| YOURS
-    QBERT -->|"+ decoder-only\n+ cross-arch study"| YOURS
-
-    style YOURS fill:#2d1b69,color:#e9d5ff,stroke:#a78bfa
-    style HAWQ fill:#2a1a1a,color:#fecaca,stroke:#f87171
-    style AWQ fill:#2a1a1a,color:#fecaca,stroke:#f87171
-    style QBERT fill:#2a1a1a,color:#fecaca,stroke:#f87171
-```
-
----
-
-## 13. Expected Results  (Qualitative)
-
-### Perplexity at 2-bit  (lower = better)
-
-```
-FP16 baseline       ████  ~7 PPL
-
-RTN 2-bit           ████████████████████████████████████  100+ PPL  💀 catastrophic
-
-GPTQ 2-bit          ██████████████████  40–60 PPL          ⚠️ large but structured
-
-GPTQ+Hadamard 2-bit █████████████  25–35 PPL              ✅ ~13% better than GPTQ
-
-Mixed {2,4} avg=3b  █████████  15–20 PPL                  ⭐ your method — best!
-
-Uniform 3-bit GPTQ  ████████  12–15 PPL                   ← direct comparison baseline
-```
-
-### Cross-architecture transfer — what the 27-run table will reveal
-
-```mermaid
-flowchart LR
-    A["Run GPTQ+H on all 3 families\nat 2-bit"]
-    B{"Is PPL improvement\nsimilar across families?"}
-    C["Method TRANSFERS\nHadamard benefit is\narchitecture-independent\n→ it's a property of the math"]
-    D["Architecture-SPECIFIC\nBenefit depends on\nweight distribution\nor GQA structure\n→ empirical finding"]
-
-    A --> B
-    B -->|"Yes — similar"| C
-    B -->|"No — varies"| D
-```
-
----
-
-## 14. GitHub Repository Structure
-
-```
-final-year-btp/
-│
-├── flowchart.md                    ← this file
-├── README.md                       ← project overview + main results table
-│
-├── phase0/                         ✅ COMPLETE
-│   ├── demo_quant.py               ← NumPy RTN + GPTQ + Hadamard (~200 lines)
-│   ├── math_proofs.pdf             ← grid error lemma, water-filling derivation
-│   └── phase0_report.pdf           ← 6-page compiled LaTeX report
-│
-├── phase1/                         🔄 IN PROGRESS  (Oct–Dec 2026)
-│   ├── framework/
-│   │   ├── calibrate.py            ← hook-based activation capture
-│   │   ├── quantize.py             ← RTN, GPTQ, GPTQ+H  (PyTorch, arch-agnostic)
-│   │   └── evaluate.py             ← lm-eval wrapper + JSON → CSV
-│   ├── configs/
-│   │   └── run_config.yaml         ← model IDs, bit-widths, methods, random seed
-│   └── results/
-│       └── ablation_table.csv      ← 27-run results + FP16 baselines
-│
-├── phase2/                         📅 Jan–Feb 2027
-│   ├── mixed_precision.py          ← Hessian-diagonal allocation algorithm
-│   ├── sweep.py                    ← vary t (10%→90%), trace PPL vs avg-bits curve
-│   └── results/
-│       └── mixedprec_results.csv
-│
-├── phase3/                         📅 Mar–May 2027
-│   ├── paper/
-│   │   ├── main.tex                ← ACL-style LaTeX paper
-│   │   └── figures/                ← all plots + result tables
-│   └── analysis/
-│       └── plot_results.py         ← generate all paper figures from CSVs
-│
-└── data/
-    └── calibration/
-        └── wikitext2_calib_seed42.pt   ← saved calibration tensors
-                                           load once, reuse across all 27 runs
-```
-
----
-
-*Compiled: September 2026 · Faqre Alam · Guneet Toppo · Ekansh Agrawal · BTech Computer Engineering · Delhi Technological University*
+## 6. Academic References & Literature Base
+
+The repository includes a curated library of **15 peer-reviewed papers** in `papers/`:
+- **Quantization:** GPTQ (Frantar et al., ICLR 2023), AWQ (Lin et al., MLSys 2024), QLoRA / NF4 (Dettmers et al., NeurIPS 2023), Jin et al. (ACL Findings 2024), Li et al. (ICML 2024).
+- **Evaluation & HELM:** HELM (Liang et al., TMLR 2023), DecodingTrust (Wang et al., NeurIPS 2023 Outstanding Paper), VHELM (Hasson et al., 2024), HEIM (Lee et al., ICML 2024), AIR-Bench (2024), Foundation Models (Bommasani et al., 2021).

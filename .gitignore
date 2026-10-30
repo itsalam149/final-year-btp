@@ -3,17 +3,19 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# PyTorch/Transformers checkpoints & weights
+# PyTorch / Transformers checkpoints & weights
 *.pt
 *.pth
 *.safetensors
 *.bin
 *.ckpt
-phase1/results/*/
 
 # Datasets and cache
 .cache/
 data/
+huggingface/
+.tmp_*
+*.part
 
 # Environments
 .env
@@ -24,8 +26,12 @@ ENV/
 env.bak/
 venv.bak/
 
-# Logs
+# Logs & temp files
 *.log
+results/**/*.tmp
+results/**/lm_eval_output/
 
-# Mac OS
+# Mac OS & IDE
 .DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,274 @@
+checkpoints:
+  qwen2.5-0.5b-fp16:
+    family: qwen2.5-0.5b
+    variant: fp16
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct
+    commit_hash: 7ae557604adf67be50417f59c2c2f167def9a775
+    publisher: official
+    precision_bits: 16
+    quant_method: baseline_fp16
+    group_size: null
+    symmetric: null
+    desc_act: null
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: transformers
+    license: apache-2.0
+    size_on_disk_mb: 953.3
+    notes: Official unquantized FP16 baseline checkpoint.
+  qwen2.5-0.5b-bnb-int8:
+    family: qwen2.5-0.5b
+    variant: bnb_int8
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct
+    commit_hash: 7ae557604adf67be50417f59c2c2f167def9a775
+    publisher: official
+    precision_bits: 8
+    quant_method: bitsandbytes_llm_int8
+    group_size: null
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: apache-2.0
+    size_on_disk_mb: 953.3
+    notes: Dynamically quantized at runtime using load_in_8bit=True.
+  qwen2.5-0.5b-gptq-int8:
+    family: qwen2.5-0.5b
+    variant: gptq_int8
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8
+    commit_hash: c68601e5424e69cdaa6e073673e3c94db27b4397
+    publisher: official
+    precision_bits: 8
+    quant_method: gptq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: qwen-internal-pretrain-subset
+    calibration_samples: 512
+    quant_library: auto-gptq / optimum
+    license: apache-2.0
+    size_on_disk_mb: 621.03
+    notes: Official 8-bit GPTQ release from Qwen.
+  qwen2.5-0.5b-bnb-nf4:
+    family: qwen2.5-0.5b
+    variant: bnb_nf4
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct
+    commit_hash: 7ae557604adf67be50417f59c2c2f167def9a775
+    publisher: official
+    precision_bits: 4
+    quant_method: bitsandbytes_nf4
+    group_size: 64
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: apache-2.0
+    size_on_disk_mb: 953.3
+    notes: NormalFloat4 data type with double quantization enabled.
+  qwen2.5-0.5b-gptq-int4:
+    family: qwen2.5-0.5b
+    variant: gptq_int4
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int4
+    commit_hash: c34a4a91629f09f73a285f32dbd26106b033c654
+    publisher: official
+    precision_bits: 4
+    quant_method: gptq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: qwen-internal-pretrain-subset
+    calibration_samples: 512
+    quant_library: auto-gptq / optimum
+    license: apache-2.0
+    size_on_disk_mb: 449.08
+    notes: Official 4-bit GPTQ release from Qwen.
+  qwen2.5-0.5b-awq-int4:
+    family: qwen2.5-0.5b
+    variant: awq_int4
+    repo_id: Qwen/Qwen2.5-0.5B-Instruct-AWQ
+    commit_hash: db09cd27ead7fee40cdee309693cf83601b9c899
+    publisher: official
+    precision_bits: 4
+    quant_method: awq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: qwen-internal-pretrain-subset
+    calibration_samples: 512
+    quant_library: autoawq / llm-compressor
+    license: apache-2.0
+    size_on_disk_mb: 707.78
+    notes: Official 4-bit AWQ release from Qwen.
+  llama-3.2-1b-fp16:
+    family: llama-3.2-1b
+    variant: fp16
+    repo_id: meta-llama/Llama-3.2-1B-Instruct
+    commit_hash: 9213176726f574b556790deb65791e0c5aa438b6
+    publisher: official
+    precision_bits: 16
+    quant_method: baseline_fp16
+    group_size: null
+    symmetric: null
+    desc_act: null
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: transformers
+    license: llama3.2
+    size_on_disk_mb: 4725.18
+    notes: Official Meta baseline. Gated checkpoint requiring HuggingFace token.
+  llama-3.2-1b-bnb-int8:
+    family: llama-3.2-1b
+    variant: bnb_int8
+    repo_id: meta-llama/Llama-3.2-1B-Instruct
+    commit_hash: 9213176726f574b556790deb65791e0c5aa438b6
+    publisher: official
+    precision_bits: 8
+    quant_method: bitsandbytes_llm_int8
+    group_size: null
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: llama3.2
+    size_on_disk_mb: 4725.18
+    notes: Runtime LLM.int8 quantization on Meta official checkpoint.
+  llama-3.2-1b-bnb-nf4:
+    family: llama-3.2-1b
+    variant: bnb_nf4
+    repo_id: meta-llama/Llama-3.2-1B-Instruct
+    commit_hash: 9213176726f574b556790deb65791e0c5aa438b6
+    publisher: official
+    precision_bits: 4
+    quant_method: bitsandbytes_nf4
+    group_size: 64
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: llama3.2
+    size_on_disk_mb: 4725.18
+    notes: Runtime NF4 quantization with double quantization.
+  llama-3.2-1b-gptq-int4:
+    family: llama-3.2-1b
+    variant: gptq_int4
+    repo_id: shuyuej/Llama-3.2-1B-Instruct-GPTQ
+    commit_hash: 4024c85b42b0a970040e96fb9f97987ab4adbd1c
+    publisher: community
+    precision_bits: 4
+    quant_method: gptq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: 'undocumented (dataset: null in config.json)'
+    calibration_samples: null
+    quant_library: auto-gptq
+    license: llama3.2
+    size_on_disk_mb: 993.31
+    notes: Community GPTQ checkpoint. Undocumented calibration data is flagged as
+      an empirical confound.
+  llama-3.2-1b-awq-int4:
+    family: llama-3.2-1b
+    variant: awq_int4
+    repo_id: ciCic/llama-3.2-1B-Instruct-AWQ
+    commit_hash: 04121407d6f68a409a03dbbc29312645caf72dc3
+    publisher: community
+    precision_bits: 4
+    quant_method: awq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: pile-val-backup
+    calibration_samples: 128
+    quant_library: autoawq
+    license: llama3.2
+    size_on_disk_mb: 1500.77
+    notes: Community AWQ checkpoint.
+  tinyllama-1.1b-fp16:
+    family: tinyllama-1.1b
+    variant: fp16
+    repo_id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+    commit_hash: fe8a4ea1ffedaf415f4da2f062534de366a451e6
+    publisher: official
+    precision_bits: 16
+    quant_method: baseline_fp16
+    group_size: null
+    symmetric: null
+    desc_act: null
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: transformers
+    license: apache-2.0
+    size_on_disk_mb: 2100.44
+    notes: 3rd comparative model family from DTU BTP synopsis.
+  tinyllama-1.1b-bnb-int8:
+    family: tinyllama-1.1b
+    variant: bnb_int8
+    repo_id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+    commit_hash: fe8a4ea1ffedaf415f4da2f062534de366a451e6
+    publisher: official
+    precision_bits: 8
+    quant_method: bitsandbytes_llm_int8
+    group_size: null
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: apache-2.0
+    size_on_disk_mb: 2100.44
+    notes: Runtime LLM.int8 quantization on TinyLlama checkpoint.
+  tinyllama-1.1b-bnb-nf4:
+    family: tinyllama-1.1b
+    variant: bnb_nf4
+    repo_id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+    commit_hash: fe8a4ea1ffedaf415f4da2f062534de366a451e6
+    publisher: official
+    precision_bits: 4
+    quant_method: bitsandbytes_nf4
+    group_size: 64
+    symmetric: true
+    desc_act: false
+    calibration_dataset: null
+    calibration_samples: null
+    quant_library: bitsandbytes
+    license: apache-2.0
+    size_on_disk_mb: 2100.44
+    notes: Runtime NF4 quantile quantization on TinyLlama checkpoint.
+  tinyllama-1.1b-gptq-int4:
+    family: tinyllama-1.1b
+    variant: gptq_int4
+    repo_id: TheBloke/TinyLlama-1.1B-Chat-v1.0-GPTQ
+    commit_hash: 9d4580a133f92d2427a1fc90680bf7061fcb9d78
+    publisher: TheBloke
+    precision_bits: 4
+    quant_method: gptq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: wikitext
+    calibration_samples: 128
+    quant_library: auto-gptq
+    license: apache-2.0
+    size_on_disk_mb: 680.0
+    notes: 4-bit GPTQ release by TheBloke.
+  tinyllama-1.1b-awq-int4:
+    family: tinyllama-1.1b
+    variant: awq_int4
+    repo_id: TheBloke/TinyLlama-1.1B-Chat-v1.0-AWQ
+    commit_hash: 2e78382701d14e0f6e919dc2b7c6c406839356be
+    publisher: TheBloke
+    precision_bits: 4
+    quant_method: awq
+    group_size: 128
+    symmetric: true
+    desc_act: false
+    calibration_dataset: pile-val-backup
+    calibration_samples: 128
+    quant_library: autoawq
+    license: apache-2.0
+    size_on_disk_mb: 720.0
+    notes: 4-bit AWQ release by TheBloke.

@@ -1,51 +1,52 @@
 # Deep Dive: Literature Review of Reference Papers
-**Project Context:** Architecture-Agnostic Layer-Wise PTQ of LLMs (with a focus on Hessian-Diagonal Mixed-Precision Allocation).
+**Project:** Task-Conditioned Evaluation of Quantized Large Language Models  
+**Group ID:** `DTU/CSE/BTP/GP159` | Delhi Technological University 2026–27
 
-This document summarizes the 9 research papers located in the `papers/` directory, detailing their core contributions and how they directly relate to our project's methodology.
+This document summarizes the core reference research papers located in the [`papers/`](../papers/) directory, detailing their key contributions and how they directly map to our project's methodology.
 
 ---
 
 ## 1. GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers
-**File:** `1` (Frantar et al., ICLR 2023)
-- **What it is:** The foundational paper that introduced GPTQ. It leverages approximate second-order information (the inverse Hessian matrix) to perform one-shot weight quantization, processing weights column-by-column using the Optimal Brain Surgeon (OBS) update rule.
-- **Connection to our project:** This is the baseline algorithm we are expanding upon. While GPTQ assumes a uniform bit-width across the model, our Phase 2 introduces "Hessian-Diagonal Mixed-Precision" to dynamically allocate bits based on the very Hessian matrices GPTQ computes.
+**File:** [`papers/1_GPTQ.pdf`](../papers/1_GPTQ.pdf) (Frantar et al., ICLR 2023)  
+- **What it is:** The foundational paper introducing GPTQ. It leverages approximate second-order inverse Hessian information to perform one-shot weight quantization, processing weights column-by-column using the Optimal Brain Surgeon (OBS) update rule.
+- **Connection to our project:** Evaluates official GPTQ-Int4 and GPTQ-Int8 releases for Qwen2.5 and Llama-3.2 to benchmark their degradation on multi-step reasoning.
 
 ## 2. Benchmarking Post-Training Quantization in LLMs
-**File:** `2.pdf` (Zhao et al., 2025)
-- **What it is:** A massive benchmarking study that categorizes PTQ into four strategies: Compensation (e.g., GPTQ), Rotation (e.g., QuIP), Salience (e.g., AWQ), and Optimization. It evaluates their cross-structure (Mamba, MoE) and cross-bitwidth robustness.
-- **Connection to our project:** Directly aligns with our **Phase 1**. We are also building an ablation grid across different architectures (Qwen, LLaMA, Pythia) and methods (RTN, GPTQ, Hadamard). Their findings validate our approach of evaluating cross-architecture PTQ resilience.
+**File:** [`papers/2_Benchmarking_PTQ.pdf`](../papers/2_Benchmarking_PTQ.pdf) (Zhao et al., 2025)  
+- **What it is:** A comprehensive benchmarking study that categorizes PTQ into four strategies: Compensation (GPTQ), Rotation (QuIP), Salience (AWQ), and Optimization.
+- **Connection to our project:** Validates our cross-method comparison (GPTQ vs. AWQ vs. BitsAndBytes) at equal bit-widths.
 
 ## 3. APTQ: Attention-aware Post-Training Mixed-Precision Quantization
-**File:** `3.pdf` (Guan et al., DAC 2024)
-- **What it is:** Introduces APTQ, which expands second-order quantization to consider the entire attention block (including non-linear softmax). Crucially, it proposes a **Hessian trace-driven mixed-precision quantization scheme**.
-- **Connection to our project:** Highly relevant to **Phase 2**. They use the *trace* of the Hessian to assign 2-bit or 4-bit precision to layers. We are doing something very similar, but using the *diagonal* of the Hessian ($H_{jj}$) multiplied by weight variance as our sensitivity metric.
+**File:** [`papers/3_APTQ_Mixed_Precision.pdf`](../papers/3_APTQ_Mixed_Precision.pdf) (Guan et al., DAC 2024)  
+- **What it is:** Expands second-order quantization to consider the entire attention block (including non-linear softmax) and proposes a Hessian trace-driven mixed-precision scheme.
+- **Connection to our project:** Provides structural insight into why attention layers in small models are sensitive to sub-4-bit compression.
 
 ## 4. GAMMA: Global Bit Allocation for Mixed-Precision Models
-**File:** `4.pdf` (Yao et al., 2026)
-- **What it is:** Proposes a quantizer-agnostic framework for mixed-precision allocation that avoids the massive compute costs of search-based methods or the inaccuracy of static proxy metrics. It learns module-wise bit preferences via a teacher-forced hidden-state reconstruction objective.
-- **Connection to our project:** Represents the state-of-the-art alternative to Hessian-based mixed precision. While we use a closed-form analytical score (Hessian-diagonal), GAMMA uses a differentiable learning pipeline. It is an excellent comparison point for our Phase 2 literature review.
+**File:** [`papers/4_GAMMA_Bit_Allocation.pdf`](../papers/4_GAMMA_Bit_Allocation.pdf) (Yao et al., 2026)  
+- **What it is:** A quantizer-agnostic framework for mixed-precision allocation that learns module-wise bit preferences via a teacher-forced hidden-state reconstruction objective.
+- **Connection to our project:** Serves as a reference for bit-budget allocation thresholds.
 
 ## 5. KRONQ: LLM Quantization via Kronecker-Factored Hessian
-**File:** `5.pdf` (Lee et al., 2026)
-- **What it is:** Challenges the standard GPTQ assumption that only input activation statistics matter. KRONQ uses Kronecker-factored approximations to include **gradient covariance** (output-side statistics) in the quantization objective and mixed-precision allocation.
-- **Connection to our project:** Extremely relevant mathematical extension of GPTQ. While we use the activation Hessian ($H = X^T X$), they prove that incorporating the gradient Hessian ($H_G$) improves 2-bit performance on massive models. 
+**File:** [`papers/5_KRONQ_Hessian.pdf`](../papers/5_KRONQ_Hessian.pdf) (Lee et al., 2026)  
+- **What it is:** Incorporates gradient covariance into the quantization objective using Kronecker-factored approximations.
+- **Connection to our project:** Theoretical backing on why higher-order loss approximations matter for preserving reasoning capacity.
 
 ## 6. D²Quant: Accurate Low-bit Post-Training Weight Quantization
-**File:** `6.pdf` (Yan et al., 2026)
-- **What it is:** Identifies that sub-4-bit PTQ degrades due to down-projection matrices and activation mean-shifts. It introduces a Dual-Scale Quantizer (DSQ) for weights and a Deviation-Aware Correction (DAC) that adjusts biases in LayerNorm to fix activation drift.
-- **Connection to our project:** Provides a structural explanation for *why* GPTQ fails at 2-bit. In our project, if we notice severe degradation at 2-bit (e.g., in Qwen2.5), we can cite D²Quant to explain that LayerNorm activation drift is the likely culprit.
+**File:** [`papers/6_D2Quant_Low_Bit.pdf`](../papers/6_D2Quant_Low_Bit.pdf) (Yan et al., 2026)  
+- **What it is:** Identifies that sub-4-bit PTQ degrades due to down-projection matrices and activation mean-shifts, proposing Dual-Scale Quantization and Deviation-Aware Correction.
+- **Connection to our project:** Explains potential failure modes if 4-bit models experience non-linear degradation on reasoning tasks.
 
 ## 7. Task-Stratified Knowledge Scaling Laws for PTQ
-**File:** `7.pdf` (Zhou et al., 2026)
-- **What it is:** Investigates how fine-grained PTQ factors (group size and calibration set size) impact different types of LLM knowledge (memorization, application, reasoning). Finds that reasoning is highly sensitive to bit-width, while memorization is sensitive to calibration data.
-- **Connection to our project:** Validates our use of WikiText-2 as a calibration set. If we see that our 2-bit models fail on reasoning tasks (like WinoGrande) but survive on easier tasks, this paper provides the theoretical backing for that phenomenon.
+**File:** [`papers/7_Knowledge_Scaling_PTQ.pdf`](../papers/7_Knowledge_Scaling_PTQ.pdf) (Zhou et al., 2026)  
+- **What it is:** Investigates how quantization affects different knowledge types (memorization vs. application vs. reasoning). Crucially finds that reasoning is hypersensitive to bit-width.
+- **Connection to our project:** Directly supports our **RQ1** and the hypothesis that GSM8K multi-step reasoning may experience distinct degradation curves compared to factual recall.
 
 ## 8. CrossQuant: A PTQ Method with Smaller Quantization Kernel
-**File:** `8.pdf` (Liu et al., 2024)
-- **What it is:** Defines the "quantization kernel" as the set of elements in an activation matrix that get quantized to exactly zero. Proves that rounding small values to zero is the root cause of precision loss, and proposes cross-quantizing using both row and column maximums.
-- **Connection to our project:** Provides a deep mathematical look at activation quantization. While our project is primarily focused on *weight-only* quantization, this paper is useful background reading on why outlier features distort LLM mathematics.
+**File:** [`papers/8_CrossQuant.pdf`](../papers/8_CrossQuant.pdf) (Liu et al., 2024)  
+- **What it is:** Analyzes precision loss from rounding small activation values to zero and cross-quantizes using row and column bounds.
+- **Connection to our project:** Mathematical context on activation distortion in small language models.
 
 ## 9. Adapting Methods for Domain-Specific Japanese Small LMs
-**File:** `9.pdf` (Yasuno, 2026)
-- **What it is:** A practical engineering paper about fine-tuning Japanese LLMs via QLoRA, and evaluating how 4-bit quantization impacts them. It makes a notable finding that GQA (Grouped-Query Attention) architectures degrade severely under 4-bit quantization compared to standard MHA.
-- **Connection to our project:** Directly supports our cross-architecture hypothesis in **Phase 1**! In our ablation grid, Qwen2.5 uses GQA while Pythia uses MHA. If our grid shows Qwen2.5 struggling at 2/3-bit compared to Pythia, we can use Yasuno's findings on GQA vulnerability to support our conclusions!
+**File:** [`papers/9_Japanese_Small_LMs.pdf`](../papers/9_Japanese_Small_LMs.pdf) (Yasuno, 2026)  
+- **What it is:** Analyzes how small Japanese language models respond to various PTQ strategies across general and domain-specific benchmarks.
+- **Connection to our project:** Demonstrates that sub-1B parameter models exhibit unique quantization sensitivities compared to 7B+ architectures.

@@ -1,0 +1,7 @@
+task,spearman_rho,ci_low,ci_high,loo_min,loo_max,influential_variant,p_value,sample_size,proxy_status
+arc_easy,,,,,,,,0,INSUFFICIENT_DATA
+hellaswag,,,,,,,,0,INSUFFICIENT_DATA
+winogrande,,,,,,,,0,INSUFFICIENT_DATA
+mmlu,,,,,,,,0,INSUFFICIENT_DATA
+gsm8k,,,,,,,,0,INSUFFICIENT_DATA
+ifeval,,,,,,,,0,INSUFFICIENT_DATA

@@ -1,0 +1,240 @@
+# =====================================================================
+# eval_config.yaml (v2)
+# Central Experiment Configuration for DTU BTech Major Project
+# Group ID: DTU/CSE/BTP/GP159 | Session 2026-27
+# Project: Task-Conditioned Evaluation of Quantized Small LLMs
+# Guide: Ms. Gull Kaur, Assistant Professor, Department of CSE, DTU
+# =====================================================================
+
+experiment_name: "task_conditioned_quant_eval_v2"
+output_dir: "results"
+results_csv: "results/results_master.csv"
+raw_output_dir: "results/raw"
+checkpoints_provenance: "configs/checkpoints.yaml"
+
+# ---------------------------------------------------------------------
+# Models & Quantization Variants to Evaluate
+# ---------------------------------------------------------------------
+# Evaluates official vendor and community checkpoints across 0.5B to 1B regime
+# Precisions: FP16 (baseline), 8-bit (GPTQ, BnB), 4-bit (GPTQ, AWQ, BnB-NF4)
+# ---------------------------------------------------------------------
+models:
+  # Model Family 1: Qwen2.5-0.5B-Instruct
+  - id: "qwen2.5-0.5b"
+    name: "Qwen2.5-0.5B-Instruct"
+    base_hf_id: "Qwen/Qwen2.5-0.5B-Instruct"
+    variants:
+      - name: "fp16"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct"
+        method: "fp16"
+        bits: 16
+        loader: "transformers"
+
+      - name: "bnb_int8"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct"
+        method: "bnb_int8"
+        bits: 8
+        loader: "bitsandbytes"
+
+      - name: "gptq_int8"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8"
+        method: "gptq"
+        bits: 8
+        loader: "gptq"
+
+      - name: "bnb_nf4"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct"
+        method: "bnb_nf4"
+        bits: 4
+        loader: "bitsandbytes"
+
+      - name: "gptq_int4"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int4"
+        method: "gptq"
+        bits: 4
+        loader: "gptq"
+
+      - name: "awq_int4"
+        hf_id: "Qwen/Qwen2.5-0.5B-Instruct-AWQ"
+        method: "awq"
+        bits: 4
+        loader: "awq"
+
+  # Model Family 2: Llama-3.2-1B-Instruct
+  - id: "llama-3.2-1b"
+    name: "Llama-3.2-1B-Instruct"
+    base_hf_id: "meta-llama/Llama-3.2-1B-Instruct"
+    variants:
+      - name: "fp16"
+        hf_id: "meta-llama/Llama-3.2-1B-Instruct"
+        method: "fp16"
+        bits: 16
+        loader: "transformers"
+
+      - name: "bnb_int8"
+        hf_id: "meta-llama/Llama-3.2-1B-Instruct"
+        method: "bnb_int8"
+        bits: 8
+        loader: "bitsandbytes"
+
+      - name: "bnb_nf4"
+        hf_id: "meta-llama/Llama-3.2-1B-Instruct"
+        method: "bnb_nf4"
+        bits: 4
+        loader: "bitsandbytes"
+
+      - name: "gptq_int4"
+        hf_id: "shuyuej/Llama-3.2-1B-Instruct-GPTQ"
+        method: "gptq"
+        bits: 4
+        loader: "gptq"
+
+      - name: "awq_int4"
+        hf_id: "ciCic/llama-3.2-1B-Instruct-AWQ"
+        method: "awq"
+        bits: 4
+        loader: "awq"
+
+  # Model Family 3: TinyLlama-1.1B-Chat (3rd Comparative Baseline in DTU Synopsis)
+  - id: "tinyllama-1.1b"
+    name: "TinyLlama-1.1B-Chat"
+    base_hf_id: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    variants:
+      - name: "fp16"
+        hf_id: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+        method: "fp16"
+        bits: 16
+        loader: "transformers"
+
+      - name: "bnb_int8"
+        hf_id: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+        method: "bnb_int8"
+        bits: 8
+        loader: "bitsandbytes"
+
+      - name: "bnb_nf4"
+        hf_id: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+        method: "bnb_nf4"
+        bits: 4
+        loader: "bitsandbytes"
+
+      - name: "gptq_int4"
+        hf_id: "TheBloke/TinyLlama-1.1B-Chat-v1.0-GPTQ"
+        method: "gptq"
+        bits: 4
+        loader: "gptq"
+
+      - name: "awq_int4"
+        hf_id: "TheBloke/TinyLlama-1.1B-Chat-v1.0-AWQ"
+        method: "awq"
+        bits: 4
+        loader: "awq"
+
+# ---------------------------------------------------------------------
+# Benchmarks & Capability Axes
+# ---------------------------------------------------------------------
+# Pinned harness: lm-evaluation-harness (0.4.3)
+# ---------------------------------------------------------------------
+tasks:
+  - id: "wikitext"
+    name: "WikiText-2 Perplexity"
+    category: "language_modeling_primary"
+    metric: "word_perplexity"
+    direction: "lower_is_better"
+    num_fewshot: 0
+    apply_chat_template: false
+
+  - id: "c4"
+    name: "C4 Perplexity (Control)"
+    category: "language_modeling_control"
+    metric: "word_perplexity"
+    direction: "lower_is_better"
+    num_fewshot: 0
+    apply_chat_template: false
+
+  - id: "arc_easy"
+    name: "ARC-Easy"
+    category: "factual_recall"
+    metric: "acc_norm,none"
+    direction: "higher_is_better"
+    num_fewshot: 0
+    apply_chat_template: false
+
+  - id: "hellaswag"
+    name: "HellaSwag"
+    category: "commonsense_reasoning"
+    metric: "acc_norm,none"
+    direction: "higher_is_better"
+    num_fewshot: 0
+    apply_chat_template: false
+
+  - id: "winogrande"
+    name: "WinoGrande"
+    category: "commonsense_reasoning"
+    metric: "acc,none"
+    direction: "higher_is_better"
+    num_fewshot: 0
+    apply_chat_template: false
+
+  - id: "mmlu"
+    name: "MMLU"
+    category: "academic_knowledge"
+    metric: "acc,none"
+    direction: "higher_is_better"
+    num_fewshot: 5
+    apply_chat_template: false
+
+  - id: "gsm8k"
+    name: "GSM8K"
+    category: "multi_step_arithmetic"
+    metric: "exact_match,strict-match"
+    secondary_metric: "exact_match,flexible-extract"
+    direction: "higher_is_better"
+    num_fewshot: 5
+    apply_chat_template: true
+
+  - id: "ifeval"
+    name: "IFEval"
+    category: "instruction_following"
+    metric: "prompt_level_strict_acc,none"
+    secondary_metric: "instruction_level_strict_acc,none"
+    direction: "higher_is_better"
+    num_fewshot: 0
+    apply_chat_template: true
+
+# ---------------------------------------------------------------------
+# Evaluation Runtime Parameters
+# ---------------------------------------------------------------------
+eval:
+  batch_size: "auto"
+  device: "auto"          # auto = cuda (NVIDIA T4) | mps (Apple Silicon) | cpu
+  limit: null             # Set integer (e.g., 50) for smoke test, null for full run
+  log_samples: true       # Required for paired bootstrap and item-level flip analysis
+  temperature: 0.0        # Deterministic greedy decoding
+  top_p: 1.0
+
+# ---------------------------------------------------------------------
+# Statistical Analysis & Acceptance Configuration (v2)
+# ---------------------------------------------------------------------
+statistics:
+  bootstrap_iterations: 10000
+  confidence_level: 0.95
+  spearman_bootstrap_iterations: 2000
+  leave_one_out_check: true
+  acceptance_threshold_pp: 3.0
+  sensitivity_thresholds_pp: [1.0, 2.0, 3.0, 5.0]
+
+# ---------------------------------------------------------------------
+# HELM-Inspired Multi-Metric Layer
+# ---------------------------------------------------------------------
+metrics:
+  calibration:
+    enabled: true
+    num_bins: 10
+    tasks: ["arc_easy", "hellaswag", "winogrande", "mmlu"]
+  efficiency:
+    enabled: true
+    prompt_tokens: 128
+    generation_tokens: 64
+    warmup_runs: 2
+    timed_runs: 5

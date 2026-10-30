@@ -1,30 +1,34 @@
-# BTech Final Year Project — LLM PTQ Framework
-# Faqre Alam · Guneet Toppo · Ekansh Agrawal | DTU 2026-27
-#
-# Install with:  pip install -r requirements.txt
+# BTech Major Project — Task-Conditioned Evaluation of Quantized Small LLMs
+# Group ID: DTU/CSE/BTP/GP159 | Session 2026-27
+# Delhi Technological University | Guide: Ms. Gull Kaur
 
-# Core deep learning
-torch>=2.1.0
-torchvision>=0.16.0
-
-# HuggingFace ecosystem
-transformers>=4.40.0
+# Core deep learning & Hugging Face ecosystem
+torch>=2.2.0
+transformers>=4.40.0,<4.45.0  # Pinned to ensure compatibility with lm-eval 0.4.3
 accelerate>=0.28.0
 datasets>=2.18.0
 huggingface-hub>=0.22.0
 tokenizers>=0.15.0
 
-# Evaluation harness (pinned minor version for reproducibility)
-lm-eval==0.4.3
+# Quantization backends (for evaluation of pre-quantized released checkpoints)
+bitsandbytes>=0.43.0          # LLM.int8 and NF4 loading on CUDA (T4 GPU)
+optimum>=1.19.0               # GPTQ & AWQ model loading integration
+# auto-gptq>=0.7.1            # Install on Kaggle/Colab T4 GPU
+# Note: AutoAWQ is archived/deprecated. Use optimum native integration or llm-compressor
+# autoawq>=0.2.5              # Pinned for dedicated AWQ environment if needed
 
-# Numerics
+# Pinned evaluation harness (strict reproducibility)
+lm-eval==0.4.3
+# Note for IFEval: run `pip install langdetect immutabledict` if evaluating ifeval
+
+# Data analysis, statistics & bootstrap estimation
 numpy>=1.26.0
 scipy>=1.12.0
+pandas>=2.2.0
+tabulate>=0.9.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
 
 # Configuration & utilities
 pyyaml>=6.0
 tqdm>=4.66.0
-pandas>=2.2.0
-
-# Optional: faster Hadamard transform
-# fast-hadamard-transform>=1.0.4

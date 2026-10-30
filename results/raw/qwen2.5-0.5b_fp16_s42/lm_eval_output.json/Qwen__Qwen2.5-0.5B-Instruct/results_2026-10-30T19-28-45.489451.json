@@ -1,0 +1,221 @@
+{
+  "results": {
+    "winogrande": {
+      "acc,none": 0.6,
+      "acc_stderr,none": 0.09097176522946843,
+      "alias": "winogrande"
+    },
+    "hellaswag": {
+      "acc,none": 0.4666666666666667,
+      "acc_stderr,none": 0.09264111117062017,
+      "acc_norm,none": 0.36666666666666664,
+      "acc_norm_stderr,none": 0.0894855453983996,
+      "alias": "hellaswag"
+    },
+    "arc_easy": {
+      "acc,none": 0.6666666666666666,
+      "acc_stderr,none": 0.08753762190648169,
+      "acc_norm,none": 0.6,
+      "acc_norm_stderr,none": 0.09097176522946843,
+      "alias": "arc_easy"
+    }
+  },
+  "group_subtasks": {
+    "arc_easy": [],
+    "hellaswag": [],
+    "winogrande": []
+  },
+  "configs": {
+    "arc_easy": {
+      "task": "arc_easy",
+      "group": [
+        "ai2_arc"
+      ],
+      "dataset_path": "allenai/ai2_arc",
+      "dataset_name": "ARC-Easy",
+      "training_split": "train",
+      "validation_split": "validation",
+      "test_split": "test",
+      "doc_to_text": "Question: {{question}}\nAnswer:",
+      "doc_to_target": "{{choices.label.index(answerKey)}}",
+      "doc_to_choice": "{{choices.text}}",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "Question: {{question}}\nAnswer:",
+      "metadata": {
+        "version": 1.0
+      }
+    },
+    "hellaswag": {
+      "task": "hellaswag",
+      "group": [
+        "multiple_choice"
+      ],
+      "dataset_path": "hellaswag",
+      "training_split": "train",
+      "validation_split": "validation",
+      "process_docs": "def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:\n    def _process_doc(doc):\n        ctx = doc[\"ctx_a\"] + \" \" + doc[\"ctx_b\"].capitalize()\n        out_doc = {\n            \"query\": preprocess(doc[\"activity_label\"] + \": \" + ctx),\n            \"choices\": [preprocess(ending) for ending in doc[\"endings\"]],\n            \"gold\": int(doc[\"label\"]),\n        }\n        return out_doc\n\n    return dataset.map(_process_doc)\n",
+      "doc_to_text": "{{query}}",
+      "doc_to_target": "{{label}}",
+      "doc_to_choice": "choices",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": {
+        "version": 1.0
+      }
+    },
+    "winogrande": {
+      "task": "winogrande",
+      "dataset_path": "winogrande",
+      "dataset_name": "winogrande_xl",
+      "training_split": "train",
+      "validation_split": "validation",
+      "doc_to_text": "def doc_to_text(doc):\n    answer_to_num = {\"1\": 0, \"2\": 1}\n    return answer_to_num[doc[\"answer\"]]\n",
+      "doc_to_target": "def doc_to_target(doc):\n    idx = doc[\"sentence\"].index(\"_\") + 1\n    return doc[\"sentence\"][idx:].strip()\n",
+      "doc_to_choice": "def doc_to_choice(doc):\n    idx = doc[\"sentence\"].index(\"_\")\n    options = [doc[\"option1\"], doc[\"option2\"]]\n    return [doc[\"sentence\"][:idx] + opt for opt in options]\n",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "sentence",
+      "metadata": {
+        "version": 1.0
+      }
+    }
+  },
+  "versions": {
+    "arc_easy": 1.0,
+    "hellaswag": 1.0,
+    "winogrande": 1.0
+  },
+  "n-shot": {
+    "arc_easy": 0,
+    "hellaswag": 0,
+    "winogrande": 0
+  },
+  "higher_is_better": {
+    "arc_easy": {
+      "acc": true,
+      "acc_norm": true
+    },
+    "hellaswag": {
+      "acc": true,
+      "acc_norm": true
+    },
+    "winogrande": {
+      "acc": true
+    }
+  },
+  "n-samples": {
+    "winogrande": {
+      "original": 1267,
+      "effective": 30
+    },
+    "hellaswag": {
+      "original": 10042,
+      "effective": 30
+    },
+    "arc_easy": {
+      "original": 2376,
+      "effective": 30
+    }
+  },
+  "config": {
+    "model": "hf",
+    "model_args": "pretrained=Qwen/Qwen2.5-0.5B-Instruct,dtype=float16",
+    "model_num_parameters": 494032768,
+    "model_dtype": "torch.float16",
+    "model_revision": "main",
+    "model_sha": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "batch_size": "4",
+    "batch_sizes": [],
+    "device": "mps",
+    "use_cache": null,
+    "limit": 30.0,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": null,
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "95d4d1b",
+  "date": 1793368697.479028,
+  "pretty_env_info": "PyTorch version: 2.15.0\nIs debug build: False\nCUDA used to build PyTorch: None\nROCm SDK used to build PyTorch: N/A\nHIP used to build PyTorch: N/A\n\nOS: macOS 27.2 (arm64)\nGCC version: Could not collect\nClang version: 21.0.0 (clang-2100.3.34.2)\nCMake version: Could not collect\nLibc version: N/A\n\nPython version: 3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 17.0.0 (clang-1700.6.3.2)] (64-bit runtime)\nPython platform: macOS-27.2-arm64-arm-64bit\nIs CUDA available: False\nCUDA runtime version: No CUDA\nCUDA_MODULE_LOADING set to: N/A\nGPU models and configuration: No CUDA\nNvidia driver version: No CUDA\ncuDNN version: No CUDA\nIs XPU available: False\nHIP runtime version: N/A\nMIOpen runtime version: N/A\nIs XNNPACK available: False\nCaching allocator config: N/A\n\nCPU:\nApple M4\n\nVersions of relevant libraries:\n[pip3] numpy==2.4.6\n[pip3] torch==2.15.0\n[conda] Could not collect",
+  "transformers_version": "4.44.2",
+  "upper_git_hash": null,
+  "tokenizer_pad_token": [
+    "<|endoftext|>",
+    151643
+  ],
+  "tokenizer_eos_token": [
+    "<|im_end|>",
+    151645
+  ],
+  "tokenizer_bos_token": [
+    null,
+    null
+  ],
+  "eot_token_id": 151645,
+  "max_length": 32768,
+  "task_hashes": {
+    "winogrande": "fc15b5d7e8639c8ff7485973db7de7fb0ea42b83391d03d3cb4a4f63d2b26ded",
+    "hellaswag": "e8ab9c2e097f8e3a47d451200f632f5161d73b52a6b11d8d3fb56257b37fc3a3",
+    "arc_easy": "f8fdb3189189f789d51dc616a097673020dfff89155d98facb35aa9b96f1c335"
+  },
+  "model_source": "hf",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_name_sanitized": "Qwen__Qwen2.5-0.5B-Instruct",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "start_time": 4307.363118166,
+  "end_time": 4337.235873208,
+  "total_evaluation_time_seconds": "29.87275504199988"
+}
