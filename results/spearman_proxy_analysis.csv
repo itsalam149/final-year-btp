@@ -5,3 +5,4 @@ winogrande,,,,,,,,0,INSUFFICIENT_DATA
 mmlu,,,,,,,,0,INSUFFICIENT_DATA
 gsm8k,,,,,,,,0,INSUFFICIENT_DATA
 ifeval,,,,,,,,0,INSUFFICIENT_DATA
+gsm8k_exact_match_flexible_extract,,,,,,,,0,INSUFFICIENT_DATA

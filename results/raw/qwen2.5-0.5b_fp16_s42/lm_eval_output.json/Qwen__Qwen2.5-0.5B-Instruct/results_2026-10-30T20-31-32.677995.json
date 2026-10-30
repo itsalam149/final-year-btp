@@ -1,0 +1,167 @@
+{
+  "results": {
+    "winogrande": {
+      "acc,none": 0.6,
+      "acc_stderr,none": 0.24494897427831783,
+      "alias": "winogrande"
+    },
+    "arc_easy": {
+      "acc,none": 0.4,
+      "acc_stderr,none": 0.24494897427831783,
+      "acc_norm,none": 0.4,
+      "acc_norm_stderr,none": 0.24494897427831783,
+      "alias": "arc_easy"
+    }
+  },
+  "group_subtasks": {
+    "arc_easy": [],
+    "winogrande": []
+  },
+  "configs": {
+    "arc_easy": {
+      "task": "arc_easy",
+      "group": [
+        "ai2_arc"
+      ],
+      "dataset_path": "allenai/ai2_arc",
+      "dataset_name": "ARC-Easy",
+      "training_split": "train",
+      "validation_split": "validation",
+      "test_split": "test",
+      "doc_to_text": "Question: {{question}}\nAnswer:",
+      "doc_to_target": "{{choices.label.index(answerKey)}}",
+      "doc_to_choice": "{{choices.text}}",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "Question: {{question}}\nAnswer:",
+      "metadata": {
+        "version": 1.0
+      }
+    },
+    "winogrande": {
+      "task": "winogrande",
+      "dataset_path": "winogrande",
+      "dataset_name": "winogrande_xl",
+      "training_split": "train",
+      "validation_split": "validation",
+      "doc_to_text": "def doc_to_text(doc):\n    answer_to_num = {\"1\": 0, \"2\": 1}\n    return answer_to_num[doc[\"answer\"]]\n",
+      "doc_to_target": "def doc_to_target(doc):\n    idx = doc[\"sentence\"].index(\"_\") + 1\n    return doc[\"sentence\"][idx:].strip()\n",
+      "doc_to_choice": "def doc_to_choice(doc):\n    idx = doc[\"sentence\"].index(\"_\")\n    options = [doc[\"option1\"], doc[\"option2\"]]\n    return [doc[\"sentence\"][:idx] + opt for opt in options]\n",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "sentence",
+      "metadata": {
+        "version": 1.0
+      }
+    }
+  },
+  "versions": {
+    "arc_easy": 1.0,
+    "winogrande": 1.0
+  },
+  "n-shot": {
+    "arc_easy": 0,
+    "winogrande": 0
+  },
+  "higher_is_better": {
+    "arc_easy": {
+      "acc": true,
+      "acc_norm": true
+    },
+    "winogrande": {
+      "acc": true
+    }
+  },
+  "n-samples": {
+    "winogrande": {
+      "original": 1267,
+      "effective": 5
+    },
+    "arc_easy": {
+      "original": 2376,
+      "effective": 5
+    }
+  },
+  "config": {
+    "model": "hf",
+    "model_args": "pretrained=Qwen/Qwen2.5-0.5B-Instruct,dtype=float16",
+    "model_num_parameters": 494032768,
+    "model_dtype": "torch.float16",
+    "model_revision": "main",
+    "model_sha": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "batch_size": "4",
+    "batch_sizes": [],
+    "device": "mps",
+    "use_cache": null,
+    "limit": 5.0,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": null,
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "79d5107",
+  "date": 1793372478.093565,
+  "pretty_env_info": "PyTorch version: 2.15.0\nIs debug build: False\nCUDA used to build PyTorch: None\nROCm SDK used to build PyTorch: N/A\nHIP used to build PyTorch: N/A\n\nOS: macOS 27.2 (arm64)\nGCC version: Could not collect\nClang version: 21.0.0 (clang-2100.3.34.2)\nCMake version: Could not collect\nLibc version: N/A\n\nPython version: 3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 17.0.0 (clang-1700.6.3.2)] (64-bit runtime)\nPython platform: macOS-27.2-arm64-arm-64bit\nIs CUDA available: False\nCUDA runtime version: No CUDA\nCUDA_MODULE_LOADING set to: N/A\nGPU models and configuration: No CUDA\nNvidia driver version: No CUDA\ncuDNN version: No CUDA\nIs XPU available: False\nHIP runtime version: N/A\nMIOpen runtime version: N/A\nIs XNNPACK available: False\nCaching allocator config: N/A\n\nCPU:\nApple M4\n\nVersions of relevant libraries:\n[pip3] numpy==2.4.6\n[pip3] torch==2.15.0\n[conda] Could not collect",
+  "transformers_version": "4.44.2",
+  "upper_git_hash": null,
+  "tokenizer_pad_token": [
+    "<|endoftext|>",
+    151643
+  ],
+  "tokenizer_eos_token": [
+    "<|im_end|>",
+    151645
+  ],
+  "tokenizer_bos_token": [
+    null,
+    null
+  ],
+  "eot_token_id": 151645,
+  "max_length": 32768,
+  "task_hashes": {
+    "winogrande": "a8ef4de6d6414c4273b81bf591c015e95a975a0b35f8f20c639586336d5ad625",
+    "arc_easy": "c8e16d52474f80ada26ed5a6181685b6bbad7cc89289b8cc138222176e301434"
+  },
+  "model_source": "hf",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_name_sanitized": "Qwen__Qwen2.5-0.5B-Instruct",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "start_time": 8087.894964208,
+  "end_time": 8104.414190333,
+  "total_evaluation_time_seconds": "16.519226125000387"
+}

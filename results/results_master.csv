@@ -3,3 +3,4 @@ timestamp,model,variant,method,bits,loader,hf_id,status,eval_time_s,seed,metric_
 2026-10-30T19:28:46.099898,qwen2.5-0.5b,fp16,fp16,16,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,32.28,42,,0.6,0.36666666666666664,0.6,,,,,
 2026-10-30T19:34:20.115018,qwen2.5-0.5b,fp16,fp16,16,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,51.49,42,,,,,,0.0,,,0.2
 2026-10-30T19:48:44.956795,tinyllama-1.1b,fp16,fp16,16,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,196.21,42,,0.45,,,,,,,
+2026-10-30T20:32:06.374912,qwen2.5-0.5b,fp16,fp16,16,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,52.2,42,,0.4,,0.6,,0.0,,,0.2
