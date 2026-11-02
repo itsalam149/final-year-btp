@@ -26,8 +26,10 @@ Group ID: DTU/CSE/BTP/GP159 | Delhi Technological University 2026-27
 
 import os
 import sys
+import gc
 import time
 import yaml
+import torch
 import argparse
 import pandas as pd
 from pathlib import Path
@@ -36,6 +38,18 @@ from datetime import datetime
 # Local imports
 from src.model_loader import detect_device, build_lm_eval_model_args
 from src.evaluator import run_evaluation
+
+# Automatic Hugging Face Token resolution (Kaggle Secrets -> Environment -> Local Cache)
+if "HF_TOKEN" not in os.environ:
+    try:
+        from kaggle_secrets import UserSecretsClient
+        _token = UserSecretsClient().get_secret("HF_TOKEN")
+        if _token:
+            os.environ["HF_TOKEN"] = _token
+            from huggingface_hub import login
+            login(token=_token, add_to_git_credential=False)
+    except Exception:
+        pass
 
 def load_config(config_path: str = "configs/eval_config.yaml") -> dict:
     with open(config_path) as f:
@@ -74,6 +88,7 @@ def main():
     parser.add_argument("--batch-size", default="auto", help="Batch size for lm-eval (default: auto)")
     parser.add_argument("--device", default=None, help="Device to use: cuda | mps | cpu (default: auto)")
     parser.add_argument("--dry-run", action="store_true", help="Print planned runs without executing")
+    parser.add_argument("--skip-completed", action="store_true", help="Skip runs that have already succeeded for all requested tasks")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--chat-template", action="store_true", help="Apply official model chat template")
     args = parser.parse_args()
@@ -125,6 +140,30 @@ def main():
 
     for i, (m_cfg, v_cfg) in enumerate(planned_runs, 1):
         run_id = f"{m_cfg['id']}_{v_cfg['name']}_s{args.seed}"
+
+        # Resume support: skip if already successfully evaluated for all requested tasks
+        if args.skip_completed and Path(results_csv).exists():
+            try:
+                df_curr = pd.read_csv(results_csv)
+                matching = df_curr[
+                    (df_curr["model"] == m_cfg["id"]) &
+                    (df_curr["variant"] == v_cfg["name"]) &
+                    (df_curr["status"] == "SUCCESS")
+                ]
+                if not matching.empty:
+                    needed_metrics = [f"metric_{t}" for t in selected_tasks]
+                    has_all = True
+                    for met in needed_metrics:
+                        if met not in matching.columns or matching[met].dropna().empty:
+                            has_all = False
+                            break
+                    if has_all:
+                        print(f"  [{i:02d}/{total_runs:02d}] ⏭️  Skipping {run_id} (already completed successfully in {results_csv})")
+                        completed += 1
+                        continue
+            except Exception:
+                pass
+
         print("\n" + "─" * 75)
         print(f"  EXECUTION [{i:02d}/{total_runs:02d}]: {run_id}")
         print("─" * 75)
@@ -212,6 +251,10 @@ def main():
             }
             log_result_row(results_csv, row)
             failed += 1
+        finally:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     total_time_h = (time.time() - t_start_grid) / 3600
     print("\n" + "═" * 75)

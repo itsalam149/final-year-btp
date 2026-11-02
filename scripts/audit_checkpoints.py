@@ -117,10 +117,18 @@ def main():
     gated_count = 0
     failed_count = 0
 
+    token = args.token or os.getenv("HF_TOKEN")
+    if not token:
+        try:
+            from kaggle_secrets import UserSecretsClient
+            token = UserSecretsClient().get_secret("HF_TOKEN")
+        except Exception:
+            pass
+
     for name, c_info in checkpoints.items():
         repo_id = c_info.get("repo_id")
         print(f"[{name}] Auditing: {repo_id} ...")
-        res = audit_checkpoint(repo_id, token=args.token)
+        res = audit_checkpoint(repo_id, token=token)
         print(f"  Status    : {res['status']}")
 
         if res["commit_sha"]:

@@ -128,6 +128,12 @@ python run_experiments.py --model qwen2.5-0.5b --variant fp16 --tasks wikitext,a
 ```
 
 ### 4. GPU execution runs (Kaggle T4 / Google Colab)
+
+> **Hugging Face Authentication:** Evaluating `Llama-3.2-1B-Instruct` requires a Hugging Face User Access Token (due to Meta's gated model agreement).
+> - **In Kaggle:** Go to **Add-ons** ➔ **Secrets**, add `HF_TOKEN` with your read access token, and attach it to the notebook.
+> - **In Terminal / Colab:** Run `export HF_TOKEN="hf_..."` or `huggingface-cli login`.
+> - See [kaggle_evaluation_runner.ipynb](notebooks/kaggle_evaluation_runner.ipynb) for the complete visual step-by-step token setup guide.
+
 ```bash
 # Run baseline models
 python run_experiments.py --variant fp16
