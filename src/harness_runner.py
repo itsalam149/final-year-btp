@@ -11,11 +11,15 @@ in newer transformers, datasets (>= 3.0), and huggingface_hub environments:
 Group ID: DTU/CSE/BTP/GP159 | DTU 2026-27
 """
 
+import os
 import sys
 import torch
 import transformers
 from urllib.parse import unquote
 from transformers import BitsAndBytesConfig
+
+# Prevent PyTorch CUDA memory fragmentation on 16GB GPUs
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 # 1. Compatibility Patch: Convert legacy BnB kwargs to BitsAndBytesConfig
 orig_from_pretrained = transformers.AutoModelForCausalLM.from_pretrained

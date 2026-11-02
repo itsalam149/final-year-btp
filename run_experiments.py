@@ -35,6 +35,9 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
+# Prevent PyTorch CUDA memory fragmentation on 16GB GPUs
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 # Local imports
 from src.model_loader import detect_device, build_lm_eval_model_args
 from src.evaluator import run_evaluation

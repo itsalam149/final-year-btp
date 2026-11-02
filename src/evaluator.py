@@ -115,11 +115,16 @@ def run_evaluation(
 
     tasks_arg = ",".join(tasks)
 
-    # Auto batch-size in lm-eval uses CUDA memory search, which fails on MPS/CPU
+    # Auto batch-size in lm-eval uses aggressive doubling that triggers CUDA OOM on 5-shot MMLU
     effective_batch_size = batch_size
-    if str(batch_size).lower() == "auto" and device in ["mps", "cpu"]:
-        effective_batch_size = 4
-        print(f"[evaluator] Note: 'batch_size: auto' requires CUDA; setting batch_size=4 for device '{device}'.")
+    if str(batch_size).lower() == "auto":
+        if apply_chat_template or any(t in ["gsm8k", "ifeval"] for t in tasks):
+            effective_batch_size = 4
+        elif device in ["mps", "cpu"]:
+            effective_batch_size = 4
+        else:
+            effective_batch_size = 8
+        print(f"[evaluator] Note: Using stable batch_size={effective_batch_size} for device '{device}' (prevents CUDA OOM).")
 
     cmd = [
         sys.executable, "-m", "src.harness_runner",
