@@ -198,7 +198,7 @@ tasks:
 # Evaluation Runtime Parameters
 # ---------------------------------------------------------------------
 eval:
-  batch_size: "auto"
+  batch_size: 8           # Stable batch size: 8 for loglikelihoods, automatically capped to 4 for generation
   device: "auto"          # auto = cuda (NVIDIA T4) | mps (Apple Silicon) | cpu
   limit: null             # Set integer (e.g., 50) for smoke test, null for full run
   log_samples: true       # Required for paired bootstrap and item-level flip analysis

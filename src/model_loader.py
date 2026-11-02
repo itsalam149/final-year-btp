@@ -36,7 +36,7 @@ def build_lm_eval_model_args(variant_cfg: Dict[str, Any], device: str = "auto") 
     loader = variant_cfg.get("loader", "transformers")
     method = variant_cfg.get("method", "fp16")
     
-    args_list = [f"pretrained={hf_id}"]
+    args_list = [f"pretrained={hf_id}", "trust_remote_code=True"]
     
     if loader == "transformers":
         args_list.append("dtype=float16")

@@ -88,7 +88,7 @@ def main():
     parser.add_argument("--variant", default=None, help="Filter by variant name (e.g. fp16, gptq_int4)")
     parser.add_argument("--tasks", default=None, help="Comma-separated tasks to run (default: all from config)")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of eval samples (for fast testing)")
-    parser.add_argument("--batch-size", default="auto", help="Batch size for lm-eval (default: auto)")
+    parser.add_argument("--batch-size", default=None, help="Batch size for lm-eval (default: 8 for MC, 4 for gen)")
     parser.add_argument("--device", default=None, help="Device to use: cuda | mps | cpu (default: auto)")
     parser.add_argument("--dry-run", action="store_true", help="Print planned runs without executing")
     parser.add_argument("--skip-completed", action="store_true", help="Skip runs that have already succeeded for all requested tasks")
@@ -195,6 +195,7 @@ def main():
                 if gen_tasks:
                     sub_batches.append((gen_tasks, True))
 
+            eval_batch_size = args.batch_size or cfg.get("eval", {}).get("batch_size", 8)
             for sub_tasks, use_chat in sub_batches:
                 if not sub_tasks:
                     continue
@@ -205,7 +206,7 @@ def main():
                     tasks=sub_tasks,
                     output_dir=output_dir,
                     run_id=run_id,
-                    batch_size=args.batch_size,
+                    batch_size=eval_batch_size,
                     device=device,
                     limit=args.limit,
                     apply_chat_template=use_chat,
