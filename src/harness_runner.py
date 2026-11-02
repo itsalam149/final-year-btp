@@ -128,6 +128,22 @@ try:
 except Exception:
     pass
 
+# 5. Compatibility Patch: Suppress deprecated trust_remote_code warning and redundant HTTP lookups
+try:
+    import datasets
+    import datasets.load as ds_load
+    orig_load_dataset = ds_load.load_dataset
+
+    def patched_load_dataset(*args, **kwargs):
+        kwargs.pop("trust_remote_code", None)
+        return orig_load_dataset(*args, **kwargs)
+
+    ds_load.load_dataset = patched_load_dataset
+    if hasattr(datasets, "load_dataset"):
+        datasets.load_dataset = patched_load_dataset
+except Exception:
+    pass
+
 # Launch lm-eval CLI
 from lm_eval.__main__ import cli_evaluate
 
