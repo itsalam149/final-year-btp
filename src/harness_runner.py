@@ -152,6 +152,25 @@ try:
 except Exception:
     pass
 
+# 6. Compatibility Patch: Cap HFLM max_length at 2048 to prevent CUDA OOM on rolling tasks (wikitext)
+try:
+    import lm_eval.models.huggingface as hf_model_mod
+    orig_hflm_init = hf_model_mod.HFLM.__init__
+
+    def patched_hflm_init(self, *args, **kwargs):
+        curr_max = kwargs.get("max_length")
+        try:
+            val = int(curr_max) if curr_max is not None else None
+            if val is None or val > 2048:
+                kwargs["max_length"] = 2048
+        except (ValueError, TypeError):
+            kwargs["max_length"] = 2048
+        return orig_hflm_init(self, *args, **kwargs)
+
+    hf_model_mod.HFLM.__init__ = patched_hflm_init
+except Exception:
+    pass
+
 # Launch lm-eval CLI
 from lm_eval.__main__ import cli_evaluate
 

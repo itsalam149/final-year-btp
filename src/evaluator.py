@@ -120,18 +120,21 @@ def run_evaluation(
     if str(batch_size).lower() == "auto":
         if apply_chat_template or any(t in ["gsm8k", "ifeval"] for t in tasks):
             effective_batch_size = 4
+        elif "wikitext" in tasks:
+            effective_batch_size = 4
         elif device in ["mps", "cpu"]:
             effective_batch_size = 4
         else:
             effective_batch_size = 8
         print(f"[evaluator] Note: Using stable batch_size={effective_batch_size} for device '{device}' (prevents CUDA OOM).")
-    elif apply_chat_template or any(t in ["gsm8k", "ifeval"] for t in tasks):
-        try:
-            if int(effective_batch_size) > 4:
+    else:
+        if apply_chat_template or any(t in ["gsm8k", "ifeval"] for t in tasks) or ("wikitext" in tasks):
+            try:
+                if int(effective_batch_size) > 4:
+                    effective_batch_size = 4
+                    print(f"[evaluator] Note: Capped batch_size to 4 to prevent CUDA OOM.")
+            except (ValueError, TypeError):
                 effective_batch_size = 4
-                print(f"[evaluator] Note: Capped generative batch_size to 4 to prevent CUDA OOM.")
-        except (ValueError, TypeError):
-            effective_batch_size = 4
 
     cmd = [
         sys.executable, "-m", "src.harness_runner",

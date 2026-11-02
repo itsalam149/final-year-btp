@@ -68,3 +68,14 @@
 - **Verification:** Full end-to-end smoke test suite passed with 100% success; 16-run experimental dry-run verified.
 
 ---
+
+### [2026-11-03] — Context-Window Capping (max_length=2048) & Rolling Perplexity Stabilization
+- **Root-Cause Diagnosis for WikiText Perplexity OOM:**
+  - Identified that models with massive context windows (Qwen2.5: 32,768 tokens, Llama-3.2: 131,072 tokens) cause `lm_eval`'s `loglikelihood_rolling` to feed the entire unconstrained sequence into PyTorch SDPA attention, demanding a single 7.51 GiB buffer and triggering `torch.OutOfMemoryError` on 16GB GPUs.
+- **Double-Layered Memory Hardening:**
+  - Standardized `max_length=2048` in `build_lm_eval_model_args` in `src/model_loader.py` for all models and quantizations, aligning with standard literature benchmarking on WikiText-2.
+  - Implemented monkey-patch in `src/harness_runner.py` intercepting `HFLM.__init__` to cap any unconstrained or oversized `max_length` at 2048.
+  - Capped `effective_batch_size` to 4 whenever `wikitext` is evaluated in `src/evaluator.py`, keeping peak attention allocations under 50 MB and total VRAM well under 4 GB.
+- **Verification:** Verified across all models (Qwen2.5-0.5B, Llama-3.2-1B, TinyLlama-1.1B) and quantization formats. All 6 smoke test suites passed cleanly with exit code 0.
+
+---

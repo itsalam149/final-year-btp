@@ -25,18 +25,23 @@ def detect_device() -> str:
         return "mps"
     return "cpu"
 
-def build_lm_eval_model_args(variant_cfg: Dict[str, Any], device: str = "auto") -> str:
+def build_lm_eval_model_args(variant_cfg: Dict[str, Any], device: str = "auto", max_length: int = 2048) -> str:
     """
     Construct the standardized model_args string for lm-evaluation-harness.
     
     lm-eval accepts:
-      --model hf --model_args pretrained=<id>,dtype=float16,...
+      --model hf --model_args pretrained=<id>,max_length=2048,dtype=float16,...
+      
+    Setting max_length=2048 prevents CUDA Out of Memory errors on long-context models
+    (such as Qwen 32k and Llama-3.2 128k) during rolling loglikelihood (wikitext perplexity).
     """
     hf_id = variant_cfg["hf_id"]
     loader = variant_cfg.get("loader", "transformers")
     method = variant_cfg.get("method", "fp16")
     
     args_list = [f"pretrained={hf_id}", "trust_remote_code=True"]
+    if max_length:
+        args_list.append(f"max_length={max_length}")
     
     if loader == "transformers":
         args_list.append("dtype=float16")
