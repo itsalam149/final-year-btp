@@ -50,3 +50,21 @@
   - Turnkey runner [`notebooks/kaggle_evaluation_runner.ipynb`](notebooks/kaggle_evaluation_runner.ipynb) updated with automated repository cloning and pull handling for 4-bit / 8-bit CUDA execution on Kaggle T4.
 
 ---
+
+### [2026-11-03] — Cloud GPU Hardening, OOM Prevention & Dataset Parser Compatibility
+- **Hugging Face Hub & Datasets Compatibility Patches:**
+  - Solved `huggingface_hub` `HfUriError` on bare repo IDs (`gsm8k`, `hellaswag`, `winogrande`, `arc_easy`) via universal `_parse_repo_body` and `HfUri.__post_init__` patch in `src/harness_runner.py` and `src/__init__.py`.
+  - Intercepted strict `datasets.builder.DatasetBuilder` repo-id path checks preventing `Data files don't belong to` crashes on relocated datasets.
+  - Suppressed deprecated `trust_remote_code` notices, eliminating redundant 404 HTTP script lookups across 57 MMLU subcategories.
+  - Verified live downloads and sample parsing across all 7 evaluation benchmarks (`wikitext`, `arc_easy`, `hellaswag`, `winogrande`, `mmlu`, `gsm8k`, `ifeval`).
+- **NVIDIA T4 CUDA OOM Elimination:**
+  - Replaced aggressive `lm-eval` `--batch_size auto` doubling with calibrated fixed batch sizes: `8` for loglikelihood tasks, `4` for generative tasks.
+  - Enabled PyTorch virtual memory allocator config: `PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"`.
+  - Added inter-run garbage collection (`gc.collect()`) and CUDA cache flushing (`torch.cuda.empty_cache()`).
+- **Execution Resilience & Resume Architecture:**
+  - Integrated `--skip-completed` flag across `run_experiments.py` and `kaggle_evaluation_runner.ipynb`.
+  - Secured Kaggle repo workspace setup (Cell 1b) to preserve uncommitted result CSVs across session restarts.
+  - Added multi-tier `HF_TOKEN` auto-resolution across Kaggle Secrets, environment variables, and local cache.
+- **Verification:** Full end-to-end smoke test suite passed with 100% success; 16-run experimental dry-run verified.
+
+---
