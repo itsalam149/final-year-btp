@@ -13,16 +13,26 @@ Group ID: DTU/CSE/BTP/GP159 | DTU 2026-27
 
 import os
 import sys
-import torch
 from typing import Tuple, Dict, Any, Optional
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+try:
+    import torch
+except ImportError:
+    torch = None
+
+try:
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+except ImportError:
+    AutoTokenizer = None
+    AutoModelForCausalLM = None
 
 def detect_device() -> str:
     """Auto-detect optimal compute device: cuda > mps > cpu."""
-    if torch.cuda.is_available():
-        return "cuda"
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        return "mps"
+    if torch is not None:
+        if torch.cuda.is_available():
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
     return "cpu"
 
 def build_lm_eval_model_args(variant_cfg: Dict[str, Any], device: str = "auto", max_length: int = 2048) -> str:

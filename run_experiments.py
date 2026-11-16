@@ -29,7 +29,10 @@ import sys
 import gc
 import time
 import yaml
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 import argparse
 import pandas as pd
 from pathlib import Path
@@ -73,13 +76,50 @@ def ensure_results_csv(csv_path: str) -> None:
         df.to_csv(csv_path, index=False)
         print(f"[runner] Initialized results CSV: {csv_path}")
 
-def log_result_row(csv_path: str, row_dict: dict) -> None:
+def upsert_result_row(csv_path: str, base_info: dict, eval_results: dict) -> None:
+    """
+    Atomically inserts or updates a result row in results_master.csv.
+    Preserves existing metrics from previously completed tasks, preventing
+    re-evaluation and data loss if a subsequent task or batch is interrupted.
+    """
     ensure_results_csv(csv_path)
-    df_existing = pd.read_csv(csv_path)
-    df_new = pd.DataFrame([row_dict])
-    df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-    df_combined.to_csv(csv_path, index=False)
-    print(f"[runner] Logged result to {csv_path}")
+    df = pd.read_csv(csv_path)
+
+    m_id = base_info["model"]
+    v_name = base_info["variant"]
+
+    # Filter duplicates if any exist
+    df = df.drop_duplicates(subset=["model", "variant"], keep="last")
+
+    mask = (df["model"] == m_id) & (df["variant"] == v_name)
+
+    if mask.any():
+        idx = df[mask].index[0]
+        for k, v in base_info.items():
+            df.at[idx, k] = v
+        for k, v in eval_results.items():
+            if pd.notna(v) and v != "":
+                df.at[idx, k] = v
+        df.at[idx, "timestamp"] = datetime.now().isoformat()
+    else:
+        new_row = {**base_info, **eval_results, "timestamp": datetime.now().isoformat()}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+    df.to_csv(csv_path, index=False)
+    print(f"[runner] Persisted updated metrics to {csv_path}")
+
+def log_result_row(csv_path: str, row_dict: dict) -> None:
+    base_info = {
+        "model": row_dict["model"],
+        "variant": row_dict["variant"],
+        "method": row_dict.get("method", ""),
+        "bits": row_dict.get("bits", 16),
+        "loader": row_dict.get("loader", ""),
+        "hf_id": row_dict.get("hf_id", ""),
+        "seed": row_dict.get("seed", 42),
+    }
+    eval_results = {k: v for k, v in row_dict.items() if k not in base_info}
+    upsert_result_row(csv_path, base_info, eval_results)
 
 def main():
     parser = argparse.ArgumentParser(description="Run Task-Conditioned Evaluation Grid (BTP GP159)")
@@ -144,28 +184,42 @@ def main():
     for i, (m_cfg, v_cfg) in enumerate(planned_runs, 1):
         run_id = f"{m_cfg['id']}_{v_cfg['name']}_s{args.seed}"
 
-        # Resume support: skip if already successfully evaluated for all requested tasks
+        base_info = {
+            "model": m_cfg["id"],
+            "variant": v_cfg["name"],
+            "method": v_cfg["method"],
+            "bits": v_cfg["bits"],
+            "loader": v_cfg["loader"],
+            "hf_id": v_cfg["hf_id"],
+            "seed": args.seed,
+        }
+
+        # Fine-grained resume support: identify which tasks have already been completed
+        tasks_to_run = list(selected_tasks)
         if args.skip_completed and Path(results_csv).exists():
             try:
                 df_curr = pd.read_csv(results_csv)
                 matching = df_curr[
                     (df_curr["model"] == m_cfg["id"]) &
-                    (df_curr["variant"] == v_cfg["name"]) &
-                    (df_curr["status"] == "SUCCESS")
+                    (df_curr["variant"] == v_cfg["name"])
                 ]
                 if not matching.empty:
-                    needed_metrics = [f"metric_{t}" for t in selected_tasks]
-                    has_all = True
-                    for met in needed_metrics:
-                        if met not in matching.columns or matching[met].dropna().empty:
-                            has_all = False
-                            break
-                    if has_all:
-                        print(f"  [{i:02d}/{total_runs:02d}] ⏭️  Skipping {run_id} (already completed successfully in {results_csv})")
+                    row_data = matching.iloc[0]
+                    already_done = []
+                    for t in selected_tasks:
+                        col = f"metric_{t}"
+                        if col in row_data and pd.notna(row_data[col]):
+                            already_done.append(t)
+                    tasks_to_run = [t for t in selected_tasks if t not in already_done]
+
+                    if not tasks_to_run:
+                        print(f"  [{i:02d}/{total_runs:02d}] ⏭️  Skipping {run_id} (all {len(selected_tasks)} tasks already completed!)")
                         completed += 1
                         continue
-            except Exception:
-                pass
+                    else:
+                        print(f"  [{i:02d}/{total_runs:02d}] ⚡ Resuming {run_id}: skipping finished [{', '.join(already_done)}], evaluating [{', '.join(tasks_to_run)}]")
+            except Exception as e:
+                print(f"[runner] Warning checking existing results: {e}")
 
         print("\n" + "─" * 75)
         print(f"  EXECUTION [{i:02d}/{total_runs:02d}]: {run_id}")
@@ -185,10 +239,10 @@ def main():
             generative_tasks = {"gsm8k", "ifeval"}
 
             if args.chat_template:
-                sub_batches = [(selected_tasks, True)]
+                sub_batches = [(tasks_to_run, True)]
             else:
-                std_tasks = [t for t in selected_tasks if t not in generative_tasks]
-                gen_tasks = [t for t in selected_tasks if t in generative_tasks]
+                std_tasks = [t for t in tasks_to_run if t not in generative_tasks]
+                gen_tasks = [t for t in tasks_to_run if t in generative_tasks]
                 sub_batches = []
                 if std_tasks:
                     sub_batches.append((std_tasks, False))
@@ -215,49 +269,33 @@ def main():
                 if sub_results.get("status") != "SUCCESS":
                     overall_status = "FAILED"
                     error_msg = sub_results.get("error_message", "")
+
+                # Immediately persist completed metrics so partial progress is NEVER lost!
                 combined_eval_results.update(sub_results)
+                sub_eval_clean = {k: v for k, v in sub_results.items() if k not in ["status", "error_message"]}
+                upsert_result_row(results_csv, base_info, sub_eval_clean)
 
             combined_eval_results["eval_time_s"] = round(total_eval_time, 2)
             combined_eval_results["status"] = overall_status
             if error_msg:
                 combined_eval_results["error_message"] = error_msg
 
-            row = {
-                "timestamp": datetime.now().isoformat(),
-                "model": m_cfg["id"],
-                "variant": v_cfg["name"],
-                "method": v_cfg["method"],
-                "bits": v_cfg["bits"],
-                "loader": v_cfg["loader"],
-                "hf_id": v_cfg["hf_id"],
-                "seed": args.seed,
-                **combined_eval_results
-            }
-            log_result_row(results_csv, row)
+            upsert_result_row(results_csv, base_info, combined_eval_results)
             if overall_status == "SUCCESS":
                 completed += 1
             else:
                 failed += 1
         except Exception as e:
             print(f"[runner] ❌ Run failed with error: {e}")
-            row = {
-                "timestamp": datetime.now().isoformat(),
-                "model": m_cfg["id"],
-                "variant": v_cfg["name"],
-                "method": v_cfg["method"],
-                "bits": v_cfg["bits"],
-                "loader": v_cfg["loader"],
-                "hf_id": v_cfg["hf_id"],
-                "seed": args.seed,
+            upsert_result_row(results_csv, base_info, {
                 "status": "FAILED",
                 "eval_time_s": 0.0,
                 "error_message": str(e)
-            }
-            log_result_row(results_csv, row)
+            })
             failed += 1
         finally:
             gc.collect()
-            if torch.cuda.is_available():
+            if torch and torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
     total_time_h = (time.time() - t_start_grid) / 3600

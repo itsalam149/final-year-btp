@@ -9,7 +9,10 @@ HELM-aligned operational efficiency profiling:
 import os
 import time
 from typing import Dict, Any, Optional
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 def measure_disk_size(path_or_dir: str) -> float:
