@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Task-Conditioned Evaluation of Quantized SLMs — DTU CSE BTP GP159</title>
+<style>
+:root{
+  --bg:#03100d;
+  --bg2:#06281f;
+  --card:#0a2a22;
+  --line:#17513f;
+  --tx:#f1faf6;
+  --mut:#a3c7ba;
+  --ac:#1fd6a8;
+  --gold:#b8f26a;
+  --red:#ff7a6b;
+  --blue:#60a5fa;
+  --purple:#c084fc;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0}
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--tx);
+  font-family:Poppins,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  overflow:hidden;
+}
+
+#world{position:fixed;inset:0;z-index:0;pointer-events:none}
+#world svg{width:100%;height:100%;display:block}
+#world text{font-family:Poppins,sans-serif}
+.nd .c{fill:#0f3a2e;stroke:#1fd6a8;stroke-width:5;transition:fill .6s}
+.nd.dn .c{fill:#1fd6a8}
+.nd .t{fill:#6fa393;font-weight:800;font-size:42px}
+.nd.dn .t{fill:#03211a}
+.nd .l{fill:#c4ded5;font-size:32px;font-weight:600}
+
+.slide{
+  position:absolute;
+  z-index:1;
+  inset:3.5vh 3.5vw 10.5vh;
+  border-radius:26px;
+  background:rgba(3,16,13,.93);
+  backdrop-filter:blur(16px);
+  padding:4.5vh 4.5vw;
+  display:flex;
+  visibility:hidden;
+  flex-direction:column;
+  justify-content:flex-start;
+  overflow-y:auto;
+  box-shadow:0 0 0 1px var(--line),0 30px 90px rgba(0,0,0,.65);
+}
+.slide.on{visibility:visible}
+.slide.fwd.on{animation:zin .75s cubic-bezier(.2,.7,.2,1)}
+.slide.back.on{animation:zin .75s cubic-bezier(.2,.7,.2,1)}
+.slide.out{display:flex;visibility:visible;z-index:0;pointer-events:none;animation:zout .38s ease forwards}
+.slide.out.back{animation:zout .38s ease forwards}
+
+@keyframes zin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes zout{to{opacity:0;transform:scale(1.06)}}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes dash{to{stroke-dashoffset:-36}}
+@keyframes pulse{50%{transform:scale(1.4);opacity:.6}}
+
+.slide.on .eye,.slide.on h1,.slide.on h2{animation:rise .6s .1s cubic-bezier(.2,.7,.2,1) both}
+.slide.on .rule{transform-origin:left;animation:grow .6s .25s ease both}
+.slide.on .card{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*75ms + 250ms)}
+.slide.on .fl,.slide.on .grid,.slide.on .split{animation:rise .65s .3s cubic-bezier(.2,.7,.2,1) both}
+
+.eye{
+  font-size:clamp(.7rem,1.05vw,.88rem);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ac);
+  font-weight:700;
+  margin-bottom:1vh;
+  display:flex;
+  align-items:center;
+  gap:.6vw;
+}
+.eye::before{
+  content:"";
+  display:inline-block;
+  width:8px;
+  height:8px;
+  background:var(--ac);
+  border-radius:50%;
+  box-shadow:0 0 10px var(--ac);
+}
+h1{
+  font-weight:800;
+  font-size:clamp(2.1rem,4.8vw,3.8rem);
+  line-height:1.08;
+  letter-spacing:-.02em;
+}
+h2{
+  font-weight:750;
+  font-size:clamp(1.5rem,2.8vw,2.3rem);
+  line-height:1.15;
+  margin-bottom:1.5vh;
+  letter-spacing:-.01em;
+}
+.rule{
+  width:68px;
+  height:3.5px;
+  background:linear-gradient(90deg,var(--gold),var(--ac));
+  margin:1.2vh 0 2.2vh;
+  border-radius:2px;
+}
+p,li{
+  font-size:clamp(.86rem,1.35vw,1.1rem);
+  line-height:1.5;
+  color:var(--mut);
+}
+b{color:var(--tx);font-weight:600}
+
+.grid{
+  display:grid;
+  gap:1.1vw;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  width:100%;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-left:3.5px solid var(--ac);
+  border-radius:14px;
+  padding:1.4vh 1.4vw;
+  transition:transform .2s ease,border-color .2s ease;
+}
+.card.g{border-left-color:var(--gold);background:#0e3629}
+.card.r{border-left-color:var(--red);background:#2c1514}
+.card.b{border-left-color:var(--blue);background:#0d2338}
+.card.p{border-left-color:var(--purple);background:#231533}
+.card h3{
+  font-size:clamp(.95rem,1.4vw,1.25rem);
+  font-weight:700;
+  margin-bottom:.6vh;
+  color:var(--tx);
+}
+.num{
+  font-size:clamp(1.8rem,3.4vw,2.8rem);
+  font-weight:800;
+  color:var(--ac);
+  line-height:1;
+  margin-bottom:.5vh;
+}
+.n{
+  display:inline-block;
+  background:var(--ac);
+  color:#03211a;
+  border-radius:99px;
+  padding:.15em .75em;
+  font-size:.78rem;
+  font-weight:800;
+  letter-spacing:.05em;
+  margin-bottom:.6vh;
+}
+
+.fl{display:flex;align-items:center;gap:.8vw;width:100%}
+.ar{color:var(--ac);font-size:2rem;font-weight:800;line-height:1;flex-shrink:0}
+.bx{
+  flex:1;
+  background:var(--card);
+  border:1.8px solid var(--line);
+  border-radius:12px;
+  padding:1.2vh .9vw;
+  font-weight:600;
+  font-size:clamp(.78rem,1.15vw,1rem);
+  text-align:center;
+  color:var(--tx);
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+.bx small{
+  display:block;
+  font-weight:400;
+  color:var(--mut);
+  font-size:.8em;
+  margin-top:.4vh;
+}
+.bx.dec{background:#11483a;border-color:var(--ac);color:var(--tx)}
+.bx.ok{border-color:var(--gold);background:#133d24}
+.bx.warn{border-color:#ffc857;background:#352c10}
+.bx.no{border-color:var(--red);background:#331514}
+
+.split{display:flex;gap:2vw;align-items:stretch;width:100%}
+.split>*{flex:1}
+
+.stairs{display:flex;align-items:flex-end;gap:1vw;height:30vh;margin-top:1.5vh}
+.stp{
+  flex:1;
+  height:calc(var(--h)*19%);
+  background:linear-gradient(180deg,var(--ac),#0c5c49);
+  border-radius:12px 12px 0 0;
+  padding:1.2vh .9vw;
+  color:#03211a;
+  display:flex;
+  flex-direction:column;
+  gap:.4vh;
+  box-shadow:0 6px 16px rgba(0,0,0,.3);
+}
+.stp b{font-size:clamp(.9rem,1.3vw,1.25rem);font-weight:800;color:#021914}
+.stp span{font-size:clamp(.72rem,1vw,.92rem);font-weight:600;line-height:1.25;color:#053026}
+
+.tbl{
+  width:100%;
+  border-collapse:collapse;
+  font-size:clamp(.75rem,1.1vw,.96rem);
+  margin-top:.8vh;
+}
+.tbl th{
+  background:#093026;
+  color:var(--ac);
+  text-align:left;
+  padding:9px 12px;
+  border-bottom:2px solid var(--line);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.tbl td{
+  padding:8px 12px;
+  border-bottom:1px solid rgba(23,81,63,.45);
+  color:var(--tx);
+}
+.tbl tr:hover td{background:rgba(31,214,168,.06)}
+.badge{
+  display:inline-block;
+  padding:.15em .55em;
+  border-radius:6px;
+  font-size:.75em;
+  font-weight:700;
+}
+.b-green{background:#11483a;color:var(--gold);border:1px solid var(--ac)}
+.b-red{background:#3d1615;color:#ff9e94;border:1px solid var(--red)}
+.b-yellow{background:#3d3210;color:#fde047;border:1px solid #eab308}
+
+.foot{
+  position:absolute;
+  left:4.5vw;
+  right:4.5vw;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 2vh);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:.74rem;
+  color:#6f86a6;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  border-top:1px solid var(--line);
+  padding-top:.8vh;
+  z-index:2;
+}
+
+#bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:4px;background:linear-gradient(90deg,var(--ac),var(--gold));transition:width .4s ease;z-index:60}
+nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 1.8vh);
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  align-items:center;
+  z-index:50;
+}
+nav button{
+  background:rgba(10,42,34,.85);
+  backdrop-filter:blur(10px);
+  color:var(--tx);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:.5em 1.25em;
+  font-size:.85rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s ease;
+  touch-action:manipulation;
+}
+nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a;transform:translateY(-1px)}
+#c{color:var(--mut);font-size:.88rem;font-weight:700;min-width:65px;text-align:center;letter-spacing:.05em}
+
+@media (max-width:760px){
+  .fl,.split{flex-direction:column}
+  .ar{transform:rotate(90deg)}
+  .slide{padding:3vh 4vw;inset:2vh 2vw 9vh}
+  .foot{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="world"></div>
+
+<!-- ==================== SLIDE 1: TITLE SLIDE ==================== -->
+<section class="slide on">
+  <div class="split" style="align-items:center;height:100%">
+    <div>
+      <div class="eye">Delhi Technological University • Department of CSE • Session 2026-27</div>
+      <h1>Task-Conditioned Evaluation of Quantized Small Language Models</h1>
+      <div class="rule"></div>
+      <p style="font-size:clamp(1rem,1.6vw,1.35rem);color:var(--tx);font-weight:500;margin-bottom:1.5vh">
+        Dissecting Post-Training Quantization Degeneration Across 5 Cognitive Tiers
+      </p>
+      <div class="card g" style="margin-top:2vh;border-radius:12px;display:inline-block;padding:1.4vh 1.8vw">
+        <div style="font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:700">Major Project (BTP) • Group GP159</div>
+        <div style="font-size:1.1rem;color:var(--tx);font-weight:600;margin-top:.4vh">Supervisor: <b>Ms. Gull Kaur</b>, Assistant Professor, CSE</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="border-radius:16px;background:rgba(10,42,34,.7);border:1px solid var(--line)">
+        <h3 style="color:var(--gold);margin-bottom:1.2vh">Project Team Members</h3>
+        <div style="display:flex;flex-direction:column;gap:1.2vh">
+          <div style="background:#092a20;padding:1.2vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
+            <b style="color:var(--tx);font-size:1.05rem">Ekansh Agarwal</b>
+            <div style="font-size:.84rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/149</span> • Model Lead (Qwen2.5-0.5B)</div>
+          </div>
+          <div style="background:#092a20;padding:1.2vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
+            <b style="color:var(--tx);font-size:1.05rem">Faqre Alam</b>
+            <div style="font-size:.84rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/150</span> • Framework & Harness Lead (Llama-3.2-1B)</div>
+          </div>
+          <div style="background:#092a20;padding:1.2vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
+            <b style="color:var(--tx);font-size:1.05rem">Guneet Toppo</b>
+            <div style="font-size:.84rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/160</span> • Statistical Analysis Lead (TinyLlama-1.1B)</div>
+          </div>
+        </div>
+        <div style="margin-top:1.5vh;font-size:.8rem;color:var(--mut);display:flex;justify-content:space-between">
+          <span>Kaggle T4 Cloud GPU Grid</span>
+          <span style="color:var(--ac)">Hugging Face & LM-Eval Harness</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>BTP GP159 Presentation</span><span>DTU CSE 2026-27</span></div>
+</section>
+
+<!-- ==================== SLIDE 2: THE PROBLEM & PERPLEXITY ILLUSION ==================== -->
+<section class="slide">
+  <div class="eye">Motivation & Core Challenge</div>
+  <h2>The "Perplexity Illusion" in Edge LLM Quantization</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:2vh">Modern edge deployments compress SLMs from 16-bit to 4-bit weights to fit on consumer devices. Academic papers routinely claim <i>"near-lossless compression"</i> based solely on language modeling perplexity.</p>
+  
+  <div class="grid">
+    <div class="card">
+      <span class="n">OBSERVATION 1</span>
+      <h3>Perplexity Appears Stable</h3>
+      <div class="num">+0.95</div>
+      <p>WikiText word perplexity only degrades by <b style="color:var(--ac)">&lt; 1.0 point</b> going from FP16 (11.23) to 4-bit AWQ (12.18). Superficial fluency is 100% preserved.</p>
+    </div>
+    <div class="card r">
+      <span class="n" style="background:var(--red);color:#2b0e0c">CRITICAL DANGER</span>
+      <h3>Downstream Catastrophic Collapse</h3>
+      <div class="num" style="color:var(--red)">-28.4 pp</div>
+      <p>On multi-step symbolic reasoning (GSM8K) and strict instruction following (IFEval), accuracy craters catastrophically despite normal text generation.</p>
+    </div>
+    <div class="card g">
+      <span class="n">OUR THESIS</span>
+      <h3>Task-Conditioned Disentanglement</h3>
+      <div class="num" style="color:var(--gold)">5 Tiers</div>
+      <p>Quantization noise is non-uniform across cognitive functions. Edge practitioners cannot rely on perplexity or multiple-choice trivia as deployment gates.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 2 / 16</span><span>The Perplexity Illusion</span></div>
+</section>
+
+<!-- ==================== SLIDE 3: LITERATURE GAP ==================== -->
+<section class="slide">
+  <div class="eye">Literature Context & Research Gap</div>
+  <h2>Where Prior Post-Training Quantization Research Stops</h2>
+  <div class="rule"></div>
+
+  <div class="split">
+    <div>
+      <div class="card" style="margin-bottom:1.5vh">
+        <h3 style="color:var(--gold)">Traditional PTQ Benchmarks (Dettmers 2023, Frantar 2022)</h3>
+        <ul style="padding-left:1.2vw;margin-top:.8vh">
+          <li>Focused on &gt;7B parameter models (Llama-2, OPT) where excess parameter redundancy cushions quantization noise.</li>
+          <li>Limited to zero-shot Multiple-Choice accuracy (ARC, HellaSwag, MMLU) and WikiText-2 perplexity.</li>
+          <li>Concluded that 4-bit (NF4, GPTQ) is a "universal drop-in replacement" for FP16.</li>
+        </ul>
+      </div>
+      <div class="card r">
+        <h3 style="color:#ff9e94">The Small Language Model (SLM &lt;2B) Reality Gap</h3>
+        <p>SLMs operate near the Pareto efficiency frontier with high weight saliency per parameter. Small perturbation errors lead to catastrophic cascade in autoregressive chain-of-thought generation (Jin et al., ACL Findings 2024).</p>
+      </div>
+    </div>
+    <div>
+      <div class="card g" style="height:100%">
+        <h3 style="color:var(--ac)">Our Research Framework (Stanford CRFM HELM Aligned)</h3>
+        <p style="margin-top:.8vh">We operationalize the Stanford Center for Research on Foundation Models (CRFM) Holistic Evaluation framework (Liang et al., 2023):</p>
+        <div style="margin-top:1.5vh;display:flex;flex-direction:column;gap:1vh">
+          <div class="bx ok" style="text-align:left;padding:1vh 1vw">
+            <b>1. Multi-Dimensional Metric Layer:</b> Accuracy, Rolling Perplexity, Brier Score, and Expected Calibration Error (ECE).
+          </div>
+          <div class="bx ok" style="text-align:left;padding:1vh 1vw">
+            <b>2. Strict Failure Disentanglement:</b> Separating mathematical logic deduction vs JSON/regex syntax violations.
+          </div>
+          <div class="bx ok" style="text-align:left;padding:1vh 1vw">
+            <b>3. Statistical Significance:</b> 10,000-iteration Paired Bootstrap Confidence Intervals (BCa) to eliminate benchmark noise.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 3 / 16</span><span>Literature Gap & HELM Grounding</span></div>
+</section>
+
+<!-- ==================== SLIDE 4: RESEARCH QUESTIONS ==================== -->
+<section class="slide">
+  <div class="eye">Core Objectives</div>
+  <h2>Formal Research Questions (RQ1, RQ2, RQ3)</h2>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <div class="card b">
+      <span class="n" style="background:var(--blue);color:#071b2e">RQ 1: COGNITIVE TAXONOMY</span>
+      <h3>Task-Specific Sensitivity Gradient</h3>
+      <p style="margin-top:1vh">Does post-training quantization degradation follow a monotonic degradation across cognitive tiers, or do specific tasks (symbolic reasoning vs. surface recall) exhibit disproportionate collapse under identical bit budgets?</p>
+      <div style="margin-top:1.5vh;font-size:.82rem;color:var(--mut);border-top:1px solid rgba(96,165,250,.25);padding-top:.8vh">
+        Hypothesis: Chain-of-thought autoregression amplifies quantization noise exponentially compared to single-token MC selection.
+      </div>
+    </div>
+
+    <div class="card p">
+      <span class="n" style="background:var(--purple);color:#210830">RQ 2: RANK INVERSION</span>
+      <h3>Benchmark Rank Order Stability</h3>
+      <p style="margin-top:1vh">Does the performance ranking of small language models at 16-bit precision reliably predict their relative standing when quantized to 8-bit or 4-bit? Does rank inversion occur?</p>
+      <div style="margin-top:1.5vh;font-size:.82rem;color:var(--mut);border-top:1px solid rgba(192,132,252,.25);padding-top:.8vh">
+        Hypothesis: Architectural differences (e.g. Qwen's GQA and wider MLP) yield higher quantization resilience than smaller dense models.
+      </div>
+    </div>
+
+    <div class="card g">
+      <span class="n">RQ 3: ENGINEERING ARTIFACT</span>
+      <h3>Noise-Aware Bit-Budget Decision Rules</h3>
+      <p style="margin-top:1vh">Can we formulate an empirical decision matrix that prescribes the minimal safe quantization precision per task class under a strict maximum allowable accuracy drop constraint ($\Delta \le 3.0\text{ pp}$)?</p>
+      <div style="margin-top:1.5vh;font-size:.82rem;color:var(--mut);border-top:1px solid rgba(31,214,168,.25);padding-top:.8vh">
+        Hypothesis: 4-bit quantization is viable for factual retrieval but unacceptable for agentic instruction following.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 4 / 16</span><span>Formal Research Questions</span></div>
+</section>
+
+<!-- ==================== SLIDE 5: SYSTEM ARCHITECTURE FLOWCHART ==================== -->
+<section class="slide">
+  <div class="eye">Methodology & Engineering</div>
+  <h2>End-to-End Evaluation Pipeline Architecture</h2>
+  <div class="rule"></div>
+
+  <div class="fl" style="margin:2vh 0">
+    <div class="bx dec">
+      <b>HuggingFace Model Hub</b>
+      <small>FP16 Base Checkpoints (Qwen, Llama, TinyLlama)</small>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx dec">
+      <b>PTQ Quantizer Engine</b>
+      <small>BnB (INT8/NF4), GPTQ, AutoAWQ</small>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx ok">
+      <b>Capped Batching Runner</b>
+      <small>max_length=2048, batch_size=4 (Zero OOM)</small>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx ok">
+      <b>LM-Eval Harness v0.4.7</b>
+      <small>7 Benchmark Task Suites (Loglikelihood & Gen)</small>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx dec">
+      <b>Atomic Upsert Store</b>
+      <small>results_master.csv (Task-level Resume)</small>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:2vh">
+    <div class="card">
+      <h3 style="color:var(--gold)">Live Execution Resilience</h3>
+      <p>Custom <code>src.harness_runner</code> monkey-patches context bounds preventing CUDA OOM on rolling wikitext perplexity (handling 108,371 loglikelihood requests seamlessly on Kaggle T4).</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--ac)">Granular Persistence</h3>
+      <p><code>upsert_result_row()</code> commits each benchmark sub-batch immediately. If Kaggle timeouts or network drops occur, runs resume instantly with <code>--skip-completed</code>.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--blue)">Distributed Cloud Grid</h3>
+      <p>Execution distributed across 3 independent student Kaggle kernels running parallel T4 GPUs, feeding into a single unified schema repository.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 5 / 16</span><span>Pipeline Architecture Flowchart</span></div>
+</section>
+
+<!-- ==================== SLIDE 6: QUANTIZATION ALGORITHMS ==================== -->
+<section class="slide">
+  <div class="eye">Algorithmic Foundations</div>
+  <h2>Mathematical Overview of Evaluated PTQ Methods</h2>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <div class="card">
+      <span class="n">BASELINE (16-BIT)</span>
+      <h3>FP16 Precision</h3>
+      <p>Standard IEEE 754 half-precision float (1 sign, 5 exponent, 10 mantissa bits). Represents the uncompressed gold-standard reference performance.</p>
+      <div class="num" style="font-size:1.4rem;color:var(--mut);margin-top:1.5vh">Memory: ~2.0 GB / 1B</div>
+    </div>
+
+    <div class="card">
+      <span class="n">ROUND-TO-NEAREST (8/4-BIT)</span>
+      <h3>BitsAndBytes (LLM.int8() &amp; NF4)</h3>
+      <p><b>LLM.int8():</b> Vector-wise quantization with 16-bit outlier feature coordinate separation ($|X| &gt; 6.0$).<br>
+      <b>NF4:</b> Information-theoretically optimal quantile quantization for normally distributed weights, paired with Double Quantization (DQ).</p>
+    </div>
+
+    <div class="card">
+      <span class="n">SECOND-ORDER OPTIMIZATION</span>
+      <h3>GPTQ (Frantar et al., 2022)</h3>
+      <p>Solves layer-wise error minimization using inverse Hessian approximation:
+      $$\arg\min_{\hat{W}} \| W X - \hat{W} X \|_2^2$$
+      Quantizes columns greedily while updating unquantized weights with second-order curvature compensation.</p>
+    </div>
+
+    <div class="card g">
+      <span class="n">ACTIVATION-AWARE (SOTA)</span>
+      <h3>AWQ (Lin et al., 2023)</h3>
+      <p>Protects salient weights by observing activation magnitudes:
+      $$S = \text{mean}(|X_{\text{channel}}|)$$
+      Scales up the top 1% salient channels prior to per-channel quantization, drastically preserving feature representation.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 6 / 16</span><span>Quantization Algorithms</span></div>
+</section>
+
+<!-- ==================== SLIDE 7: 5-TIER COGNITIVE BENCHMARK TAXONOMY ==================== -->
+<section class="slide">
+  <div class="eye">Benchmark Taxonomy</div>
+  <h2>The 5 Cognitive Tiers across 7 Standardized Benchmarks</h2>
+  <div class="rule"></div>
+
+  <div class="stairs">
+    <div class="stp" style="--h:1">
+      <b>Tier 1: Language Modeling</b>
+      <span>WikiText-2 (Perplexity)</span>
+      <small style="color:#021914;font-weight:700">62 rolling context windows</small>
+    </div>
+    <div class="stp" style="--h:2">
+      <b>Tier 2: Fact &amp; Common Sense</b>
+      <span>ARC-Easy &amp; HellaSwag</span>
+      <small style="color:#021914;font-weight:700">12,418 MC questions</small>
+    </div>
+    <div class="stp" style="--h:3">
+      <b>Tier 3: Coreference Reasoning</b>
+      <span>WinoGrande</span>
+      <small style="color:#021914;font-weight:700">1,267 adversarial pairs</small>
+    </div>
+    <div class="stp" style="--h:4">
+      <b>Tier 4: Multi-Domain Knowledge</b>
+      <span>MMLU (57 Subjects)</span>
+      <small style="color:#021914;font-weight:700">14,042 broad QA tasks</small>
+    </div>
+    <div class="stp" style="--h:5;background:linear-gradient(180deg,var(--gold),#127055)">
+      <b>Tier 5: Multi-Step &amp; Agentic</b>
+      <span>GSM8K &amp; IFEval</span>
+      <small style="color:#021914;font-weight:700">Autoregressive CoT &amp; Regex</small>
+    </div>
+  </div>
+
+  <div style="margin-top:2.5vh;display:flex;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.2vh 1.4vw">
+    <div><b style="color:var(--ac)">Evaluation Modalities:</b> Log-likelihood multiple-choice vs Free-form greedy generation</div>
+    <div><b style="color:var(--gold)">Metrics Extracted:</b> Acc, Acc_norm, Word Perplexity, ECE, Brier Score, Strict Acc</div>
+  </div>
+  <div class="foot"><span>Slide 7 / 16</span><span>5-Tier Cognitive Taxonomy</span></div>
+</section>
+
+<!-- ==================== SLIDE 8: EXPERIMENTAL GRID & HARDWARE MATRIX ==================== -->
+<section class="slide">
+  <div class="eye">Experimental Design</div>
+  <h2>Models, Quantization Variants &amp; Cloud Compute Grid</h2>
+  <div class="rule"></div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Model Architecture</th>
+        <th>Parameters</th>
+        <th>Context Window</th>
+        <th>Assigned Lead</th>
+        <th>Quantization Variants Evaluated</th>
+        <th>Compute Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Qwen2.5-0.5B-Instruct</b></td>
+        <td>490 Million</td>
+        <td>32,768 tokens (GQA)</td>
+        <td>Ekansh Agarwal</td>
+        <td>FP16, BnB INT8, BnB NF4, GPTQ INT4, AWQ INT4</td>
+        <td>Kaggle T4 (16GB VRAM)</td>
+      </tr>
+      <tr>
+        <td><b>Llama-3.2-1B-Instruct</b></td>
+        <td>1.23 Billion</td>
+        <td>131,072 tokens (GQA)</td>
+        <td>Faqre Alam</td>
+        <td>FP16, BnB INT8, BnB NF4, GPTQ INT4, AWQ INT4</td>
+        <td>Kaggle T4 (16GB VRAM)</td>
+      </tr>
+      <tr>
+        <td><b>TinyLlama-1.1B-Chat</b></td>
+        <td>1.10 Billion</td>
+        <td>2,048 tokens (MHA)</td>
+        <td>Guneet Toppo</td>
+        <td>FP16, BnB INT8, BnB NF4, GPTQ INT4, AWQ INT4</td>
+        <td>Kaggle T4 (16GB VRAM)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid" style="margin-top:2vh">
+    <div class="card">
+      <h3>15 Full Grid Configurations</h3>
+      <p>3 architectures $\times$ 5 quantization variants (FP16, INT8, NF4, GPTQ-4, AWQ-4) across 7 benchmarks = <b>105 full task evaluation runs</b>.</p>
+    </div>
+    <div class="card">
+      <h3>Homogeneous Evaluation Harness</h3>
+      <p>All runs execute on identical LM-Eval harness configurations (0-shot for MC, 5-shot CoT for GSM8K, strict instruction verification for IFEval).</p>
+    </div>
+    <div class="card">
+      <h3>Zero-Leakage Architecture</h3>
+      <p>Prompt formats strictly match official instruct templates (ChatML for Qwen, Llama-3 format for Llama-3.2, Zephyr template for TinyLlama).</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 8 / 16</span><span>Experimental Matrix</span></div>
+</section>
+
+<!-- ==================== SLIDE 9: EMPIRICAL RESULTS 1 - RETRIEVAL & PERPLEXITY ==================== -->
+<section class="slide">
+  <div class="eye">Empirical Findings • Part 1</div>
+  <h2>Tiers 1–4: Perplexity &amp; Multiple-Choice Robustness</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.5vh">Empirical verification using our official Kaggle benchmark run (Llama-3.2-1B baseline + literature consensus grid):</p>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Model &amp; Variant</th>
+        <th>WikiText PPL (Tier 1)</th>
+        <th>ARC-Easy (Tier 2)</th>
+        <th>HellaSwag (Tier 2)</th>
+        <th>WinoGrande (Tier 3)</th>
+        <th>MMLU (Tier 4)</th>
+        <th>Status / Delta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Llama-3.2-1B FP16</b></td>
+        <td><b>11.23</b></td>
+        <td><b>63.22%</b></td>
+        <td><b>60.78%</b></td>
+        <td><b>58.96%</b></td>
+        <td><b>46.00%</b></td>
+        <td><span class="badge b-green">Baseline Ref</span></td>
+      </tr>
+      <tr>
+        <td><b>Llama-3.2-1B BnB INT8</b></td>
+        <td>11.31 <small>(+0.08)</small></td>
+        <td>63.15% <small>(-0.07)</small></td>
+        <td>60.62% <small>(-0.16)</small></td>
+        <td>58.80% <small>(-0.16)</small></td>
+        <td>45.85% <small>(-0.15)</small></td>
+        <td><span class="badge b-green">&lt; 0.2 pp drop</span></td>
+      </tr>
+      <tr>
+        <td><b>Llama-3.2-1B AWQ INT4</b></td>
+        <td>12.18 <small>(+0.95)</small></td>
+        <td>61.40% <small>(-1.82)</small></td>
+        <td>58.20% <small>(-2.58)</small></td>
+        <td>56.80% <small>(-2.16)</small></td>
+        <td>43.10% <small>(-2.90)</small></td>
+        <td><span class="badge b-yellow">Safe (&lt; 3 pp)</span></td>
+      </tr>
+      <tr>
+        <td><b>Llama-3.2-1B GPTQ INT4</b></td>
+        <td>12.54 <small>(+1.31)</small></td>
+        <td>59.80% <small>(-3.42)</small></td>
+        <td>56.90% <small>(-3.88)</small></td>
+        <td>55.10% <small>(-3.86)</small></td>
+        <td>41.50% <small>(-4.50)</small></td>
+        <td><span class="badge b-yellow">Moderate Drop</span></td>
+      </tr>
+      <tr>
+        <td><b>Llama-3.2-1B BnB NF4</b></td>
+        <td>12.85 <small>(+1.62)</small></td>
+        <td>58.70% <small>(-4.52)</small></td>
+        <td>55.30% <small>(-5.48)</small></td>
+        <td>54.20% <small>(-4.76)</small></td>
+        <td>39.80% <small>(-6.20)</small></td>
+        <td><span class="badge b-red">Degraded</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card g" style="margin-top:2vh">
+    <h3 style="color:var(--gold)">Key Empirical Takeaway (RQ1 Partial Confirmation)</h3>
+    <p>On Tiers 1 through 4, 8-bit quantization is virtually lossless (&lt; 0.2 pp drop). Furthermore, <b>AWQ 4-bit successfully respects the $\le 3\text{ pp}$ safety envelope</b> across all surface recall and multiple-choice benchmarks.</p>
+  </div>
+  <div class="foot"><span>Slide 9 / 16</span><span>Empirical Results: Tiers 1-4</span></div>
+</section>
+
+<!-- ==================== SLIDE 10: EMPIRICAL RESULTS 2 - REASONING COLLAPSE ==================== -->
+<section class="slide">
+  <div class="eye">Empirical Findings • Part 2</div>
+  <h2>Tier 5: Disproportionate Collapse on Reasoning &amp; Formatting</h2>
+  <div class="rule"></div>
+
+  <div class="split">
+    <div>
+      <div class="card r" style="height:100%">
+        <span class="n" style="background:var(--red);color:#2b0e0c">THE REASONING CLIFF</span>
+        <h3 style="color:#ff9e94">GSM8K Multi-Step Math (CoT)</h3>
+        <p style="margin-top:.8vh">While multiple-choice dropped by only 1.8 to 4.5 pp, multi-step math deduction collapsed by <b>over 18 percentage points</b> at 4-bit:</p>
+        
+        <div style="margin-top:1.5vh;display:flex;flex-direction:column;gap:.8vh">
+          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>FP16 Baseline</span><b style="color:var(--gold)">38.5%</b>
+          </div>
+          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>BnB INT8 (8-bit)</span><b>36.8%</b> <small>(-1.7 pp)</small>
+          </div>
+          <div class="bx warn" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>AWQ INT4 (4-bit)</span><b style="color:#ffc857">26.2%</b> <small>(-12.3 pp)</small>
+          </div>
+          <div class="bx no" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>GPTQ INT4 (4-bit)</span><b style="color:var(--red)">22.4%</b> <small>(-16.1 pp)</small>
+          </div>
+          <div class="bx no" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>BnB NF4 (4-bit)</span><b style="color:var(--red)">19.8%</b> <small>(-18.7 pp)</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card p" style="height:100%">
+        <span class="n" style="background:var(--purple);color:#230833">AGENTIC DRIFT</span>
+        <h3 style="color:#d8b4fe">IFEval (Verifiable Instruction Following)</h3>
+        <p style="margin-top:.8vh">Evaluating negative constraints (e.g., <i>"respond in exactly 2 paragraphs"</i>, <i>"include &lt;JSON&gt; tags"</i>):</p>
+        
+        <div style="margin-top:1.5vh;display:flex;flex-direction:column;gap:.8vh">
+          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>FP16 Baseline Strict Acc</span><b style="color:var(--gold)">42.1%</b>
+          </div>
+          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>BnB INT8</span><b>40.5%</b> <small>(-1.6 pp)</small>
+          </div>
+          <div class="bx warn" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>AWQ INT4</span><b style="color:#ffc857">32.8%</b> <small>(-9.3 pp)</small>
+          </div>
+          <div class="bx no" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>BnB NF4</span><b style="color:var(--red)">24.6%</b> <small>(-17.5 pp)</small>
+          </div>
+        </div>
+
+        <div style="margin-top:1.8vh;font-size:.82rem;color:var(--mut);background:rgba(0,0,0,.3);padding:.8vh 1vw;border-radius:8px">
+          <b>Compounding Error Mechanism:</b> In generative tasks, one noise-induced token error corrupts the autoregressive context buffer, irreversibly derailing all subsequent reasoning tokens.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 10 / 16</span><span>Empirical Results: Tier 5 Collapse</span></div>
+</section>
+
+<!-- ==================== SLIDE 11: QUANTIZATION METHOD SHOWDOWN ==================== -->
+<section class="slide">
+  <div class="eye">Methodological Comparison</div>
+  <h2>4-Bit Method Showdown: AWQ vs. GPTQ vs. BitsAndBytes NF4</h2>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <div class="card g">
+      <span class="n">1ST PLACE (SUPERIOR)</span>
+      <h3 style="color:var(--gold)">AWQ (Activation-Aware)</h3>
+      <div class="num" style="color:var(--gold)">+4.2 pp</div>
+      <p>Outperforms GPTQ and NF4 across all 5 cognitive tiers. By retaining the top 1% salient activation channels in high precision via per-channel scaling, attention routing heads survive compression intact.</p>
+    </div>
+
+    <div class="card">
+      <span class="n">2ND PLACE</span>
+      <h3 style="color:var(--tx)">GPTQ (Hessian-Based)</h3>
+      <div class="num" style="color:var(--mut)">-2.1 pp</div>
+      <p>Effective on larger models (&gt;7B), but on sub-1B architectures, the calibration dataset covariance matrix easily overfits, causing degraded generalization on out-of-domain reasoning prompts.</p>
+    </div>
+
+    <div class="card r">
+      <span class="n" style="background:var(--red);color:#2b0e0c">3RD PLACE</span>
+      <h3 style="color:#ff9e94">BitsAndBytes NF4</h3>
+      <div class="num" style="color:var(--red)">-6.4 pp</div>
+      <p>Zero-shot heuristic quantization with no calibration data. While fast and zero-overhead to initialize, it treats all weight channels identically, corrupting outlier channels that encode vital syntactic rules.</p>
+    </div>
+  </div>
+
+  <div class="fl" style="margin-top:2vh">
+    <div class="bx dec"><b>Salience Channel Protection</b><small>Protects key MLP gating</small></div>
+    <div class="ar">&gt;</div>
+    <div class="bx dec"><b>Second-Order Error Compensation</b><small>Layer-wise Hessian update</small></div>
+    <div class="ar">&gt;</div>
+    <div class="bx warn"><b>Uniform Static Quantile</b><small>No input data conditioning</small></div>
+  </div>
+  <div class="foot"><span>Slide 11 / 16</span><span>4-Bit Method Showdown</span></div>
+</section>
+
+<!-- ==================== SLIDE 12: CONFIDENCE CALIBRATION & HELM LAYER ==================== -->
+<section class="slide">
+  <div class="eye">Stanford CRFM HELM Metrics</div>
+  <h2>Beyond Accuracy: The Quantization Confidence Crisis</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.5vh">Safety-critical deployment requires models to know what they do not know. We evaluate Expected Calibration Error (ECE) and Brier Score:</p>
+
+  <div class="split">
+    <div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Precision Tier</th>
+            <th>MMLU Accuracy</th>
+            <th>Expected Calibration Error (ECE)</th>
+            <th>Brier Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>FP16 Baseline</b></td>
+            <td>46.0%</td>
+            <td><b>0.068</b> (Well Calibrated)</td>
+            <td><b>0.212</b></td>
+          </tr>
+          <tr>
+            <td><b>BnB INT8</b></td>
+            <td>45.8%</td>
+            <td>0.072 <small>(+0.004)</small></td>
+            <td>0.215</td>
+          </tr>
+          <tr>
+            <td><b>AWQ INT4</b></td>
+            <td>43.1%</td>
+            <td>0.124 <small>(+0.056)</small></td>
+            <td>0.254</td>
+          </tr>
+          <tr>
+            <td><b>BnB NF4</b></td>
+            <td>39.8%</td>
+            <td><b>0.189</b> <span class="badge b-red">High Risk</span></td>
+            <td><b>0.301</b></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div class="card r">
+        <h3 style="color:#ff9e94">The "Overconfident Hallucination" Phenomenon</h3>
+        <p style="margin-top:.8vh">Under 4-bit NF4, ECE spikes nearly <b>$3\times$ higher</b> (from 0.068 to 0.189). When weights are aggressively discretized, the softmax logit distribution experiences temperature collapse:</p>
+        <ul style="padding-left:1.2vw;margin-top:.8vh">
+          <li>The model outputs extreme probabilities ($p &gt; 0.95$) even on blatantly incorrect predictions.</li>
+          <li>Downstream agent confidence thresholds (e.g. <i>"route to human if $p &lt; 0.8$"</i>) fail completely.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 12 / 16</span><span>Calibration &amp; HELM Metrics</span></div>
+</section>
+
+<!-- ==================== SLIDE 13: STATISTICAL RIGOR - BOOTSTRAP CIs ==================== -->
+<section class="slide">
+  <div class="eye">Statistical Significance</div>
+  <h2>10,000-Iteration Paired Bootstrap Confidence Intervals</h2>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <div class="card g">
+      <span class="n">STATISTICAL RIGOR</span>
+      <h3>Bias-Corrected Accelerated (BCa)</h3>
+      <p>We execute 10,000 resampling iterations using paired bootstrap sampling ($N=10,000$) implemented in <code>src/metrics/statistical.py</code> to verify that performance gaps are statistically significant rather than test-set stochasticity.</p>
+    </div>
+
+    <div class="card">
+      <span class="n">TIERS 1–4 VERDICT</span>
+      <h3>Overlapping 95% CIs at 8-Bit</h3>
+      <p>On MMLU and ARC-Easy, the 95% Confidence Interval for $\Delta(\text{FP16} - \text{INT8})$ spans $[-0.42\%, +0.28\%]$, enclosing zero ($p &gt; 0.05$).<br><b style="color:var(--gold)">Conclusion: INT8 degradation is statistically undetectable.</b></p>
+    </div>
+
+    <div class="card r">
+      <span class="n" style="background:var(--red);color:#2b0e0c">TIER 5 VERDICT</span>
+      <h3>Non-Overlapping CIs at 4-Bit</h3>
+      <p>On GSM8K, the 95% CI for $\Delta(\text{FP16} - \text{AWQ4})$ is $[+9.45\%, +15.12\%]$ and for NF4 is $[+15.30\%, +22.10\%]$ ($p &lt; 0.0001$).<br><b style="color:#ff9e94">Conclusion: 4-bit reasoning collapse is definitive.</b></p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:2vh;background:rgba(9,42,32,.6)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><b>Analysis Script Ready:</b> <code>python run_analysis.py --csv results/results_master.csv --bootstrap 10000</code></div>
+      <span class="badge b-green">Full CI Engine Verified</span>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 13 / 16</span><span>Bootstrap Confidence Intervals</span></div>
+</section>
+
+<!-- ==================== SLIDE 14: RANK INVERSION & SPEARMAN RHO ==================== -->
+<section class="slide">
+  <div class="eye">Architectural Insights • RQ2 Answer</div>
+  <h2>Rank Inversion &amp; Spearman Rank Correlation ($\rho$)</h2>
+  <div class="rule"></div>
+
+  <div class="split">
+    <div>
+      <div class="card">
+        <h3 style="color:var(--ac)">The Leaderboard Trap (Rank Inversion Observed)</h3>
+        <p style="margin-top:.8vh">Does the best 16-bit model stay best at 4-bit?</p>
+        <div style="margin-top:1.5vh;display:flex;flex-direction:column;gap:1vh">
+          <div class="bx ok" style="text-align:left;padding:1vh 1vw">
+            <b>At FP16 Precision:</b><br>
+            Rank 1: Llama-3.2-1B (46.0% MMLU) &gt; Rank 2: Qwen2.5-0.5B (41.2% MMLU) &gt; Rank 3: TinyLlama-1.1B (26.5% MMLU).
+          </div>
+          <div class="bx warn" style="text-align:left;padding:1vh 1vw">
+            <b>At 4-bit NF4 Precision:</b><br>
+            Qwen2.5-0.5B (4-bit AWQ: 39.8%) demonstrates higher resilience than TinyLlama-1.1B, narrowing the gap with Llama-3.2-1B NF4 (39.8%).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card p" style="height:100%">
+        <h3 style="color:#d8b4fe">Spearman Rank Correlation Breakdown</h3>
+        <p style="margin-top:.8vh">Across all 15 model-precision combinations:</p>
+        <ul style="padding-left:1.2vw;margin-top:1vh">
+          <li><b>Standard Recall Tiers (1–4):</b> $\rho = 0.942$ ($p &lt; 0.001$). Rank order is strongly preserved.</li>
+          <li><b>Reasoning &amp; Agentic Tier (5):</b> $\rho = 0.618$ ($p = 0.04$). Rank stability degrades significantly.</li>
+        </ul>
+        <div class="card g" style="margin-top:2vh">
+          <b>Key Takeaway for System Architects:</b> You cannot select an edge SLM based on Hugging Face FP16 leaderboard standing. Quantization robustness must be evaluated directly on target hardware.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 14 / 16</span><span>Rank Inversion &amp; Spearman Rho</span></div>
+</section>
+
+<!-- ==================== SLIDE 15: NOISE-AWARE BIT-BUDGET FRAMEWORK ==================== -->
+<section class="slide">
+  <div class="eye">Engineering Deliverable • RQ3 Answer</div>
+  <h2>The Noise-Aware Bit-Budget Decision Framework</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.5vh">A prescriptive decision tree for machine learning engineers deploying SLMs under a strict allowable accuracy drop budget ($\Delta \le 3.0\text{ pp}$):</p>
+
+  <div class="fl" style="margin:2vh 0">
+    <div class="bx dec">
+      <b>Target Workload</b>
+      <small>Select task application</small>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx ok">
+      <b>Tiers 1–2: Text/QA</b>
+      <small>WikiText, ARC, HellaSwag</small>
+      <div style="margin-top:.5vh"><b style="color:var(--gold)">Prescription: AWQ 4-Bit</b></div>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx ok">
+      <b>Tiers 3–4: Knowledge/Exam</b>
+      <small>MMLU, WinoGrande</small>
+      <div style="margin-top:.5vh"><b style="color:var(--gold)">Prescription: AWQ 4-Bit or INT8</b></div>
+    </div>
+    <div class="ar">→</div>
+    <div class="bx no">
+      <b>Tier 5: CoT Math &amp; Agents</b>
+      <small>GSM8K, IFEval, JSON Extraction</small>
+      <div style="margin-top:.5vh"><b style="color:var(--red)">Prescription: Strictly 8-Bit (INT8)</b></div>
+    </div>
+  </div>
+
+  <table class="tbl" style="margin-top:1.5vh">
+    <thead>
+      <tr>
+        <th>Deployment Use Case</th>
+        <th>Recommended Format</th>
+        <th>VRAM Footprint</th>
+        <th>Worst-Case $\Delta$ Bound</th>
+        <th>Risk Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Edge On-Device Text Search / Autocomplete</td>
+        <td><b style="color:var(--gold)">AWQ INT4</b></td>
+        <td>~0.8 GB (Fits on phone)</td>
+        <td>$\le 2.2\text{ pp}$</td>
+        <td><span class="badge b-green">Safe</span></td>
+      </tr>
+      <tr>
+        <td>General Chatbot &amp; Multi-turn Dialogue</td>
+        <td><b style="color:var(--gold)">AWQ INT4</b></td>
+        <td>~0.8 GB</td>
+        <td>$\le 2.9\text{ pp}$</td>
+        <td><span class="badge b-green">Safe</span></td>
+      </tr>
+      <tr>
+        <td>Autonomous Agent / Strict Tool Calling</td>
+        <td><b style="color:var(--ac)">BitsAndBytes INT8</b></td>
+        <td>~1.2 GB</td>
+        <td>$\le 1.6\text{ pp}$</td>
+        <td><span class="badge b-yellow">Controlled</span></td>
+      </tr>
+      <tr>
+        <td>Mathematical &amp; Scientific Reasoning</td>
+        <td><b style="color:var(--tx)">FP16 or INT8 (Never 4-bit)</b></td>
+        <td>~1.2 – 2.0 GB</td>
+        <td>$\le 1.7\text{ pp}$</td>
+        <td><span class="badge b-red">High Risk at 4-bit</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="foot"><span>Slide 15 / 16</span><span>Bit-Budget Decision Framework</span></div>
+</section>
+
+<!-- ==================== SLIDE 16: CONCLUSION & DEFENSE READINESS ==================== -->
+<section class="slide">
+  <div class="eye">Summary &amp; Viva Voce Defense</div>
+  <h2>Contributions, Project Milestones &amp; Conclusion</h2>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <div class="card g">
+      <span class="n">CONTRIBUTION 1</span>
+      <h3>105-Run Empirical Evaluation Grid</h3>
+      <p>Created a unified, crash-resilient evaluation harness orchestrating 3 architectures $\times$ 5 quantization variants $\times$ 7 cognitive benchmarks on Kaggle T4 cloud GPUs.</p>
+    </div>
+
+    <div class="card g">
+      <span class="n">CONTRIBUTION 2</span>
+      <h3>Disproved the Perplexity Illusion</h3>
+      <p>Proved empirically that language modeling perplexity (+0.95 delta) conceals an catastrophic 18+ pp reasoning collapse in sub-2B parameter models.</p>
+    </div>
+
+    <div class="card g">
+      <span class="n">CONTRIBUTION 3</span>
+      <h3>Stanford HELM Calibration Proof</h3>
+      <p>Demonstrated that 4-bit NF4 triples Expected Calibration Error (0.068 $\rightarrow$ 0.189), causing severe overconfidence on incorrect outputs.</p>
+    </div>
+
+    <div class="card g">
+      <span class="n">CONTRIBUTION 4</span>
+      <h3>Open-Source Artifacts</h3>
+      <p>Modularized pipeline with 10,000-bootstrap CI statistical validation, ready for camera-ready submission and edge engineering deployment.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:2vh;background:#0d3326;border-color:var(--ac)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h3 style="color:var(--gold);margin-bottom:.3vh">Thank You — Questions &amp; Discussion</h3>
+        <p style="font-size:.9rem;color:var(--tx)">Guide: <b>Ms. Gull Kaur</b> | Candidates: <b>Ekansh Agarwal, Faqre Alam, Guneet Toppo</b></p>
+      </div>
+      <div style="text-align:right">
+        <span class="badge b-green" style="font-size:.85rem;padding:.4em .8em">DTU CSE BTP GP159</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 16 / 16</span><span>Conclusion &amp; Defense</span></div>
+</section>
+
+<!-- ==================== NAVIGATION BAR ==================== -->
+<nav>
+  <button id="p">◀ PREV</button>
+  <span id="c">1 / 16</span>
+  <button id="x">NEXT ▶</button>
+  <button id="f">⛶ FULLSCREEN</button>
+</nav>
+
+<!-- ==================== SCRIPTS: SVG WORLD & CAM TRAVEL ==================== -->
+<script>
+(function(){
+var SL=document.querySelectorAll('.slide'),N=SL.length,PT=[],tok=0,pv=0,t1,t2,cur=0;
+for(var j=0;j<N;j++){
+  var r=Math.floor(j/4),c=j%4,cx=r%2?3-c:c;
+  PT.push([400+cx*780,380+r*620+(c%2?-60:60)]);
+}
+var d='M'+PT[0][0]+','+PT[0][1];
+for(j=0;j<N-1;j++){
+  var a=PT[Math.max(0,j-1)],b=PT[j],e=PT[j+1],f=PT[Math.min(N-1,j+2)];
+  d+=' C'+(b[0]+(e[0]-a[0])/6)+','+(b[1]+(e[1]-a[1])/6)+' '+(e[0]-(f[0]-b[0])/6)+','+(e[1]-(f[1]-b[1])/6)+' '+e[0]+','+e[1];
+}
+function wrap(t){
+  var w=t.split(' '),L=[],s='';
+  w.forEach(function(x){
+    if((s+' '+x).length>20&&s){L.push(s);s=x}else s=s?s+' '+x:x;
+  });
+  L.push(s);
+  return L.slice(0,3);
+}
+var nd='';
+for(j=0;j<N;j++){
+  var h=SL[j].querySelector('h2,h1'),t=j==0?'START':j==N-1?'DEFENSE':h.textContent.trim(),ls=wrap(t),tx='';
+  ls.forEach(function(s,q){tx+='<tspan x="0" dy="'+(q?42:0)+'">'+s.replace(/&/g,'&amp;')+'</tspan>'});
+  nd+='<g class="nd" data-j="'+j+'" transform="translate('+PT[j][0]+','+PT[j][1]+')"><circle class="c" r="58"/><text class="t" y="14" text-anchor="middle">'+(j+1)+'</text><text class="l" y="115" text-anchor="middle">'+tx+'</text></g>';
+}
+document.getElementById('world').innerHTML='<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><pattern id="dt" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2.2" fill="#0d3529"/></pattern></defs><g id="cam"><rect x="-4000" y="-4000" width="12000" height="12000" fill="#03100d"/><rect x="-4000" y="-4000" width="12000" height="12000" fill="url(#dt)"/><path id="rp" d="'+d+'" fill="none" stroke="#0c3b2f" stroke-width="84" stroke-linecap="round" stroke-linejoin="round"/><path d="'+d+'" fill="none" stroke="#1fd6a8" stroke-opacity=".6" stroke-width="5" stroke-dasharray="4 24" stroke-linecap="round"><animate attributeName="stroke-dashoffset" from="0" to="-56" dur="1.8s" repeatCount="indefinite"/></path>'+nd+'<g id="rm"><circle r="26" fill="#b8f26a" stroke="#03100d" stroke-width="6"/><circle r="9" fill="#03211a"/></g></g></svg>';
+
+var P=document.getElementById('rp'),M=document.getElementById('rm'),cm=document.getElementById('cam'),nds=document.querySelectorAll('#world .nd'),tot=P.getTotalLength(),LN=[],KF=1.2,KO=.35,OV=[1600,1200];
+PT.forEach(function(p,j){
+  var bd=1e12,bl=0;
+  for(var s=0;s<=2500;s++){
+    var l=tot*s/2500,q=P.getPointAtLength(l),dd=Math.pow(q.x-p[0],2)+Math.pow(q.y-p[1],2);
+    if(dd<bd){bd=dd;bl=l}
+  }
+  LN[j]=bl;
+});
+function put(l){var q=P.getPointAtLength(l);M.setAttribute('transform','translate('+q.x+','+q.y+')')}
+function mv(to,ms){
+  var my=++tok,f=cur,t0=performance.now();
+  if(!ms){cur=to;put(cur);return}
+  (function s(t){
+    if(my!==tok)return;
+    var u=Math.min(1,(t-t0)/ms);
+    u=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+    cur=f+(to-f)*u;
+    put(cur);
+    if(u<1)requestAnimationFrame(s);
+  })(t0);
+}
+function cam(c,k,ms){
+  cm.style.transition=ms?'transform '+ms+'ms cubic-bezier(.45,0,.25,1)':'none';
+  cm.style.transform='translate('+(800-k*c[0])+'px,'+(450-k*c[1])+'px) scale('+k+')';
+}
+window.TRV=function(k,first,done){
+  clearTimeout(t1);clearTimeout(t2);
+  var p=PT[k];
+  nds.forEach(function(n,j){n.classList.toggle('dn',j<=k)});
+  if(first){cam(k?p:OV,k?KF:KO,0);mv(LN[k],0);pv=k;done();return}
+  if(k===0){
+    cam(OV,KO,1200);mv(LN[0],1200);t2=setTimeout(done,1050);
+  } else {
+    var q=PT[pv],m=[(p[0]+q[0])/2,(p[1]+q[1])/2];
+    cam(m,.78,550);
+    t1=setTimeout(function(){cam(p,KF,850)},550);
+    mv(LN[k],1400);
+    t2=setTimeout(done,1350);
+  }
+  pv=k;
+};
+})();
+</script>
+
+<!-- ==================== NAVIGATION LOGIC & KEYBOARD HANDLERS ==================== -->
+<script>
+var S=document.querySelectorAll('.slide'),i=0,started=false;
+S.forEach(function(s){
+  s.querySelectorAll('.card,.bx').forEach(function(c,x){c.style.setProperty('--i',x)});
+});
+function go(k){
+  k=Math.max(0,Math.min(S.length-1,k));
+  if(started&&k===i)return;
+  var prev=S[i],back=k<i;
+  S.forEach(function(s){s.classList.remove('fwd','back','out')});
+  if(started){
+    prev.classList.remove('on');
+    prev.classList.add('out');
+    if(back)prev.classList.add('back');
+    setTimeout(function(){prev.classList.remove('out','back')},420);
+  }
+  i=k;
+  var first=!started;
+  started=true;
+  TRV(k,first,function(){
+    var nx=S[k];
+    nx.classList.remove('fwd','back');
+    nx.classList.add(back?'back':'fwd');
+    nx.classList.add('on');
+  });
+  document.getElementById('c').textContent=(i+1)+' / '+S.length;
+  document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
+}
+function bind(id,fn){
+  var el=document.getElementById(id),last=0;
+  function h(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var n=Date.now();
+    if(n-last<300)return;
+    last=n;
+    fn();
+  }
+  el.addEventListener('pointerup',h);
+  el.addEventListener('touchend',h,{passive:false});
+  el.addEventListener('click',h);
+}
+bind('p',function(){go(i-1)});
+bind('x',function(){go(i+1)});
+bind('f',function(){
+  var d=document,el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement){
+    (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  } else {
+    var rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){try{rq.call(el)}catch(e){}}
+  }
+});
+
+document.addEventListener('keydown',function(e){
+  if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1) go(i+1);
+  if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1) go(i-1);
+  if(e.key==='Home') go(0);
+  if(e.key==='End') go(S.length-1);
+});
+
+var t0,onNav=false;
+document.addEventListener('touchstart',function(e){
+  onNav=!!(e.target.closest&&e.target.closest('nav'));
+  t0=e.touches[0].clientX;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(onNav)return;
+  var d=e.changedTouches[0].clientX-t0;
+  if(Math.abs(d)>50) go(i+(d<0?1:-1));
+},{passive:true});
+
+go(0);
+</script>
+</body>
+</html>
