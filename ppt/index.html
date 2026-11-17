@@ -57,20 +57,20 @@ html,body{
   box-shadow:0 0 0 1px var(--line),0 28px 80px rgba(0,0,0,.65);
 }
 .slide.on{visibility:visible}
-.slide.fwd.on{animation:zin .7s cubic-bezier(.2,.7,.2,1)}
-.slide.back.on{animation:zin .7s cubic-bezier(.2,.7,.2,1)}
-.slide.out{display:flex;visibility:visible;z-index:0;pointer-events:none;animation:zout .36s ease forwards}
-.slide.out.back{animation:zout .36s ease forwards}
+.slide.fwd.on{animation:zin .85s cubic-bezier(.2,.8,.2,1) both}
+.slide.back.on{animation:zin .85s cubic-bezier(.2,.8,.2,1) both}
+.slide.out{display:flex;visibility:visible;z-index:0;pointer-events:none;animation:zout .52s cubic-bezier(.4,0,.2,1) forwards}
+.slide.out.back{animation:zout .52s cubic-bezier(.4,0,.2,1) forwards}
 
-@keyframes zin{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:none}}
-@keyframes zout{to{opacity:0;transform:scale(1.05)}}
-@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes zin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes zout{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.05)}}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 
-.slide.on .eye,.slide.on h1,.slide.on h2{animation:rise .55s .1s cubic-bezier(.2,.7,.2,1) both}
-.slide.on .rule{transform-origin:left;animation:grow .55s .2s ease both}
-.slide.on .card{animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*70ms + 220ms)}
-.slide.on .fl,.slide.on .grid,.slide.on .split{animation:rise .6s .26s cubic-bezier(.2,.7,.2,1) both}
+.slide.on .eye,.slide.on h1,.slide.on h2{animation:rise .75s .15s cubic-bezier(.2,.8,.2,1) both}
+.slide.on .rule{transform-origin:left;animation:grow .75s .25s ease both}
+.slide.on .card{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*80ms + 250ms)}
+.slide.on .fl,.slide.on .grid,.slide.on .split{animation:rise .75s .3s cubic-bezier(.2,.8,.2,1) both}
 
 .eye{
   font-size:clamp(.7rem,1vw,.88rem);
@@ -979,32 +979,36 @@ window.TRV=function(k,first,done){
     return;
   }
 
-  // Smooth, instant camera move to the target node
-  cam(p, KF, 600);
-  mv(LN[k], 600);
+  // Smooth, measured, cinematic camera glide to target node (1000ms)
+  cam(p, KF, 1000);
+  mv(LN[k], 1000);
   pv=k;
-  t1=setTimeout(done, 150);
+  // Let the old slide finish fading out comfortably before bringing in the new slide
+  t1=setTimeout(done, 450);
 };
 })();
 </script>
 
 <!-- ==================== NAVIGATION LOGIC & KEYBOARD HANDLERS ==================== -->
 <script>
-var S=document.querySelectorAll('.slide'),i=0,started=false;
+var S=document.querySelectorAll('.slide'),i=0,started=false,transitioning=false;
 S.forEach(function(s){
   s.querySelectorAll('.card,.bx').forEach(function(c,x){c.style.setProperty('--i',x)});
 });
 
 function go(k){
   k=Math.max(0,Math.min(S.length-1,k));
-  if(started&&k===i)return;
+  if(started && (k===i || transitioning)) return;
+  transitioning = true;
   var prev=S[i],back=k<i;
   S.forEach(function(s){s.classList.remove('fwd','back','out')});
   if(started){
     prev.classList.remove('on');
     prev.classList.add('out');
     if(back)prev.classList.add('back');
-    setTimeout(function(){prev.classList.remove('out','back')},350);
+    setTimeout(function(){
+      prev.classList.remove('out','back');
+    }, 550);
   }
   i=k;
   var first=!started;
@@ -1014,6 +1018,7 @@ function go(k){
     nx.classList.remove('fwd','back');
     nx.classList.add(back?'back':'fwd');
     nx.classList.add('on');
+    setTimeout(function(){ transitioning = false; }, 400);
   });
   document.getElementById('c').textContent=(i+1)+' / '+S.length;
   document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
@@ -1025,7 +1030,7 @@ function bind(id,fn){
     e.preventDefault();
     e.stopPropagation();
     var n=Date.now();
-    if(n-last<250)return;
+    if(n-last<650)return;
     last=n;
     fn();
   }
@@ -1045,11 +1050,21 @@ bind('f',function(){
   }
 });
 
+var lastKeyTime = 0;
 document.addEventListener('keydown',function(e){
-  if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1) go(i+1);
-  if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1) go(i-1);
-  if(e.key==='Home') go(0);
-  if(e.key==='End') go(S.length-1);
+  var now = Date.now();
+  if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1){
+    if(now - lastKeyTime < 650) return;
+    lastKeyTime = now;
+    go(i+1);
+  }
+  if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1){
+    if(now - lastKeyTime < 650) return;
+    lastKeyTime = now;
+    go(i-1);
+  }
+  if(e.key==='Home') { lastKeyTime = now; go(0); }
+  if(e.key==='End') { lastKeyTime = now; go(S.length-1); }
 });
 
 var t0,onNav=false;
