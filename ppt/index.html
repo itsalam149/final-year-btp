@@ -252,29 +252,7 @@ b{color:var(--tx);font-weight:600}
 }
 
 
-#flow-toast{
-  position:fixed;
-  top:2.5vh;
-  left:50%;
-  transform:translateX(-50%) translateY(-25px);
-  background:rgba(9,39,30,.95);
-  border:1.5px solid var(--ac);
-  border-radius:99px;
-  padding:.7vh 2vw;
-  color:var(--tx);
-  font-size:clamp(.8rem,1.15vw,.96rem);
-  font-weight:600;
-  letter-spacing:.04em;
-  box-shadow:0 0 25px rgba(31,214,168,.4);
-  z-index:90;
-  opacity:0;
-  pointer-events:none;
-  transition:all .45s cubic-bezier(.2,.7,.2,1);
-}
-#flow-toast.on{
-  opacity:1;
-  transform:translateX(-50%) translateY(0);
-}
+
 
 #bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:4px;background:linear-gradient(90deg,var(--ac),var(--gold));transition:width .4s ease;z-index:60}
 nav{
@@ -315,7 +293,6 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
 <body>
 
 <div id="bar"></div>
-<div id="flow-toast"></div>
 <div id="world"></div>
 
 <!-- ==================== SLIDE 1: TITLE SLIDE ==================== -->
@@ -930,7 +907,6 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
   <button id="p">◀ PREV</button>
   <span id="c">1 / 13</span>
   <button id="x">NEXT ▶</button>
-  <button id="m">🗺️ FLOWCHART</button>
   <button id="f">⛶ FULLSCREEN</button>
 </nav>
 
@@ -989,76 +965,25 @@ function cam(c,k,ms){
   cm.style.transition=ms?'transform '+ms+'ms cubic-bezier(.45,0,.25,1)':'none';
   cm.style.transform='translate('+(800-k*c[0])+'px,'+(450-k*c[1])+'px) scale('+k+')';
 }
-var flowTimer = null;
-var pendingDone = null;
-
-function skipFlowchartWait(){
-  if(pendingDone){
-    clearTimeout(flowTimer);
-    var fn = pendingDone;
-    pendingDone = null;
-    var tst = document.getElementById('flow-toast');
-    if(tst) tst.classList.remove('on');
-    fn();
-    return true;
-  }
-  return false;
-}
 
 window.TRV=function(k,first,done){
   clearTimeout(t1);clearTimeout(t2);
-  skipFlowchartWait();
   var p=PT[k];
   nds.forEach(function(n,j){n.classList.toggle('dn',j<=k)});
 
   if(first){
-    // Clean initial focus on Slide 1: Node 1 (no awkward peeking of Node 13)
-    cam(PT[0], 0.95, 0);
-    mv(LN[0], 0);
-    pv=0;
+    cam(p, KF, 0);
+    mv(LN[k], 0);
+    pv=k;
     done();
     return;
   }
 
-  // When advancing from Slide 1 (k=0) to Slide 2 (k=1): STOP ON FLOWCHART!
-  if(k === 1 && pv === 0){
-    // Smoothly zoom out to full flowchart overview and STOP!
-    cam(OV, KO * 1.05, 1100);
-    mv(LN[1], 1100);
-
-    var toast = document.getElementById('flow-toast');
-    if(toast){
-      toast.textContent = "🗺️ Research Flowchart & Architecture (Paused for Overview — Press NEXT or Space to continue)";
-      setTimeout(function(){ toast.classList.add('on'); }, 300);
-    }
-
-    // Stop and stay stationary on the flowchart for 4.5 seconds!
-    pendingDone = function(){
-      if(toast) toast.classList.remove('on');
-      cam(p, KF, 800);
-      setTimeout(done, 550);
-    };
-
-    flowTimer = setTimeout(function(){
-      skipFlowchartWait();
-    }, 4500);
-
-    pv = 1;
-    return;
-  }
-
-  if(k===0){
-    cam(PT[0], 0.95, 1100);
-    mv(LN[0], 1100);
-    t2=setTimeout(done, 1050);
-  } else {
-    var q=PT[pv],m=[(p[0]+q[0])/2,(p[1]+q[1])/2];
-    cam(m,.78,550);
-    t1=setTimeout(function(){cam(p,KF,850)},550);
-    mv(LN[k],1400);
-    t2=setTimeout(done,1350);
-  }
+  // Smooth, instant camera move to the target node
+  cam(p, KF, 600);
+  mv(LN[k], 600);
   pv=k;
+  t1=setTimeout(done, 150);
 };
 })();
 </script>
@@ -1069,29 +994,8 @@ var S=document.querySelectorAll('.slide'),i=0,started=false;
 S.forEach(function(s){
   s.querySelectorAll('.card,.bx').forEach(function(c,x){c.style.setProperty('--i',x)});
 });
-var mapMode = false;
-function toggleMapMode(){
-  mapMode = !mapMode;
-  var curSlide = S[i];
-  var toast = document.getElementById('flow-toast');
-  if(mapMode){
-    if(curSlide) { curSlide.style.opacity = '0'; curSlide.style.pointerEvents = 'none'; }
-    cam(OV, KO, 900);
-    if(toast){
-      toast.textContent = "🗺️ Full Flowchart Roadmap (Press 'M' or click to resume slide)";
-      toast.classList.add('on');
-    }
-  } else {
-    if(curSlide) { curSlide.style.opacity = '1'; curSlide.style.pointerEvents = 'auto'; }
-    var p = PT[i];
-    cam(p, KF, 800);
-    if(toast) toast.classList.remove('on');
-  }
-}
 
 function go(k){
-  if(mapMode) toggleMapMode();
-  if(skipFlowchartWait()) return; // Pressing NEXT during flowchart pause immediately reveals slide
   k=Math.max(0,Math.min(S.length-1,k));
   if(started&&k===i)return;
   var prev=S[i],back=k<i;
@@ -1100,7 +1004,7 @@ function go(k){
     prev.classList.remove('on');
     prev.classList.add('out');
     if(back)prev.classList.add('back');
-    setTimeout(function(){prev.classList.remove('out','back')},400);
+    setTimeout(function(){prev.classList.remove('out','back')},350);
   }
   i=k;
   var first=!started;
@@ -1116,11 +1020,12 @@ function go(k){
 }
 function bind(id,fn){
   var el=document.getElementById(id),last=0;
+  if(!el) return;
   function h(e){
     e.preventDefault();
     e.stopPropagation();
     var n=Date.now();
-    if(n-last<300)return;
+    if(n-last<250)return;
     last=n;
     fn();
   }
@@ -1130,7 +1035,6 @@ function bind(id,fn){
 }
 bind('p',function(){go(i-1)});
 bind('x',function(){go(i+1)});
-bind('m',function(){toggleMapMode()});
 bind('f',function(){
   var d=document,el=d.documentElement;
   if(d.fullscreenElement||d.webkitFullscreenElement){
@@ -1142,7 +1046,6 @@ bind('f',function(){
 });
 
 document.addEventListener('keydown',function(e){
-  if(e.key==='m' || e.key==='M') { toggleMapMode(); return; }
   if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1) go(i+1);
   if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1) go(i-1);
   if(e.key==='Home') go(0);
