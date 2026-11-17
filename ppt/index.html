@@ -327,10 +327,123 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 1 / 12</span><span>DTU CSE BTP GP159</span></div>
+  <div class="foot"><span>Slide 1 / 13</span><span>DTU CSE BTP GP159</span></div>
 </section>
 
-<!-- ==================== SLIDE 2: WHAT IS QUANTIZATION? ==================== -->
+<!-- ==================== SLIDE 2: COMPLETE SYSTEM & ARCHITECTURE DIAGRAM ==================== -->
+<section class="slide">
+  <div class="eye">System Architecture & Overview</div>
+  <h2>Complete Project Architecture at a Glance</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.5vh">End-to-end experimental framework: from SLM ingestion and multi-method quantization to 5-tier evaluation, statistical rigor, and edge deployment rules.</p>
+
+  <!-- Complete Architecture Diagram Flow -->
+  <div style="display:flex;flex-direction:column;gap:1.4vh;width:100%;margin-top:.4vh">
+    <!-- Top Flow: Horizontal Pipeline -->
+    <div style="display:grid;grid-template-columns:1.1fr auto 1.3fr auto 1.2fr auto 1.4fr auto 1.2fr;align-items:center;gap:.6vw;width:100%">
+      
+      <!-- Stage 1: Models -->
+      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--ac)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--ac);letter-spacing:.08em;text-transform:uppercase">1. SLM Models</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">Small LMs (&lt;2B)</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
+          • Qwen2.5-0.5B<br>
+          • Llama-3.2-1B<br>
+          • TinyLlama-1.1B
+        </div>
+      </div>
+
+      <div style="color:var(--ac);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
+
+      <!-- Stage 2: Quantization -->
+      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--gold)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--gold);letter-spacing:.08em;text-transform:uppercase">2. PTQ Engine</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">5 Precision Variants</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
+          • 16-bit: FP16 Baseline<br>
+          • 8-bit: BnB LLM.int8<br>
+          • 4-bit: AWQ, GPTQ, NF4
+        </div>
+      </div>
+
+      <div style="color:var(--gold);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
+
+      <!-- Stage 3: Execution Grid -->
+      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--blue)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--blue);letter-spacing:.08em;text-transform:uppercase">3. Execution Grid</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">LM-Eval Harness</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
+          • Kaggle T4 GPUs (16GB)<br>
+          • Capped ctx (2048)<br>
+          • Batch size 4 (Zero OOM)
+        </div>
+      </div>
+
+      <div style="color:var(--blue);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
+
+      <!-- Stage 4: 5 Cognitive Tiers -->
+      <div class="card g" style="padding:1.2vh 1vw;border-left:3px solid var(--ac)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--ac);letter-spacing:.08em;text-transform:uppercase">4. Evaluation</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">5 Cognitive Tiers</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
+          • T1: Fluency (WikiText)<br>
+          • T2-T4: Recall &amp; MMLU<br>
+          • T5: CoT Math &amp; IFEval
+        </div>
+      </div>
+
+      <div style="color:var(--ac);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
+
+      <!-- Stage 5: Outputs -->
+      <div class="card" style="padding:1.2vh 1vw;background:#153828;border-left:3px solid var(--gold)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--gold);letter-spacing:.08em;text-transform:uppercase">5. Final Output</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">Decision Matrix</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
+          • Bit-Budget Rules<br>
+          • 10k Bootstrap CIs<br>
+          • Safe Edge Deployment
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Detailed Architecture Breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2vw;margin-top:.6vh">
+      <div class="card" style="background:rgba(9,39,30,.6);border:1px solid var(--line);border-left:3px solid var(--ac)">
+        <h3 style="color:var(--ac);font-size:1rem;margin-bottom:.6vh">The 5-Tier Task-Conditioned Evaluation Matrix</h3>
+        <table class="tbl" style="font-size:.76rem;margin-top:.2vh">
+          <thead>
+            <tr><th>Tier</th><th>Benchmark</th><th>Capability Tested</th><th>Metric</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>Tier 1</b></td><td>WikiText-2</td><td>Language Modeling Fluency</td><td>Word Perplexity</td></tr>
+            <tr><td><b>Tier 2</b></td><td>ARC-Easy, HellaSwag</td><td>Factual &amp; Commonsense Recall</td><td>Acc_norm (0-shot)</td></tr>
+            <tr><td><b>Tier 3</b></td><td>WinoGrande</td><td>Coreference Logic</td><td>Acc (0-shot)</td></tr>
+            <tr><td><b>Tier 4</b></td><td>MMLU (57 subjects)</td><td>Broad World Knowledge</td><td>Acc (0-shot)</td></tr>
+            <tr><td><b>Tier 5</b></td><td>GSM8K, IFEval</td><td>Multi-Step Math &amp; Negative Rules</td><td>Strict Match &amp; CoT</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="background:rgba(9,39,30,.6);border:1px solid var(--line);border-left:3px solid var(--gold)">
+        <h3 style="color:var(--gold);font-size:1rem;margin-bottom:.6vh">Analysis, Calibration &amp; Verification Layer</h3>
+        <div style="display:flex;flex-direction:column;gap:.6vh;font-size:.8rem;color:var(--mut)">
+          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--gold)">
+            <b>Expected Calibration Error (ECE) &amp; Brier Score:</b> Quantifying overconfidence and probability distortion under 4-bit rounding.
+          </div>
+          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--ac)">
+            <b>10,000-Iteration Paired Bootstrap CIs:</b> Establishing statistical significance ($p &lt; 0.0001$) to eliminate test-set variance.
+          </div>
+          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--blue)">
+            <b>Spearman Rank Correlation (&rho;):</b> Proving rank inversion — FP16 leaderboard ranking fails to predict 4-bit standing.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 2 / 13</span><span>Complete Architecture Diagram</span></div>
+</section>
+
+<!-- ==================== SLIDE 3: WHAT IS QUANTIZATION? ==================== -->
 <section class="slide">
   <div class="eye">Basic Concept</div>
   <h2>What is Quantization? (In Plain Words)</h2>
@@ -367,10 +480,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
     <div class="ar">→</div>
     <div class="bx ok"><b>4-Bit Model on Device</b><small>Runs in 1/4th RAM footprint</small></div>
   </div>
-  <div class="foot"><span>Slide 2 / 12</span><span>What is Quantization</span></div>
+  <div class="foot"><span>Slide 3 / 13</span><span>What is Quantization</span></div>
 </section>
 
-<!-- ==================== SLIDE 3: WHY IS IT IMPORTANT? ==================== -->
+<!-- ==================== SLIDE 4: WHY IS IT IMPORTANT? ==================== -->
 <section class="slide">
   <div class="eye">Motivation</div>
   <h2>Why is Quantization Essential for Real-World AI?</h2>
@@ -399,10 +512,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       <p>Runs offline without sending user data over the internet. No cloud API subscription bills or latency delays.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 3 / 12</span><span>Why Quantization is Important</span></div>
+  <div class="foot"><span>Slide 4 / 13</span><span>Why Quantization is Important</span></div>
 </section>
 
-<!-- ==================== SLIDE 4: THE PROBLEM & WHY WE ARE DOING THIS ==================== -->
+<!-- ==================== SLIDE 5: THE PROBLEM & WHY WE ARE DOING THIS ==================== -->
 <section class="slide">
   <div class="eye">The Problem Statement</div>
   <h2>The Trap: The "Perplexity Illusion"</h2>
@@ -431,10 +544,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 4 / 12</span><span>The Problem &amp; The Trap</span></div>
+  <div class="foot"><span>Slide 5 / 13</span><span>The Problem &amp; The Trap</span></div>
 </section>
 
-<!-- ==================== SLIDE 5: OUR THINKING & HYPOTHESIS ==================== -->
+<!-- ==================== SLIDE 6: OUR THINKING & HYPOTHESIS ==================== -->
 <section class="slide">
   <div class="eye">Core Hypothesis</div>
   <h2>Our Thinking: "Not All Tasks Suffer Equally"</h2>
@@ -460,10 +573,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       <p style="margin-top:.6vh">Instead of guessing, we must build a <b>Task-Conditioned Decision Matrix</b>: a clear guide telling engineers the exact minimum bit-budget allowed per task class.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 5 / 12</span><span>Our Thinking &amp; Hypothesis</span></div>
+  <div class="foot"><span>Slide 6 / 13</span><span>Our Thinking &amp; Hypothesis</span></div>
 </section>
 
-<!-- ==================== SLIDE 6: OUR APPROACH (5 COGNITIVE TIERS) ==================== -->
+<!-- ==================== SLIDE 7: OUR APPROACH (5 COGNITIVE TIERS) ==================== -->
 <section class="slide">
   <div class="eye">Methodology</div>
   <h2>Our Approach: The 5-Tier Evaluation Ladder</h2>
@@ -506,10 +619,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
     <h3 style="color:var(--ac)">Why This Spectrum Matters</h3>
     <p>By moving from Tier 1 (simple word prediction) to Tier 5 (multi-step math reasoning and syntax verification), we can pinpoint the exact threshold where quantization noise destroys model capabilities.</p>
   </div>
-  <div class="foot"><span>Slide 6 / 12</span><span>Our Approach &amp; 5 Tiers</span></div>
+  <div class="foot"><span>Slide 7 / 13</span><span>Our Approach &amp; 5 Tiers</span></div>
 </section>
 
-<!-- ==================== SLIDE 7: PARAMETERS & FORMULAS ==================== -->
+<!-- ==================== SLIDE 8: PARAMETERS & FORMULAS ==================== -->
 <section class="slide">
   <div class="eye">Technical Formulas</div>
   <h2>Parameters, Formulas &amp; Quantization Algorithms</h2>
@@ -541,10 +654,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 7 / 12</span><span>Parameters &amp; Formulas</span></div>
+  <div class="foot"><span>Slide 8 / 13</span><span>Parameters &amp; Formulas</span></div>
 </section>
 
-<!-- ==================== SLIDE 8: THE PROCESS WE FOLLOWED ==================== -->
+<!-- ==================== SLIDE 9: THE PROCESS WE FOLLOWED ==================== -->
 <section class="slide">
   <div class="eye">Engineering Process</div>
   <h2>The Step-by-Step Process We Followed</h2>
@@ -581,10 +694,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       <p>1.10 Billion parameters. Evaluated standard multi-head attention baseline to see if older architectures degrade faster than newer models.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 8 / 12</span><span>The Process We Followed</span></div>
+  <div class="foot"><span>Slide 9 / 13</span><span>The Process We Followed</span></div>
 </section>
 
-<!-- ==================== SLIDE 9: EVALUATION & RESULTS ==================== -->
+<!-- ==================== SLIDE 10: EVALUATION & RESULTS ==================== -->
 <section class="slide">
   <div class="eye">Empirical Findings</div>
   <h2>Evaluation Results: Tiers 1–4 vs. Tier 5</h2>
@@ -648,10 +761,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       <p>While facts and fluency remain fine at 4-bit, multi-step math and rule-following suffer an <b>18+ percentage point collapse</b>!</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 9 / 12</span><span>Evaluation Results</span></div>
+  <div class="foot"><span>Slide 10 / 13</span><span>Evaluation Results</span></div>
 </section>
 
-<!-- ==================== SLIDE 10: CONFIDENCE & STATISTICAL CHECKS ==================== -->
+<!-- ==================== SLIDE 11: CONFIDENCE & STATISTICAL CHECKS ==================== -->
 <section class="slide">
   <div class="eye">Deeper Analysis</div>
   <h2>The Confidence Crisis &amp; Statistical Validation</h2>
@@ -683,15 +796,15 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
         <ul style="padding-left:1.2vw;margin-top:.8vh;display:flex;flex-direction:column;gap:.6vh">
           <li>We ran <b>10,000 bootstrap resamples</b> with 95% Confidence Intervals.</li>
           <li><b>8-Bit Drop:</b> 95% CI is $[-0.4\%, +0.2\%]$ (enclosing zero) — mathematically indistinguishable from original.</li>
-          <li><b>4-Bit Reasoning Drop:</b> 95% CI is $[+15.3\%, +22.1\%]$ ($p < 0.0001$) — 100% statistically confirmed.</li>
+          <li><b>4-Bit Reasoning Drop:</b> 95% CI is $[+15.3\%, +22.1\%]$ ($p &lt; 0.0001$) — 100% statistically confirmed.</li>
         </ul>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 10 / 12</span><span>Confidence &amp; Statistical Validation</span></div>
+  <div class="foot"><span>Slide 11 / 13</span><span>Confidence &amp; Statistical Validation</span></div>
 </section>
 
-<!-- ==================== SLIDE 11: ENGINEERING DECISION GUIDE ==================== -->
+<!-- ==================== SLIDE 12: ENGINEERING DECISION GUIDE ==================== -->
 <section class="slide">
   <div class="eye">Practical Solution</div>
   <h2>The Engineering Rulebook: Which Format When?</h2>
@@ -743,10 +856,10 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
   <div class="card" style="margin-top:1.8vh;background:#0d3527">
     <b style="color:var(--gold)">The Golden Rule:</b> For simple recall and chatbots, 4-bit AWQ saves huge memory with zero noticeable downside. But the moment an app requires multi-step logic or strict JSON schema, you must stay at 8-bit.
   </div>
-  <div class="foot"><span>Slide 11 / 12</span><span>Engineering Decision Guide</span></div>
+  <div class="foot"><span>Slide 12 / 13</span><span>Engineering Decision Guide</span></div>
 </section>
 
-<!-- ==================== SLIDE 12: CONCLUSION ==================== -->
+<!-- ==================== SLIDE 13: CONCLUSION ==================== -->
 <section class="slide">
   <div class="eye">Summary</div>
   <h2>Conclusion &amp; Key Takeaways</h2>
@@ -783,13 +896,13 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 12 / 12</span><span>Conclusion</span></div>
+  <div class="foot"><span>Slide 13 / 13</span><span>Conclusion</span></div>
 </section>
 
 <!-- ==================== NAVIGATION BAR ==================== -->
 <nav>
   <button id="p">◀ PREV</button>
-  <span id="c">1 / 12</span>
+  <span id="c">1 / 13</span>
   <button id="x">NEXT ▶</button>
   <button id="f">⛶ FULLSCREEN</button>
 </nav>
@@ -817,7 +930,7 @@ function wrap(t){
 }
 var nd='';
 for(j=0;j<N;j++){
-  var h=SL[j].querySelector('h2,h1'),t=j==0?'START':j==N-1?'FINISH':h.textContent.trim(),ls=wrap(t),tx='';
+  var h=SL[j].querySelector('h2,h1'),t=j==0?'START':j==1?'ARCHITECTURE':j==N-1?'FINISH':h.textContent.trim(),ls=wrap(t),tx='';
   ls.forEach(function(s,q){tx+='<tspan x="0" dy="'+(q?42:0)+'">'+s.replace(/&/g,'&amp;')+'</tspan>'});
   nd+='<g class="nd" data-j="'+j+'" transform="translate('+PT[j][0]+','+PT[j][1]+')"><circle class="c" r="58"/><text class="t" y="14" text-anchor="middle">'+(j+1)+'</text><text class="l" y="115" text-anchor="middle">'+tx+'</text></g>';
 }
