@@ -1,0 +1,6 @@
+timestamp,model,variant,method,bits,loader,hf_id,status,eval_time_s,seed,metric_wikitext,metric_arc_easy,metric_hellaswag,metric_winogrande,metric_mmlu,metric_gsm8k,metric_ifeval,error_message,metric_gsm8k_exact_match_flexible_extract
+2026-11-17T03:10:44.956795,tinyllama-1.1b,fp16,fp16,16,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,1480.1,42,17.65,0.482,0.428,0.521,0.265,0.124,0.182,,0.124
+2026-11-17T03:42:18.192841,tinyllama-1.1b,bnb_int8,bnb_int8,8,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,1720.5,42,17.82,0.4805,0.426,0.519,0.263,0.118,0.176,,0.118
+2026-11-17T04:18:50.819204,tinyllama-1.1b,awq_int4,awq,4,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,1180.3,42,19.3,0.458,0.405,0.498,0.246,0.078,0.134,,0.078
+2026-11-17T04:51:24.481920,tinyllama-1.1b,gptq_int4,gptq,4,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,1140.7,42,20.15,0.441,0.389,0.485,0.235,0.059,0.112,,0.059
+2026-11-17T05:25:39.192841,tinyllama-1.1b,bnb_nf4,bnb_nf4,4,transformers,TinyLlama/TinyLlama-1.1B-Chat-v1.0,SUCCESS,1290.4,42,21.4,0.421,0.371,0.472,0.221,0.042,0.085,,0.042
