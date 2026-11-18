@@ -1,6 +1,0 @@
-timestamp,model,variant,method,bits,loader,hf_id,status,eval_time_s,seed,metric_wikitext,metric_arc_easy,metric_hellaswag,metric_winogrande,metric_mmlu,metric_gsm8k,metric_ifeval,error_message,metric_gsm8k_exact_match_flexible_extract
-2026-11-17T03:20:10.519284,qwen2.5-0.5b,fp16,fp16,16,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,1120.4,42,14.82,0.584,0.541,0.548,0.412,0.321,0.364,,0.321
-2026-11-17T03:48:33.291048,qwen2.5-0.5b,bnb_int8,bnb_int8,8,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,1340.2,42,14.94,0.5825,0.539,0.546,0.4105,0.306,0.349,,0.306
-2026-11-17T04:22:19.481920,qwen2.5-0.5b,awq_int4,awq,4,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,920.15,42,15.91,0.568,0.522,0.529,0.398,0.234,0.279,,0.234
-2026-11-17T04:55:04.182910,qwen2.5-0.5b,gptq_int4,gptq,4,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,895.4,42,16.45,0.551,0.508,0.512,0.379,0.192,0.238,,0.192
-2026-11-17T05:28:49.619284,qwen2.5-0.5b,bnb_nf4,bnb_nf4,4,transformers,Qwen/Qwen2.5-0.5B-Instruct,SUCCESS,1010.8,42,16.98,0.538,0.491,0.499,0.362,0.165,0.211,,0.165
