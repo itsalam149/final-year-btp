@@ -533,7 +533,7 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
       </div>
       <div class="card r">
         <h3 style="color:#ff9e94">What Actually Happens (Downstream Tasks)</h3>
-        <p>When you ask the same 4-bit model to solve a multi-step math problem or follow strict JSON formatting, accuracy drops from <b>38.5% down to 19.8%</b>!</p>
+        <p>In published literature (e.g. Jin et al., ACL 2024), when researchers test 4-bit models on multi-step reasoning or strict instruction formatting, downstream accuracy suffers a severe, disproportionate collapse!</p>
       </div>
     </div>
     <div>
@@ -702,109 +702,127 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
 
 <!-- ==================== SLIDE 10: EVALUATION & RESULTS ==================== -->
 <section class="slide">
-  <div class="eye">Empirical Findings</div>
-  <h2>Evaluation Results: Tiers 1–4 vs. Tier 5</h2>
+  <div class="eye">Empirical Findings &amp; Live Baselines</div>
+  <h2>Empirical Baseline Execution &amp; Grid Status</h2>
   <div class="rule"></div>
-  <p style="margin-bottom:1.2vh">Here are the real benchmark numbers from our evaluation grid:</p>
+  <p style="margin-bottom:1.2vh">Live verified baseline execution on Kaggle T4 cloud GPU alongside our distributed evaluation matrix:</p>
 
   <table class="tbl">
     <thead>
       <tr>
-        <th>Quantization Variant</th>
-        <th>WikiText (Fluency)</th>
+        <th>Model Architecture &amp; Variant</th>
+        <th>WikiText (PPL)</th>
         <th>ARC-Easy (Facts)</th>
+        <th>HellaSwag (Commonsense)</th>
+        <th>WinoGrande (Logic)</th>
         <th>MMLU (Knowledge)</th>
-        <th>GSM8K (Math CoT)</th>
-        <th>IFEval (Strict Rules)</th>
+        <th>Execution Status</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><b>FP16 (Original Baseline)</b></td>
+        <td><b>Llama-3.2-1B FP16 Baseline</b></td>
         <td><b>11.23</b></td>
         <td><b>63.22%</b></td>
+        <td><b>60.78%</b></td>
+        <td><b>58.96%</b></td>
         <td><b>46.00%</b></td>
-        <td><b>38.5%</b></td>
-        <td><b>42.1%</b></td>
+        <td><span class="badge b-green">Verified Live (Kaggle T4)</span></td>
       </tr>
       <tr>
-        <td><b>BitsAndBytes INT8 (8-bit)</b></td>
-        <td>11.31 <small>(+0.08)</small></td>
-        <td>63.15% <small>(-0.07)</small></td>
-        <td>45.85% <small>(-0.15)</small></td>
-        <td>36.8% <small>(-1.7 pp)</small></td>
-        <td>40.5% <small>(-1.6 pp)</small></td>
+        <td><b>Llama-3.2-1B BnB INT8 (8-bit)</b></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
       </tr>
       <tr>
-        <td><b>AWQ INT4 (4-bit Best)</b></td>
-        <td>12.18 <small>(+0.95)</small></td>
-        <td>61.40% <small>(-1.82)</small></td>
-        <td>43.10% <small>(-2.90)</small></td>
-        <td>26.2% <small>(-12.3 pp)</small></td>
-        <td>32.8% <small>(-9.3 pp)</small></td>
+        <td><b>Llama-3.2-1B AWQ INT4 (4-bit)</b></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
       </tr>
       <tr>
-        <td><b>BitsAndBytes NF4 (4-bit Naive)</b></td>
-        <td>12.85 <small>(+1.62)</small></td>
-        <td>58.70% <small>(-4.52)</small></td>
-        <td>39.80% <small>(-6.20)</small></td>
-        <td><b style="color:var(--red)">19.8% (-18.7 pp)</b></td>
-        <td><b style="color:var(--red)">24.6% (-17.5 pp)</b></td>
+        <td><b>Llama-3.2-1B BnB NF4 (4-bit)</b></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
+      </tr>
+      <tr>
+        <td><b>Qwen2.5-0.5B (All 5 Variants)</b></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td><span class="badge b-yellow">Assigned: Ekansh (Kaggle)</span></td>
+      </tr>
+      <tr>
+        <td><b>TinyLlama-1.1B (All 5 Variants)</b></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td><span class="badge b-yellow">Assigned: Guneet (Kaggle)</span></td>
       </tr>
     </tbody>
   </table>
 
   <div class="split" style="margin-top:1.5vh">
     <div class="card g">
-      <h3 style="color:var(--gold)">Key Finding 1: 8-Bit is Completely Safe</h3>
-      <p>Across every single test, 8-bit quantization retains &gt;98% of original performance. The drop is less than 0.2% on standard recall.</p>
+      <h3 style="color:var(--gold)">Hardware Milestone: Zero CUDA OOM</h3>
+      <p>Successfully overcame the quadratic memory attention crash on 16GB T4 GPUs by enforcing <code>max_length=2048</code> and batch size 4, running <b>108,371 evaluation requests</b> cleanly.</p>
     </div>
-    <div class="card r">
-      <h3 style="color:#ff9e94">Key Finding 2: 4-Bit Kills Reasoning</h3>
-      <p>While facts and fluency remain fine at 4-bit, multi-step math and rule-following suffer an <b>18+ percentage point collapse</b>!</p>
+    <div class="card" style="background:rgba(9,39,30,.6);border-left:3px solid var(--ac)">
+      <h3 style="color:var(--ac)">Distributed Orchestration Architecture</h3>
+      <p>Execution distributed across 3 independent student Kaggle accounts with atomic per-task persistence (<code>upsert_result_row</code>) preventing data loss on kernel timeouts.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 10 / 13</span><span>Evaluation Results</span></div>
+  <div class="foot"><span>Slide 10 / 13</span><span>Baseline Execution &amp; Grid Status</span></div>
 </section>
 
 <!-- ==================== SLIDE 11: CONFIDENCE & STATISTICAL CHECKS ==================== -->
 <section class="slide">
-  <div class="eye">Deeper Analysis</div>
-  <h2>The Confidence Crisis &amp; Statistical Validation</h2>
+  <div class="eye">Statistical Methodology</div>
+  <h2>Stanford HELM Calibration &amp; Statistical Engine</h2>
   <div class="rule"></div>
 
   <div class="split">
     <div>
       <div class="card r" style="height:100%">
-        <span class="n" style="background:var(--red);color:#2b0e0c">SAFETY ISSUE</span>
-        <h3 style="color:#ff9e94">The "Confidently Wrong" Problem</h3>
-        <p style="margin-top:.6vh">We tested Expected Calibration Error (ECE) — how well model confidence matches real accuracy:</p>
-        <div style="margin-top:1.2vh;display:flex;flex-direction:column;gap:.8vh">
-          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
-            <span>FP16 Baseline ECE</span><b>0.068 (Well Calibrated)</b>
-          </div>
-          <div class="bx no" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
-            <span>4-Bit NF4 ECE</span><b style="color:var(--red)">0.189 (3x Worse!)</b>
-          </div>
+        <span class="n" style="background:var(--red);color:#2b0e0c">UNCERTAINTY LAYER</span>
+        <h3 style="color:#ff9e94">The Calibration Problem (ECE Metric)</h3>
+        <p style="margin-top:.6vh">We incorporate the Stanford CRFM HELM formulation for Expected Calibration Error:</p>
+        <div style="background:rgba(0,0,0,.35);padding:.8vh 1vw;border-radius:8px;font-family:monospace;font-size:.82rem;color:var(--gold);margin:.8vh 0">
+          ECE = &Sigma; (|B_m| / N) * |acc(B_m) - conf(B_m)|
         </div>
-        <p style="font-size:.84rem;margin-top:1.2vh">Quantized models output 99% probability on wrong answers. Safety filters cannot detect their mistakes!</p>
+        <p style="font-size:.84rem;margin-top:.8vh"><b>Theoretical Vulnerability:</b> Low-bit discretization increases logit variance, saturating softmax probabilities towards 0 or 1. Models become <i>confidently wrong</i> on hallucinations, bypassing safety filters.</p>
       </div>
     </div>
 
     <div>
       <div class="card g" style="height:100%">
-        <span class="n">MATHEMATICAL PROOF</span>
-        <h3 style="color:var(--gold)">10,000-Iteration Bootstrap Validation</h3>
-        <p style="margin-top:.6vh">To ensure our findings weren't just luck or random test noise:</p>
-        <ul style="padding-left:1.2vw;margin-top:.8vh;display:flex;flex-direction:column;gap:.6vh">
-          <li>We ran <b>10,000 bootstrap resamples</b> with 95% Confidence Intervals.</li>
-          <li><b>8-Bit Drop:</b> 95% CI is $[-0.4\%, +0.2\%]$ (enclosing zero) — mathematically indistinguishable from original.</li>
-          <li><b>4-Bit Reasoning Drop:</b> 95% CI is $[+15.3\%, +22.1\%]$ ($p &lt; 0.0001$) — 100% statistically confirmed.</li>
+        <span class="n">STATISTICAL RIGOR</span>
+        <h3 style="color:var(--gold)">10,000-Iteration Bootstrap Engine</h3>
+        <p style="margin-top:.6vh">To eliminate benchmark stochastic noise and establish true significance:</p>
+        <ul style="padding-left:1.2vw;margin-top:.8vh;display:flex;flex-direction:column;gap:.8vh">
+          <li><b>Paired Bootstrap Algorithm:</b> Implemented in <code>src/metrics/statistical.py</code> using Bias-Corrected and Accelerated (BCa) resamples (N=10,000).</li>
+          <li><b>Distribution-Free Testing:</b> Avoids invalid Gaussian assumptions on bounded [0, 1] accuracy scores.</li>
+          <li><b>Decision Rule:</b> Computes exact 95% Confidence Intervals for $\Delta(\text{FP16} - \text{quant})$, formally proving if degradation exceeds our $\le 3.0\text{ pp}$ safety envelope (p < 0.05).</li>
         </ul>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 11 / 13</span><span>Confidence &amp; Statistical Validation</span></div>
+  <div class="foot"><span>Slide 11 / 13</span><span>Statistical Engine &amp; Calibration</span></div>
 </section>
 
 <!-- ==================== SLIDE 12: ENGINEERING DECISION GUIDE ==================== -->

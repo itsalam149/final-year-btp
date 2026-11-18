@@ -97,14 +97,14 @@ When machine learning teams deploy language models to edge devices (e.g., smartp
 
 The established research literature commonly asserts that 4-bit Post-Training Quantization (PTQ) incurs ``near-zero degradation'' based on \textbf{Language Modeling Perplexity} (e.g., WikiText word perplexity increasing by less than $1.0$ point).
 
-\textbf{Our Core Finding:} In Small Language Models ($<2\text{B}$ parameters), text perplexity is a \textit{deceptive metric}. While text remains superficially fluent, multi-step symbolic reasoning (e.g., GSM8K math) and negative-constraint instruction following (IFEval) suffer a \textbf{catastrophic collapse exceeding 18 percentage points}.
+\textbf{Our Core Hypothesis:} In Small Language Models ($<2\text{B}$ parameters), text perplexity is a \textit{deceptive metric}. While text remains superficially fluent, multi-step symbolic reasoning (e.g., GSM8K math) and negative-constraint instruction following (IFEval) suffer a severe collapse in published literature (e.g., Jin et al., ACL 2024), which our 5-tier evaluation framework systematically investigates.
 
 \subsection{Project Scope \& Contributions}
 \begin{enumerate}[leftmargin=*]
   \item \textbf{105-Run Empirical Evaluation Grid:} 3 distinct model architectures ($\text{Qwen2.5-0.5B}$, $\text{Llama-3.2-1B}$, $\text{TinyLlama-1.1B}$) evaluated across 5 precision formats ($\text{FP16}$, $\text{BnB INT8}$, $\text{BnB NF4}$, $\text{GPTQ INT4}$, $\text{AWQ INT4}$) over 7 standardized benchmarks.
   \item \textbf{5-Tier Cognitive Evaluation Ladder:} Disentangling model degradation across language modeling, factual recall, commonsense logic, broad exam knowledge, and generative reasoning.
-  \item \textbf{Stanford CRFM HELM Metrics:} Demonstrating that 4-bit quantization triples Expected Calibration Error ($\text{ECE} = 0.068 \rightarrow 0.189$), producing dangerously overconfident hallucinated outputs.
-  \item \textbf{Statistical Validation Engine:} 10,000-iteration Paired Bootstrap Confidence Intervals (BCa) proving that 8-bit degradation is statistically indistinguishable from zero ($p > 0.05$), while 4-bit reasoning collapse is definitive ($p < 0.0001$).
+  \item \textbf{Stanford CRFM HELM Metrics:} Formalizing Expected Calibration Error (ECE) analysis to evaluate whether 4-bit discretization induces overconfidence and softmax temperature collapse.
+  \item \textbf{Statistical Validation Engine:} 10,000-iteration Paired Bootstrap Confidence Intervals (BCa) implemented in \texttt{src/metrics/statistical.py} to establish distribution-free 95\% confidence intervals for $\Delta(\text{FP16} - \text{quant})$.
   \item \textbf{Noise-Aware Bit-Budget Decision Rules:} A prescriptive engineering framework providing exact bit-budget allocations bounded by a maximum allowable accuracy drop constraint ($\Delta \le 3.0\text{ pp}$).
 \end{enumerate}
 
@@ -165,14 +165,14 @@ Third, it runs 100\% offline with zero server bills and zero latency delays.''
 
 % ----------------------------------------------------
 \subsection{Slide 5: The Problem: The ``Perplexity Illusion''}
-\textbf{Slide Content:} The trap of evaluating only text fluency (WikiText +0.95 delta) while downstream multi-step math (GSM8K) drops by 18.7 percentage points.
+\textbf{Slide Content:} The trap of evaluating only text fluency (WikiText word perplexity) while downstream multi-step math and instruction-following suffer severe collapse in literature.
 
 \begin{scriptbox}
 ``However, there is a dangerous trap that academic papers routinely overlook. We call this the \textbf{`Perplexity Illusion'}.
-When researchers test a 4-bit model, they standardly evaluate text perplexity on datasets like WikiText-2. And indeed, the perplexity barely changes---our Llama-3.2-1B baseline measured 11.23 in FP16 and only 12.18 in 4-bit AWQ. To a human reader, the text sounds natural and fluent.
+When researchers test a 4-bit model, they standardly evaluate text perplexity on datasets like WikiText-2. On paper, perplexity barely shifts---our verified baseline for Llama-3.2-1B FP16 achieved 11.23 perplexity, maintaining natural fluency.
 
-Because of this, many practitioners assume 4-bit quantization is `lossless'. But when we evaluated that exact same model on multi-step math reasoning in GSM8K, the accuracy cratered from 38.5\% down to 19.8\%.
-Large 70-billion parameter models have redundant parameters to absorb rounding errors, but small language models under 2 billion parameters operate at the efficiency frontier. In small models, quantization noise directly destroys critical reasoning paths.''
+Because perplexity stays low, many practitioners assume 4-bit quantization is `lossless'. However, recent literature (e.g., Jin et al., ACL 2024) reveals that when these same models are tested on multi-step reasoning or strict instruction formatting, downstream accuracy suffers a severe, disproportionate collapse.
+Large 70-billion parameter models have redundant parameters to absorb rounding errors, but small language models under 2 billion parameters operate at the efficiency frontier. In small models, quantization noise directly destroys critical reasoning circuits.''
 \end{scriptbox}
 
 % ----------------------------------------------------
@@ -241,31 +241,29 @@ Every completed sub-task is committed immediately into an atomic CSV datastore, 
 \end{scriptbox}
 
 % ----------------------------------------------------
-\subsection{Slide 10: Evaluation Results: Tiers 1--4 vs. Tier 5}
-\textbf{Slide Content:} The empirical results table showing that 8-bit is lossless ($<0.2\text{ pp}$ drop) while 4-bit causes an 18+ percentage point drop in GSM8K.
+\subsection{Slide 10: Empirical Baseline Execution \& Grid Status}
+\textbf{Slide Content:} Live verified baseline benchmark execution for Llama-3.2-1B on Kaggle T4 GPU alongside the multi-account evaluation matrix.
 
 \begin{scriptbox}
-``Now, let us examine our core empirical results. This table compares Llama-3.2-1B across its precision levels:
-Notice the clear divide between Tiers 1 through 4 versus Tier 5:
+``Now, let us examine our empirical execution status. On this slide, we present the verified live baseline benchmark for Llama-3.2-1B on Kaggle T4 cloud GPUs:
 \begin{itemize}[leftmargin=*]
-  \item \textbf{8-bit is completely safe:} On ARC-Easy, HellaSwag, and MMLU, BitsAndBytes INT8 performance is virtually indistinguishable from the FP16 baseline---the degradation is less than 0.2 percentage points.
-  \item \textbf{4-bit preserves facts:} In AWQ 4-bit, ARC-Easy only drops by 1.8\% and MMLU by 2.9\%.
-  \item \textbf{The Reasoning Cliff in Tier 5:} In GSM8K math, accuracy collapses from 38.5\% in FP16 down to 26.2\% in AWQ, and down to 19.8\% in NF4---a catastrophic loss of 18.7 percentage points!
+  \item Language modeling word perplexity achieved 11.23 across all rolling context windows.
+  \item Factual recall on ARC-Easy achieved 63.22\%, HellaSwag 60.78\%, WinoGrande 58.96\%, and MMLU 46.00\%.
+  \item Crucially, we achieved our core systems milestone: we solved the quadratic memory attention crash on 16GB GPUs by enforcing context capping (max\_length=2048, batch\_size=4), successfully executing 108,371 requests without a single OOM.
 \end{itemize}
-This provides conclusive empirical proof of our hypothesis: surface knowledge survives 4-bit quantization, but multi-step reasoning collapses.''
+Our multi-account cloud grid is currently executing the remaining quantization variants across 3 independent student accounts with automated task-level persistence.''
 \end{scriptbox}
 
 % ----------------------------------------------------
-\subsection{Slide 11: The Confidence Crisis \& Statistical Validation}
-\textbf{Slide Content:} Expected Calibration Error (ECE) spike from 0.068 to 0.189, and 10,000-iteration Paired Bootstrap Confidence Intervals ($p < 0.0001$).
+\subsection{Slide 11: Stanford HELM Calibration \& Statistical Engine}
+\textbf{Slide Content:} Expected Calibration Error (ECE) formulation and 10,000-iteration Paired Bootstrap Confidence Intervals (BCa).
 
 \begin{scriptbox}
-``We went deeper than raw accuracy by examining Stanford CRFM HELM safety metrics:
-First, we measured \textbf{Expected Calibration Error (ECE)}. In 4-bit NF4, ECE triples from 0.068 to 0.189. Quantization distorts the softmax logit distribution, causing the model to output extreme 99\% probabilities even when producing complete hallucinations. In safety-critical apps, confidence filters fail to catch these errors.
+``Beyond raw accuracy, our evaluation pipeline incorporates rigorous statistical and uncertainty frameworks:
+First, we implemented the Stanford CRFM HELM formulation for \textbf{Expected Calibration Error (ECE)}. Low-bit discretization increases logit variance, which mathematically causes softmax probabilities to saturate towards 0 or 1---an effective temperature collapse. As a result, quantized models can output extreme 99\% confidence on hallucinations, bypassing safety filters.
 
-Second, to prove our findings were not random noise, we executed a \textbf{10,000-iteration Paired Bootstrap} resampling test:
-For 8-bit, the 95\% confidence interval for accuracy delta encloses zero ($-0.4\%$ to $+0.2\%$), confirming that 8-bit loss is statistically undetectable.
-For 4-bit GSM8K, the 95\% confidence interval is strictly positive ($+15.3\%$ to $+22.1\%$, $p < 0.0001$), mathematically proving that the reasoning collapse is genuine and reproducible.''
+Second, to ensure empirical evaluations avoid benchmark stochastic noise, we built a \textbf{10,000-iteration Paired Bootstrap} statistical engine in \texttt{src/metrics/statistical.py} using Bias-Corrected and Accelerated (BCa) resamples.
+This provides distribution-free 95\% confidence intervals on $\Delta(\text{FP16} - \text{quant})$, formally testing whether degradation breaches our $\le 3.0\text{ pp}$ safety envelope at $p < 0.05$.''
 \end{scriptbox}
 
 % ----------------------------------------------------
@@ -431,25 +429,20 @@ By resampling instance indices with replacement 10,000 times, we compute the tru
 \]
 A perfectly calibrated model has $\text{ECE}=0$, meaning that when it is 80\% confident, it is correct 80\% of the time.
 
-In our experiments, 4-bit NF4 caused ECE to triple from 0.068 to 0.189. This occurs because aggressive 4-bit discretization removes fine-grained weight distinctions in the final linear classification head. As a result, the unnormalized logit variance increases, causing an effective \textbf{temperature collapse} where the softmax function saturates towards 0 or 1. The model outputs extreme $>95\%$ confidence even when predicting completely incorrect tokens.''
+In our theoretical evaluation framework, we track ECE to detect the well-documented overconfidence failure mode in low-bit quantized models. Aggressive 4-bit discretization removes fine-grained weight distinctions in the final linear classification head. As a result, the unnormalized logit variance increases, causing an effective \textbf{temperature collapse} where the softmax function saturates towards 0 or 1. The model outputs extreme $>95\%$ confidence even when predicting completely incorrect tokens.''
 \end{qabox}
 
-\begin{qabox}{What is Rank Inversion, and what does your Spearman correlation ($\rho = 0.618$) indicate?}
+\begin{qabox}{What is Rank Inversion, and what does your Spearman correlation proxy analysis investigate?}
 \textbf{Examiner Focus:} RQ2 answer and architectural insights.
 
 \textbf{Model Answer:}
-``Rank Inversion occurs when the relative performance ordering of models at full precision (FP16) changes or reverses when compressed to low-bit precision.
-In our experiments, at FP16 precision:
-\[
-\text{Llama-3.2-1B} > \text{Qwen2.5-0.5B} > \text{TinyLlama-1.1B}
-\]
-However, under 4-bit AWQ, Qwen2.5-0.5B retained 39.8\% on MMLU due to its Grouped Query Attention and wider intermediate MLP dimensions, matching Llama-3.2-1B NF4 (39.8\%) and substantially outperforming TinyLlama-1.1B.
+``Rank Inversion occurs when the relative performance ordering of models at full precision (FP16) changes or reverses when compressed to low-bit precision. For example, a model that outperforms another at FP16 may degrade much faster under aggressive 4-bit compression if its architecture is less resilient (e.g., differences in Grouped Query Attention or MLP expansion ratios).
 
-Computing the Spearman rank-order correlation coefficient:
+In our methodology, we compute the Spearman rank-order correlation coefficient:
 \[
 \rho = 1 - \frac{6 \sum d_i^2}{n(n^2 - 1)}
 \]
-revealed that while standard recall maintains high rank correlation ($\rho = 0.942$), complex generative reasoning drops to $\rho = 0.618$ ($p = 0.04$). This proves that an engineer cannot choose an edge model based on Hugging Face FP16 leaderboard rankings; quantization resilience is architecture-dependent.''
+between text perplexity degradation ($\Delta\text{WikiText}$) and downstream task degradation ($\Delta\text{Acc}$). This directly tests whether language modeling perplexity is a faithful proxy ($\rho \le -0.70$) or whether task degradation is decoupled ($|\rho| < 0.40$), formally proving whether practitioners can rely on FP16 leaderboard rankings for edge deployment decisions.''
 \end{qabox}
 
 % ====================================================
@@ -494,39 +487,54 @@ However, recent literature (such as Dettmers et al. on QLoRA and Kim et al. on Q
 \end{qabox}
 
 \newpage
-\section{Quick-Reference Empirical Data Cheat Sheet}
+\section{Quick-Reference Empirical Data \& Evaluation Matrix}
 
-Keep these verified baseline numbers in mind during the viva defense:
+Keep these verified live baseline numbers and experimental grid status in mind during the viva defense:
 
+\subsection{Verified Live Baseline Execution (Kaggle T4 Cloud GPU)}
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{lcccccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Model \& Variant} & \textbf{WikiText (PPL)} & \textbf{ARC-Easy} & \textbf{HellaSwag} & \textbf{MMLU} & \textbf{GSM8K (CoT)} & \textbf{ECE} \\
+\textbf{Benchmark Task} & \textbf{Metric} & \textbf{Sample Size} & \textbf{Verified Score} & \textbf{Systems Stability} \\
 \midrule
-\textbf{Llama-3.2-1B FP16} & \textbf{11.23} & \textbf{63.22\%} & \textbf{60.78\%} & \textbf{46.00\%} & \textbf{38.5\%} & \textbf{0.068} \\
-Llama-3.2-1B BnB INT8 & 11.31 & 63.15\% & 60.62\% & 45.85\% & 36.8\% & 0.072 \\
-Llama-3.2-1B AWQ INT4 & 12.18 & 61.40\% & 58.20\% & 43.10\% & 26.2\% & 0.124 \\
-Llama-3.2-1B GPTQ INT4 & 12.54 & 59.80\% & 56.90\% & 41.50\% & 22.4\% & 0.142 \\
-Llama-3.2-1B BnB NF4 & 12.85 & 58.70\% & 55.30\% & 39.80\% & 19.8\% & 0.189 \\
-\midrule
-\textbf{Qwen2.5-0.5B FP16} & 14.82 & 58.40\% & 54.10\% & 41.20\% & 32.1\% & 0.082 \\
-Qwen2.5-0.5B AWQ INT4 & 15.91 & 56.80\% & 52.20\% & 39.80\% & 23.4\% & 0.138 \\
-\midrule
-\textbf{TinyLlama-1.1B FP16} & 17.65 & 48.20\% & 42.80\% & 26.50\% & 12.4\% & 0.112 \\
-TinyLlama-1.1B NF4 & 21.40 & 42.10\% & 37.10\% & 22.10\% & 4.2\% & 0.224 \\
+\textbf{WikiText-2} & Word Perplexity (PPL) & 62 windows & \textbf{11.23} & Capped Context (\texttt{max\_length=2048}) \\
+\textbf{ARC-Easy} & Accuracy & 2,376 & \textbf{63.22\%} & Zero CUDA Out-Of-Memory Crashes \\
+\textbf{HellaSwag} & Accuracy (Norm) & 10,042 & \textbf{60.78\%} & 108,371 Requests Cleanly Executed \\
+\textbf{WinoGrande} & Accuracy & 1,267 & \textbf{58.96\%} & Memory-Capped Batching on 16GB VRAM \\
+\textbf{MMLU} & Accuracy & 14,042 & \textbf{46.00\%} & Broad Multi-Subject Evaluation \\
 \bottomrule
 \end{tabular}
-\caption{Empirical Benchmark Grid across Evaluated Models and Quantization Variants.}
+\caption{Verified Live Baseline Execution for Llama-3.2-1B-Instruct (FP16).}
+\end{table}
+
+\subsection{Multi-Account Distributed Evaluation Grid (15 Variants)}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Architecture} & \textbf{Params} & \textbf{Quantization Method} & \textbf{Lead Student} & \textbf{Execution Status} \\
+\midrule
+\textbf{Llama-3.2-1B} & 1.23B & FP16 Baseline & Faqre Alam & \textbf{Verified Live (Kaggle T4)} \\
+Llama-3.2-1B & 1.23B & BnB INT8, AWQ, GPTQ, NF4 & Faqre Alam & Kaggle Run In Progress \\
+\midrule
+\textbf{Qwen2.5-0.5B} & 490M & FP16, BnB INT8, AWQ, GPTQ, NF4 & Ekansh Agarwal & Kaggle Run In Progress \\
+\midrule
+\textbf{TinyLlama-1.1B} & 1.10B & FP16, BnB INT8, AWQ, GPTQ, NF4 & Guneet Toppo & Kaggle Run In Progress \\
+\bottomrule
+\end{tabular}
+\caption{Multi-Account Distributed Execution Matrix across 3 Student Accounts.}
 \end{table}
 
 \begin{keybox}
 \textbf{Core Defense Rule:} Whenever asked about numbers:
 \begin{itemize}[leftmargin=*]
-  \item \textbf{8-bit}: Drops are consistently under $0.2\text{ pp}$ on factual recall and under $1.7\text{ pp}$ on math.
-  \item \textbf{4-bit AWQ}: Drops are under $3.0\text{ pp}$ on factual recall, but collapse by $12.3\text{ pp}$ on GSM8K.
-  \item \textbf{4-bit NF4}: Suffers the worst drop ($18.7\text{ pp}$ on GSM8K) and highest calibration error ($\text{ECE}=0.189$).
+  \item \textbf{Verified Baseline:} Cite Faqre's live Kaggle run for Llama-3.2-1B FP16 ($11.23$ PPL, $63.22\%$ ARC-Easy, $60.78\%$ HellaSwag, $58.96\%$ WinoGrande, $46.00\%$ MMLU).
+  \item \textbf{Systems Achievement:} Emphasize solving the $\mathcal{O}(L^2)$ quadratic memory attention crash on 16GB GPUs via context window capping (\texttt{max\_length=2048}, \texttt{batch\_size=4}), running 108,371 requests without OOM.
+  \item \textbf{Distributed Orchestration:} Explain that the 15-variant evaluation matrix is distributed across 3 student Kaggle accounts with atomic database logging (\texttt{upsert\_result\_row}) for zero data loss on kernel timeout.
+  \item \textbf{Statistical Rigor:} State that our 10,000-iteration Paired Bootstrap (BCa) engine in \texttt{src/metrics/statistical.py} will compute exact 95\% confidence intervals for $\Delta(\text{FP16} - \text{quant})$ as grid execution concludes.
 \end{itemize}
 \end{keybox}
 
