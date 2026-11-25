@@ -31,6 +31,8 @@ import kotlinx.coroutines.launch
 fun ChatScreen(
     controller: AgentController,
     voiceManager: VoiceManager? = null,
+    galleryManager: com.dtu.mobileagent.engine.ModelGalleryManager? = null,
+    onImportLocalModel: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -41,6 +43,7 @@ fun ChatScreen(
 
     val hardwareTelemetry by controller.hardwareProfiler.telemetry.collectAsState()
     var showDetailedTelemetry by remember { mutableStateOf(false) }
+    var showModelGallery by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
 
@@ -72,6 +75,15 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    // Edge Model Gallery (Google Edge Gallery style model hub)
+                    IconButton(onClick = { showModelGallery = true }) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = "Edge Model Gallery",
+                            tint = EmeraldGlow
+                        )
+                    }
+
                     // Hardware Telemetry Toggle
                     IconButton(onClick = { showDetailedTelemetry = !showDetailedTelemetry }) {
                         Icon(
@@ -247,6 +259,24 @@ fun ChatScreen(
                 onConfirm = { approved ->
                     coroutineScope.launch {
                         controller.confirmPendingAction(approved)
+                    }
+                }
+            )
+        }
+
+        // Edge Model Gallery Sheet
+        if (showModelGallery && galleryManager != null) {
+            ModelGallerySheet(
+                galleryManager = galleryManager,
+                onDismiss = { showModelGallery = false },
+                onImportLocalFile = {
+                    showModelGallery = false
+                    onImportLocalModel()
+                },
+                onModelActivated = { spec ->
+                    showModelGallery = false
+                    coroutineScope.launch {
+                        controller.switchModel(spec.filename)
                     }
                 }
             )

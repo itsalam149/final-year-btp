@@ -40,5 +40,4 @@ find_library(log-lib log)
 target_link_libraries(
     llama-bridge
     ${log-lib}
-    atomic
 )

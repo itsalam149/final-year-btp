@@ -3,11 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 
-      PRIVACY GUARANTEE:
-      Notice the complete absence of android.permission.INTERNET.
-      This guarantees at the OS sandbox level that the application CANNOT transmit
-      user voice, notes, documents, or conversation history to external servers.
+      PRIVACY & OFFLINE ARCHITECTURE:
+      Internet access is permitted solely for the in-app Edge Model Gallery to download
+      open-source quantized GGUF models on demand (like Google AI Edge Gallery).
+      All agent inference, memory, calendar, notes, and tool execution run strictly OFFLINE on-device.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Local alarm & reminder scheduling -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />

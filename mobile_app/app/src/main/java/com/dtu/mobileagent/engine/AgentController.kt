@@ -66,6 +66,19 @@ class AgentController(
         )
     }
 
+    suspend fun switchModel(modelFilename: String) {
+        _uiState.value = _uiState.value.copy(isProcessing = true)
+        val success = llamaBridge.initialize(modelFilename)
+        val metrics = llamaBridge.getMetrics()
+        hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
+        _uiState.value = _uiState.value.copy(
+            isProcessing = false,
+            isModelLoaded = success,
+            currentTokensPerSec = metrics.tokensPerSecond,
+            currentMemoryMb = metrics.memoryFootprintMb
+        )
+    }
+
     suspend fun handleUserMessage(text: String) {
         if (text.isBlank()) return
 

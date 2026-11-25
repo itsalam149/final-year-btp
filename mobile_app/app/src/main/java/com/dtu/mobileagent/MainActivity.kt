@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.dtu.mobileagent.engine.AgentController
 import com.dtu.mobileagent.ui.ChatScreen
 import com.dtu.mobileagent.ui.OfflineMobileAgentTheme
+import com.dtu.mobileagent.engine.ModelGalleryManager
 import com.dtu.mobileagent.voice.VoiceManager
 import kotlinx.coroutines.launch
 
@@ -19,6 +20,20 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var agentController: AgentController
     private lateinit var voiceManager: VoiceManager
+    private lateinit var galleryManager: ModelGalleryManager
+
+    private val filePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            lifecycleScope.launch {
+                val success = galleryManager.importLocalModel(it, "imported_model.gguf")
+                if (success) {
+                    agentController.switchModel("imported_model.gguf")
+                }
+            }
+        }
+    }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -30,6 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val app = application as MobileAgentApplication
+        galleryManager = ModelGalleryManager(this)
         agentController = AgentController(this, app.database)
 
         // Initialize offline voice pipeline
@@ -56,7 +72,9 @@ class MainActivity : ComponentActivity() {
             OfflineMobileAgentTheme {
                 ChatScreen(
                     controller = agentController,
-                    voiceManager = voiceManager
+                    voiceManager = voiceManager,
+                    galleryManager = galleryManager,
+                    onImportLocalModel = { filePickerLauncher.launch("*/*") }
                 )
             }
         }
