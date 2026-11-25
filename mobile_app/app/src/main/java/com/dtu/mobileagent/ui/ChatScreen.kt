@@ -1,7 +1,9 @@
 package com.dtu.mobileagent.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +49,6 @@ fun ChatScreen(
     var showModelGallery by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
-
     var inputText by remember { mutableStateOf("") }
 
     // Scroll to bottom when message arrives
@@ -61,12 +63,21 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(
-                            text = "Offline Mobile AI Agent",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(EmeraldGlow)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Offline Mobile AI Agent",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
                         Text(
                             text = "DTU GP159 • Llama-3.2-1B (Q4_K_M GBNF)",
                             fontSize = 11.sp,
@@ -75,7 +86,7 @@ fun ChatScreen(
                     }
                 },
                 actions = {
-                    // Edge Model Gallery (Google Edge Gallery style model hub)
+                    // Edge Model Gallery (Google Edge Gallery style hub)
                     IconButton(onClick = { showModelGallery = true }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,
@@ -88,12 +99,12 @@ fun ChatScreen(
                     IconButton(onClick = { showDetailedTelemetry = !showDetailedTelemetry }) {
                         Icon(
                             imageVector = Icons.Default.Analytics,
-                            contentDescription = "Toggle Hardware Telemetry",
+                            contentDescription = "Toggle Telemetry",
                             tint = if (showDetailedTelemetry) BlueAccent else TextSecondary
                         )
                     }
 
-                    // Offline Text-to-Speech Toggle
+                    // Spoken Voice Toggle
                     IconButton(onClick = { controller.toggleVoiceOutput() }) {
                         Icon(
                             imageVector = if (uiState.isVoiceOutputEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
@@ -127,7 +138,7 @@ fun ChatScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 OfflineSecurityBadge()
                 Spacer(modifier = Modifier.height(6.dp))
@@ -141,27 +152,45 @@ fun ChatScreen(
                 }
             }
 
-            // Message stream
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(messages) { msg ->
-                    MessageBubble(msg)
+            // Message Stream or Welcome Screen
+            if (messages.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    WelcomeHero(
+                        onPromptSelected = { prompt ->
+                            coroutineScope.launch {
+                                controller.handleUserMessage(prompt)
+                            }
+                        }
+                    )
                 }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(messages) { msg ->
+                        MessageBubble(msg)
+                    }
 
-                if (uiState.isProcessing) {
-                    item {
-                        AgentProcessingIndicator()
+                    if (uiState.isProcessing) {
+                        item {
+                            AgentProcessingIndicator()
+                        }
                     }
                 }
             }
 
-            // Input bar
+            // Input Bar
             Surface(
                 color = SurfaceDark,
                 modifier = Modifier.fillMaxWidth(),
@@ -170,7 +199,7 @@ fun ChatScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextField(
@@ -200,7 +229,7 @@ fun ChatScreen(
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    // Offline Voice Input Button (Microphone)
+                    // Voice Input Button
                     IconButton(
                         onClick = {
                             if (isListening) {
@@ -225,6 +254,7 @@ fun ChatScreen(
 
                     Spacer(modifier = Modifier.width(6.dp))
 
+                    // Send Button
                     IconButton(
                         onClick = {
                             if (inputText.isNotBlank() && !uiState.isProcessing) {
@@ -285,6 +315,116 @@ fun ChatScreen(
 }
 
 @Composable
+fun WelcomeHero(onPromptSelected: (String) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Futuristic DTU AI Core Emblem
+        Surface(
+            color = CardBackground,
+            shape = RoundedCornerShape(16.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(EmeraldOffline.copy(alpha = 0.4f), Color.Transparent)
+                            )
+                        )
+                        .border(1.5.dp, EmeraldOffline, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Memory,
+                        contentDescription = "Edge AI Core",
+                        tint = EmeraldGlow,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Offline Autonomous Mobile Agent",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "DTU Dept of CSE • GP159\nGuide: Ms. Gull Kaur | 100% Private On-Device",
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "QUICK PROMPTS",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextMuted,
+            letterSpacing = 1.sp
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val prompts = listOf(
+            "Schedule a BTP review meeting tomorrow at 11 AM",
+            "Set a reminder to verify model training loss at 6 PM",
+            "What is my battery and thermal telemetry?",
+            "How does zero-cloud egress protect my privacy?"
+        )
+
+        prompts.forEach { prompt ->
+            Surface(
+                color = CardBackground.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle.copy(alpha = 0.6f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clickable { onPromptSelected(prompt) }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = BlueAccent,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = prompt,
+                        fontSize = 12.sp,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun MessageBubble(message: ChatMessageEntity) {
     val isUser = message.sender == "user"
     val bubbleColor = if (isUser) DtuRedPrimary else CardBackground
@@ -295,31 +435,33 @@ fun MessageBubble(message: ChatMessageEntity) {
         horizontalAlignment = alignment
     ) {
         if (!isUser && message.thought.isNotBlank()) {
-            // Display model reasoning thought
             Surface(
                 color = SurfaceDark,
                 shape = RoundedCornerShape(8.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
                 modifier = Modifier
                     .padding(bottom = 4.dp)
-                    .widthIn(max = 300.dp)
+                    .widthIn(max = 310.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
                     Icon(
                         imageVector = Icons.Default.Psychology,
                         contentDescription = "Reasoning",
                         tint = BlueAccent,
-                        modifier = Modifier.size(13.dp)
+                        modifier = Modifier
+                            .size(14.dp)
+                            .padding(top = 2.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Thought: ${message.thought}",
+                        text = message.thought,
                         fontSize = 11.sp,
                         color = TextSecondary,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 15.sp
                     )
                 }
             }
@@ -328,7 +470,7 @@ fun MessageBubble(message: ChatMessageEntity) {
         // Tool Badge if action was taken
         if (!message.toolName.isNullOrBlank()) {
             Surface(
-                color = EmeraldDark.copy(alpha = 0.2f),
+                color = EmeraldDark.copy(alpha = 0.25f),
                 shape = RoundedCornerShape(6.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.5f)),
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -360,8 +502,8 @@ fun MessageBubble(message: ChatMessageEntity) {
             shape = RoundedCornerShape(
                 topStart = 14.dp,
                 topEnd = 14.dp,
-                bottomStart = if (isUser) 14.dp else 2.dp,
-                bottomEnd = if (isUser) 2.dp else 14.dp
+                bottomStart = if (isUser) 14.dp else 3.dp,
+                bottomEnd = if (isUser) 3.dp else 14.dp
             ),
             modifier = Modifier.widthIn(max = 310.dp)
         ) {
@@ -369,6 +511,7 @@ fun MessageBubble(message: ChatMessageEntity) {
                 text = message.content,
                 color = TextPrimary,
                 fontSize = 14.sp,
+                lineHeight = 19.sp,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
             )
         }

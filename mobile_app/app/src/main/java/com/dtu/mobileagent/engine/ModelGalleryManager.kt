@@ -1,21 +1,22 @@
 package com.dtu.mobileagent.engine
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Environment
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 data class ModelSpec(
     val id: String,
@@ -33,7 +34,8 @@ data class ModelDownloadProgress(
     val isDownloading: Boolean = false,
     val progressPct: Float = 0.0f,
     val downloadedBytes: Long = 0L,
-    val totalBytes: Long = 0L
+    val totalBytes: Long = 0L,
+    val errorMessage: String? = null
 )
 
 /**
@@ -94,6 +96,9 @@ class ModelGalleryManager(private val context: Context) {
     private val _downloadStates = MutableStateFlow<Map<String, ModelDownloadProgress>>(emptyMap())
     val downloadStates: StateFlow<Map<String, ModelDownloadProgress>> = _downloadStates.asStateFlow()
 
+    private val downloadJobs = mutableMapOf<String, Job>()
+    private val downloadScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     fun isModelDownloaded(spec: ModelSpec): Boolean {
         val file = File(modelsDir, spec.filename)
         return file.exists() && file.length() > 1024 * 1024 // At least 1MB to avoid empty placeholders
@@ -115,8 +120,9 @@ class ModelGalleryManager(private val context: Context) {
     suspend fun importLocalModel(uri: Uri, targetFileName: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val destFile = File(modelsDir, targetFileName)
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                FileOutputStream(destFile).use { output ->
+            val stream: InputStream? = context.contentResolver.openInputStream(uri)
+            stream?.use { input ->
+                destFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
@@ -129,33 +135,141 @@ class ModelGalleryManager(private val context: Context) {
     }
 
     /**
-     * Downloads model directly to internal storage via DownloadManager or HTTP client.
+     * Downloads model directly to internal storage via streaming HTTP connection.
+     * Follows redirects automatically and writes directly to app private storage.
      */
     fun startDownload(spec: ModelSpec) {
+        if (downloadJobs[spec.id]?.isActive == true) return
+
         val current = _downloadStates.value.toMutableMap()
         current[spec.id] = ModelDownloadProgress(
             modelId = spec.id,
             isDownloading = true,
-            progressPct = 0.05f
+            progressPct = 0.001f,
+            downloadedBytes = 0L,
+            totalBytes = spec.sizeMb.toLong() * 1024L * 1024L
         )
         _downloadStates.value = current
 
-        try {
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val request = DownloadManager.Request(Uri.parse(spec.downloadUrl))
-                .setTitle("Downloading ${spec.displayName}")
-                .setDescription("Downloading on-device quantized AI model (${spec.sizeMb} MB)")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationUri(Uri.fromFile(File(modelsDir, spec.filename)))
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(false)
+        val job = downloadScope.launch {
+            val destFile = File(modelsDir, spec.filename)
+            val tempFile = File(modelsDir, "${spec.filename}.download")
+            try {
+                var currentUrl = spec.downloadUrl
+                var connection: HttpURLConnection
+                var redirects = 0
 
-            val downloadId = downloadManager.enqueue(request)
-            Log.i(TAG, "Enqueued download for ${spec.displayName} (Download ID: $downloadId)")
-        } catch (e: Exception) {
-            Log.e(TAG, "Could not start download for ${spec.displayName}", e)
-            current[spec.id] = ModelDownloadProgress(modelId = spec.id, isDownloading = false)
-            _downloadStates.value = current
+                while (true) {
+                    val url = URL(currentUrl)
+                    connection = url.openConnection() as HttpURLConnection
+                    connection.instanceFollowRedirects = false
+                    connection.connectTimeout = 30000
+                    connection.readTimeout = 60000
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) MobileAgent/1.0")
+
+                    val code = connection.responseCode
+                    if (code == HttpURLConnection.HTTP_MOVED_PERM ||
+                        code == HttpURLConnection.HTTP_MOVED_TEMP ||
+                        code == HttpURLConnection.HTTP_SEE_OTHER ||
+                        code == 307 || code == 308) {
+                        val location = connection.getHeaderField("Location")
+                        if (location.isNullOrEmpty()) throw IllegalStateException("Redirect missing Location header")
+                        currentUrl = if (location.startsWith("http://") || location.startsWith("https://")) {
+                            location
+                        } else {
+                            URL(URL(currentUrl), location).toString()
+                        }
+                        connection.disconnect()
+                        redirects++
+                        if (redirects > 10) throw IllegalStateException("Exceeded max redirects")
+                        continue
+                    }
+                    if (code != HttpURLConnection.HTTP_OK) {
+                        throw IllegalStateException("HTTP error $code: ${connection.responseMessage}")
+                    }
+                    break
+                }
+
+                val remoteSize = connection.contentLengthLong.let {
+                    if (it > 0) it else connection.getHeaderField("x-linked-size")?.toLongOrNull() ?: (spec.sizeMb.toLong() * 1024L * 1024L)
+                }
+
+                if (tempFile.exists()) tempFile.delete()
+
+                connection.inputStream.use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        val buffer = ByteArray(256 * 1024) // 256 KB buffer for high speed
+                        var bytesRead: Int
+                        var downloaded = 0L
+                        var lastUpdate = System.currentTimeMillis()
+
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            downloaded += bytesRead
+
+                            val now = System.currentTimeMillis()
+                            if (now - lastUpdate > 250) {
+                                lastUpdate = now
+                                val pct = (downloaded.toFloat() / remoteSize.toFloat()).coerceIn(0f, 0.99f)
+                                val updated = _downloadStates.value.toMutableMap()
+                                updated[spec.id] = ModelDownloadProgress(
+                                    modelId = spec.id,
+                                    isDownloading = true,
+                                    progressPct = pct,
+                                    downloadedBytes = downloaded,
+                                    totalBytes = remoteSize
+                                )
+                                _downloadStates.value = updated
+                            }
+                        }
+                        output.flush()
+                    }
+                }
+
+                if (tempFile.exists()) {
+                    if (destFile.exists()) destFile.delete()
+                    tempFile.renameTo(destFile)
+                }
+
+                val finished = _downloadStates.value.toMutableMap()
+                finished[spec.id] = ModelDownloadProgress(
+                    modelId = spec.id,
+                    isDownloading = false,
+                    progressPct = 1.0f,
+                    downloadedBytes = destFile.length(),
+                    totalBytes = destFile.length()
+                )
+                _downloadStates.value = finished
+                Log.i(TAG, "Download successfully completed: ${destFile.absolutePath} (${destFile.length() / (1024 * 1024)} MB)")
+            } catch (e: Exception) {
+                Log.e(TAG, "Download failed for ${spec.displayName}", e)
+                if (tempFile.exists()) tempFile.delete()
+                val errMap = _downloadStates.value.toMutableMap()
+                errMap[spec.id] = ModelDownloadProgress(
+                    modelId = spec.id,
+                    isDownloading = false,
+                    progressPct = 0f,
+                    errorMessage = e.message ?: "Download failed"
+                )
+                _downloadStates.value = errMap
+            } finally {
+                downloadJobs.remove(spec.id)
+            }
         }
+        downloadJobs[spec.id] = job
+    }
+
+    fun cancelDownload(spec: ModelSpec) {
+        downloadJobs[spec.id]?.cancel()
+        downloadJobs.remove(spec.id)
+        val tempFile = File(modelsDir, "${spec.filename}.download")
+        if (tempFile.exists()) tempFile.delete()
+        val updated = _downloadStates.value.toMutableMap()
+        updated[spec.id] = ModelDownloadProgress(
+            modelId = spec.id,
+            isDownloading = false,
+            progressPct = 0f
+        )
+        _downloadStates.value = updated
     }
 }
