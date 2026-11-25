@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -304,7 +305,7 @@ fun ChatScreen(
                             .background(if (inputText.isNotBlank()) EmeraldOffline else BorderSubtle)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
@@ -373,14 +374,16 @@ fun CleanWelcomeCard(
 
         Spacer(modifier = Modifier.height(18.dp))
 
+        data class WelcomePrompt(val icon: String, val text: String)
+
         val prompts = listOf(
-            "⏰ Remind me to study at 7 PM",
-            "🗓️ What's my schedule for today?",
-            "📝 Take a note: BTP review on Monday",
-            "📱 Open WhatsApp"
+            WelcomePrompt("⏰", "Remind me to study at 7 PM"),
+            WelcomePrompt("🗓️", "What's my schedule for today?"),
+            WelcomePrompt("📝", "Take a note: BTP review on Monday"),
+            WelcomePrompt("📱", "Open WhatsApp")
         )
 
-        prompts.forEach { prompt ->
+        prompts.forEach { item ->
             Surface(
                 color = CardBackground,
                 shape = RoundedCornerShape(12.dp),
@@ -388,10 +391,10 @@ fun CleanWelcomeCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable { onPromptSelected(prompt.substring(3).trim()) }
+                    .clickable { onPromptSelected(item.text) }
             ) {
                 Text(
-                    text = prompt,
+                    text = "${item.icon}  ${item.text}",
                     fontSize = 13.sp,
                     color = TextPrimary,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)

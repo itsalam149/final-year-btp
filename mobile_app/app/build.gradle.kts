@@ -127,4 +127,7 @@ dependencies {
 
     // JSON Parsing for Function Calling Schemas
     implementation(libs.gson)
+
+    // Unit Testing
+    testImplementation("junit:junit:4.13.2")
 }
