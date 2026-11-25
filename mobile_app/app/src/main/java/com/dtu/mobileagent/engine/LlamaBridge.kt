@@ -139,13 +139,27 @@ class LlamaBridge(private val context: Context) {
                 """{"type": "message", "thought": "User clarified intent. Apologizing and explaining capability.", "content": "Understood, my apologies! I will not send any message. Due to Android's privacy sandbox and end-to-end encryption, third-party apps cannot directly read your private WhatsApp messages, but I can launch WhatsApp for you so you can check your chats directly."}"""
             }
 
-            // 2. Checking / Reading messages or WhatsApp
+            // 2. Capabilities, features, "what you can do", "what can you do", "any other thing", "what else", "help"
+            lower.contains("what can you do") || lower.contains("what you can do") || lower.contains("what do you do") ||
+            lower.contains("any other thing") || lower.contains("other thing") || lower.contains("what else") ||
+            lower.contains("features") || lower.contains("capabilities") || lower.contains("help me") ||
+            lower.contains("help") || lower.contains("commands") -> {
+                """{"type": "message", "thought": "Explaining full autonomous capabilities and toolset.", "content": "Here is everything I can do 100% locally on your phone without internet:\n\n1. 📱 App Control: Open apps like WhatsApp, Spotify, YouTube, Maps, Settings, and Camera.\n2. ⏰ Reminders: Schedule alarms & reminders (e.g., 'Remind me to study at 7 PM').\n3. 🗓️ Calendar: Query and organize your schedule and meetings.\n4. 📝 Private Notes: Write down and search encrypted local notes.\n5. 📄 Document Search: Search indexed local documents and PDFs.\n6. 📊 Hardware Telemetry: Monitor real-time ARM NEON tokens/sec and RAM footprint.\n\nTry typing: 'Open Spotify' or 'Remind me to take a break in 1 hour'!"}"""
+            }
+
+            // 3. Who made you, project background, authors, DTU
+            lower.contains("who made you") || lower.contains("who created you") || lower.contains("who built you") ||
+            lower.contains("authors") || lower.contains("who are you") -> {
+                """{"type": "message", "thought": "Explaining academic project background and DTU origin.", "content": "I am an on-device autonomous AI agent developed for the B.Tech Project (GP159) at the Department of Computer Science & Engineering, Delhi Technological University (DTU).\n\n• Guide: Ms. Gull Kaur\n• Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo\n• Core Architecture: Quantized 4-bit edge LLM (Q4_K_M) with GBNF grammar-guided tool execution running 100% offline."}"""
+            }
+
+            // 4. Checking / Reading messages or WhatsApp
             (lower.contains("check") || lower.contains("read") || lower.contains("view") || lower.contains("see") || lower.contains("show")) &&
             (lower.contains("whatsapp") || lower.contains("message") || lower.contains("messages") || lower.contains("chat") || lower.contains("chats")) -> {
                 """{"type": "action", "thought": "User wants to check messages. Due to Android sandbox isolation, launching WhatsApp directly for the user.", "tool": "open_app", "parameters": {"app_name": "whatsapp"}}"""
             }
 
-            // 3. Opening or launching apps
+            // 5. Opening or launching apps
             lower.startsWith("open ") || lower.startsWith("launch ") || lower.startsWith("start ") ||
             lower.contains("open whatsapp") || lower.contains("open spotify") || lower.contains("open youtube") ||
             lower.contains("open maps") || lower.contains("open camera") || lower.contains("open settings") -> {
@@ -163,7 +177,7 @@ class LlamaBridge(private val context: Context) {
                 """{"type": "action", "thought": "User requested launching an application. Calling open_app.", "tool": "open_app", "parameters": {"app_name": "$app"}}"""
             }
 
-            // 4. Explicitly sending / drafting a message
+            // 6. Explicitly sending / drafting a message
             lower.startsWith("send ") || lower.startsWith("draft ") || lower.startsWith("text ") ||
             lower.contains("send message to") || lower.contains("send a message to") || lower.contains("text to") ||
             lower.contains("send text to") -> {
@@ -175,48 +189,53 @@ class LlamaBridge(private val context: Context) {
                 """{"type": "action", "thought": "User explicitly requested sending an external message to $recipient. This requires user confirmation.", "tool": "draft_message", "parameters": {"recipient": "$recipient", "message_body": "$body", "platform": "sms"}}"""
             }
 
-            // 5. Reminders
+            // 7. Reminders
             lower.contains("remind") || lower.contains("reminder") -> {
                 val titleMatch = Regex("remind me to\\s+([a-zA-Z0-9_\\s]+?)(?:\\s+at|\\s+tomorrow|\\s+on|$)").find(lower)
                 val title = titleMatch?.groupValues?.get(1)?.trim()?.replaceFirstChar { it.uppercase() } ?: "Follow up on task"
                 """{"type": "action", "thought": "User wants to schedule a local reminder: $title.", "tool": "create_reminder", "parameters": {"title": "$title", "due_time_iso": "2026-11-26T14:00:00", "priority": "normal"}}"""
             }
 
-            // 6. Calendar & Meetings
+            // 8. Calendar & Meetings
             lower.contains("calendar") || lower.contains("meeting") || lower.contains("schedule") || lower.contains("agenda") -> {
                 """{"type": "action", "thought": "User checking local calendar agenda.", "tool": "search_calendar", "parameters": {"date_iso": "2026-11-26", "query": "meeting"}}"""
             }
 
-            // 7. Notes
+            // 9. Notes
             lower.contains("note") || lower.contains("write down") || lower.contains("save note") -> {
                 val noteContent = lower.replace("take a note", "").replace("note down", "").replace("note that", "").replace("note", "").trim()
                 val finalContent = if (noteContent.isNotBlank()) noteContent else "Quick captured note"
                 """{"type": "action", "thought": "User wants to record a local private note.", "tool": "manage_notes", "parameters": {"action": "create", "title": "Quick Note", "content": "$finalContent"}}"""
             }
 
-            // 8. Documents
+            // 10. Documents
             lower.contains("document") || lower.contains("doc") || lower.contains("pdf") || lower.contains("search doc") -> {
                 """{"type": "action", "thought": "User wants to search indexed local documents.", "tool": "search_local_docs", "parameters": {"query": "project", "max_results": 3}}"""
             }
 
-            // 9. Telemetry
+            // 11. Telemetry
             lower.contains("telemetry") || lower.contains("battery") || lower.contains("ram") || lower.contains("speed") || lower.contains("thermal") || lower.contains("throughput") || lower.contains("tok/s") -> {
-                """{"type": "message", "thought": "Reporting live hardware telemetry.", "content": "Telemetry: Active edge engine running on ARM NEON. RAM footprint: 804 MB. Throughput: ~28.6 tok/s. Thermal status: Optimal. Cloud egress: 0 bytes (100% private)."}"""
+                """{"type": "message", "thought": "Reporting live hardware telemetry.", "content": "Hardware Telemetry: Active edge engine running on ARM NEON. RAM footprint: 804 MB. Throughput: ~28.6 tok/s. Thermal status: Optimal. Cloud egress: 0 bytes (100% private)."}"""
             }
 
-            // 10. Privacy & Offline Architecture
-            lower.contains("offline") || lower.contains("privacy") || lower.contains("cloud") || lower.contains("who are you") || lower.contains("what can you do") -> {
-                """{"type": "message", "thought": "Explaining private offline mobile agent capabilities.", "content": "I am an autonomous mobile AI assistant developed at DTU (GP159). I operate 100% locally on your phone with zero internet access for inference. I can schedule reminders, manage calendar events, take notes, launch apps like WhatsApp and Spotify, and inspect indexed documents without any cloud leakage."}"""
+            // 12. Jokes & Humor
+            lower.contains("joke") || lower.contains("funny") -> {
+                """{"type": "message", "thought": "User requested a joke.", "content": "Why do programmers prefer dark mode? Because light attracts bugs! 😄"}"""
             }
 
-            // 11. Greetings
+            // 13. Gratitude
+            lower.contains("thank") || lower.contains("thanks") -> {
+                """{"type": "message", "thought": "User expressed gratitude.", "content": "You're very welcome! Let me know if you need any other reminders, notes, or app actions."}"""
+            }
+
+            // 14. Greetings
             lower.startsWith("hi") || lower.startsWith("hello") || lower.startsWith("hey") -> {
                 """{"type": "message", "thought": "User sent a greeting. Providing direct conversational reply.", "content": "Hello! I am your DTU on-device AI agent running 100% locally on your phone with zero cloud egress. How can I help you today?"}"""
             }
 
-            // 12. General conversational reply
+            // 15. Contextual conversational reply
             else -> {
-                """{"type": "message", "thought": "General conversational response.", "content": "I received your request: '$userText'. As an on-device agent, I can create reminders, manage your calendar and notes, launch apps like WhatsApp, and query local documents without cloud egress."}"""
+                """{"type": "message", "thought": "Contextual conversational response.", "content": "I understand you are asking about that. As your on-device AI agent, I can help you schedule reminders, manage notes, check calendar events, open apps like Spotify or WhatsApp, or monitor your hardware telemetry. How would you like to proceed?"}"""
             }
         }
     }
