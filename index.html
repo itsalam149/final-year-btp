@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline Mobile AI Agent — DTU CSE</title>
+  <title>Offline Mobile Agent — DTU CSE</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,21 +23,21 @@
       border: 1px solid #1E293B;
       border-radius: 20px;
       padding: 32px 24px;
-      max-width: 420px;
+      max-width: 440px;
       width: 100%;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
     .icon-box {
-      width: 72px;
-      height: 72px;
+      width: 76px;
+      height: 76px;
       margin: 0 auto 16px auto;
       background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(9, 13, 22, 0) 70%);
       border: 2px solid #10B981;
-      border-radius: 50%;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 34px;
     }
     h1 {
       font-size: 22px;
@@ -65,20 +65,20 @@
     }
     .btn-download {
       display: block;
-      background: linear-gradient(135deg, #B91C1C 0%, #EF4444 100%);
+      background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%);
       color: #FFFFFF;
       text-decoration: none;
       font-weight: 700;
       font-size: 16px;
       padding: 16px 24px;
       border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 4px 20px rgba(29, 78, 216, 0.4);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
       margin-bottom: 24px;
     }
     .btn-download:active {
       transform: scale(0.98);
-      box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+      box-shadow: 0 2px 10px rgba(29, 78, 216, 0.3);
     }
     .info-box {
       background: #1E293B;
@@ -90,7 +90,7 @@
       line-height: 1.6;
     }
     .info-box strong {
-      color: #F59E0B;
+      color: #38BDF8;
       display: block;
       margin-bottom: 6px;
       font-size: 13px;
@@ -100,6 +100,19 @@
     }
     .step-list li {
       margin-bottom: 6px;
+    }
+    .feature-list {
+      list-style: none;
+      margin: 12px 0 0 0;
+      padding: 0;
+    }
+    .feature-list li {
+      margin-bottom: 4px;
+      color: #94A3B8;
+    }
+    .feature-list li span {
+      color: #34D399;
+      font-weight: 600;
     }
     .footer {
       margin-top: 24px;
@@ -111,29 +124,35 @@
 <body>
   <div class="card">
     <div class="icon-box">⚡</div>
-    <h1>Offline Mobile AI Agent</h1>
-    <span class="badge">v1.0.4 • Google Gemma-2-2B & Multi-Topic Knowledge AI</span>
+    <h1>Offline Mobile Agent</h1>
+    <span class="badge">v1.0.5 • Model Switching & Clean UI</span>
     <p class="subtitle">
       DTU Dept of CSE • GP159<br>
-      High-speed local Llama-3.2-1B model gallery & agentic tools.
+      Guide: Ms. Gull Kaur | Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo
     </p>
 
     <a href="/app-release.apk" class="btn-download">
-      Download Single APK (12 MB)
+      Download APK v1.0.5 (12 MB)
     </a>
 
     <div class="info-box">
-      <strong>⚠️ To fix "App not installed":</strong>
+      <strong>✨ What's New in v1.0.5:</strong>
+      <ul class="feature-list">
+        <li><span>⚡ Model Switching:</span> Instant 1-tap dropdown in top bar + Edge Gallery (Gemma-2-2B, Llama-3.2, Qwen-2.5).</li>
+        <li><span>🎨 Clean UI/UX:</span> Streamlined modern dark chat, removed clunky metric blocks & thought boxes.</li>
+        <li><span>📱 Launcher Icon:</span> High-resolution custom tech icon across all Android densities.</li>
+        <li><span>🎯 Focused Functionality:</span> Natural conversation + Reminders, Calendar, Notes, and App Launcher.</li>
+      </ul>
+      <br>
+      <strong>⚠️ Installation Note:</strong>
       <ol class="step-list">
-        <li><strong>Uninstall</strong> any older version from your phone first (long press the app icon &rarr; Uninstall).</li>
-        <li>Tap the <strong>Download Single APK</strong> button above.</li>
-        <li>Open the downloaded APK and tap <strong>Install</strong>.</li>
+        <li>If you had an earlier build, uninstall it first to avoid certificate mismatch.</li>
+        <li>Tap <strong>Download APK v1.0.5</strong> above and install.</li>
       </ol>
     </div>
 
     <div class="footer">
-      Delhi Technological University • Department of CSE<br>
-      Guide: Ms. Gull Kaur
+      Delhi Technological University • Department of CSE
     </div>
   </div>
 </body>

@@ -1,6 +1,5 @@
 package com.dtu.mobileagent.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dtu.mobileagent.data.local.entities.ChatMessageEntity
 import com.dtu.mobileagent.engine.AgentController
+import com.dtu.mobileagent.engine.ModelGalleryManager
 import com.dtu.mobileagent.voice.VoiceInputState
 import com.dtu.mobileagent.voice.VoiceManager
 import kotlinx.coroutines.launch
@@ -34,7 +33,7 @@ import kotlinx.coroutines.launch
 fun ChatScreen(
     controller: AgentController,
     voiceManager: VoiceManager? = null,
-    galleryManager: com.dtu.mobileagent.engine.ModelGalleryManager? = null,
+    galleryManager: ModelGalleryManager? = null,
     onImportLocalModel: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -44,8 +43,7 @@ fun ChatScreen(
     val voiceState by voiceManager?.inputState?.collectAsState() ?: remember { mutableStateOf(VoiceInputState.Idle) }
     val isListening = voiceState is VoiceInputState.Listening
 
-    val hardwareTelemetry by controller.hardwareProfiler.telemetry.collectAsState()
-    var showDetailedTelemetry by remember { mutableStateOf(false) }
+    var showModelMenu by remember { mutableStateOf(false) }
     var showModelGallery by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
@@ -72,48 +70,101 @@ fun ChatScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Offline Mobile AI Agent",
-                                fontSize = 17.sp,
+                                text = "Offline Mobile Agent",
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                         }
                         Text(
-                            text = "DTU GP159 • Llama-3.2-1B (Q4_K_M GBNF)",
+                            text = "100% on-device • ${uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")} • ${uiState.currentTokensPerSec} tps",
                             fontSize = 11.sp,
                             color = TextSecondary
                         )
                     }
                 },
                 actions = {
-                    // Edge Model Gallery (Google Edge Gallery style hub)
+                    // Quick Engine Switcher Dropdown Pill
+                    Box {
+                        Surface(
+                            onClick = { showModelMenu = true },
+                            color = CardBackground,
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = EmeraldGlow,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = uiState.activeModel.displayName.take(11),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = showModelMenu,
+                            onDismissRequest = { showModelMenu = false },
+                            modifier = Modifier.background(SurfaceDark)
+                        ) {
+                            ModelGalleryManager.CATALOG.forEach { spec ->
+                                val isSelected = uiState.activeModel.id == spec.id
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = spec.displayName,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) EmeraldGlow else TextPrimary,
+                                                fontSize = 13.sp
+                                            )
+                                            Text(
+                                                text = "${spec.precision} • ${spec.sizeMb} MB • ~${spec.ramMb} MB RAM",
+                                                fontSize = 10.sp,
+                                                color = TextSecondary
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        showModelMenu = false
+                                        coroutineScope.launch {
+                                            controller.switchModel(spec)
+                                            galleryManager?.setActiveModel(spec)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Model Hub Button
                     IconButton(onClick = { showModelGallery = true }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "Edge Model Gallery",
-                            tint = EmeraldGlow
+                            contentDescription = "Model Gallery",
+                            tint = TextSecondary
                         )
                     }
 
-                    // Hardware Telemetry Toggle
-                    IconButton(onClick = { showDetailedTelemetry = !showDetailedTelemetry }) {
-                        Icon(
-                            imageVector = Icons.Default.Analytics,
-                            contentDescription = "Toggle Telemetry",
-                            tint = if (showDetailedTelemetry) BlueAccent else TextSecondary
-                        )
-                    }
-
-                    // Spoken Voice Toggle
-                    IconButton(onClick = { controller.toggleVoiceOutput() }) {
-                        Icon(
-                            imageVector = if (uiState.isVoiceOutputEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
-                            contentDescription = "Toggle Spoken Replies",
-                            tint = if (uiState.isVoiceOutputEnabled) EmeraldGlow else TextSecondary
-                        )
-                    }
-
-                    // Clear Chat History
+                    // Clear History
                     IconButton(onClick = { coroutineScope.launch { controller.clearHistory() } }) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
@@ -134,34 +185,17 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Security badge & Performance Metrics Bar
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
-            ) {
-                OfflineSecurityBadge()
-                Spacer(modifier = Modifier.height(6.dp))
-                ModelMetricsBar(
-                    tokensPerSec = uiState.currentTokensPerSec,
-                    memoryMb = uiState.currentMemoryMb
-                )
-                if (showDetailedTelemetry) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    HardwareTelemetryCard(telemetry = hardwareTelemetry)
-                }
-            }
-
-            // Message Stream or Welcome Screen
+            // Message Feed or Clean Welcome
             if (messages.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    WelcomeHero(
+                    CleanWelcomeCard(
+                        activeModel = uiState.activeModel.displayName,
                         onPromptSelected = { prompt ->
                             coroutineScope.launch {
                                 controller.handleUserMessage(prompt)
@@ -175,16 +209,16 @@ fun ChatScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(messages) { msg ->
-                        MessageBubble(msg)
+                        CleanMessageBubble(msg)
                     }
 
                     if (uiState.isProcessing) {
                         item {
-                            AgentProcessingIndicator()
+                            ProcessingIndicator()
                         }
                     }
                 }
@@ -193,13 +227,12 @@ fun ChatScreen(
             // Input Bar
             Surface(
                 color = SurfaceDark,
-                modifier = Modifier.fillMaxWidth(),
-                tonalElevation = 8.dp
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextField(
@@ -207,7 +240,7 @@ fun ChatScreen(
                         onValueChange = { inputText = it },
                         placeholder = {
                             Text(
-                                "Ask your offline agent...",
+                                "Type a request...",
                                 color = TextMuted,
                                 fontSize = 14.sp
                             )
@@ -217,14 +250,14 @@ fun ChatScreen(
                             unfocusedContainerColor = CardBackground,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary,
-                            cursorColor = DtuRedLight,
+                            cursorColor = EmeraldOffline,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent
                         ),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = RoundedCornerShape(22.dp),
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 48.dp)
+                            .heightIn(min = 46.dp)
                     )
 
                     Spacer(modifier = Modifier.width(6.dp))
@@ -239,20 +272,19 @@ fun ChatScreen(
                             }
                         },
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
                             .background(if (isListening) EmeraldOffline else CardBackground)
-                            .border(1.dp, if (isListening) EmeraldGlow else BorderSubtle, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = "Voice Input",
                             tint = if (isListening) Color.White else TextSecondary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     // Send Button
                     IconButton(
@@ -267,15 +299,15 @@ fun ChatScreen(
                         },
                         enabled = inputText.isNotBlank() && !uiState.isProcessing,
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
-                            .background(if (inputText.isNotBlank()) DtuRedPrimary else BorderSubtle)
+                            .background(if (inputText.isNotBlank()) EmeraldOffline else BorderSubtle)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Send,
                             contentDescription = "Send",
                             tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -306,7 +338,8 @@ fun ChatScreen(
                 onModelActivated = { spec ->
                     showModelGallery = false
                     coroutineScope.launch {
-                        controller.switchModel(spec.filename)
+                        controller.switchModel(spec)
+                        galleryManager.setActiveModel(spec)
                     }
                 }
             )
@@ -315,226 +348,119 @@ fun ChatScreen(
 }
 
 @Composable
-fun WelcomeHero(onPromptSelected: (String) -> Unit) {
+fun CleanWelcomeCard(
+    activeModel: String,
+    onPromptSelected: (String) -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Futuristic DTU AI Core Emblem
-        Surface(
-            color = CardBackground,
-            shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(EmeraldOffline.copy(alpha = 0.4f), Color.Transparent)
-                            )
-                        )
-                        .border(1.5.dp, EmeraldOffline, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = "Edge AI Core",
-                        tint = EmeraldGlow,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Offline Autonomous Mobile Agent",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "DTU Dept of CSE • GP159\nGuide: Ms. Gull Kaur | 100% Private On-Device",
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    lineHeight = 16.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
         Text(
-            text = "QUICK PROMPTS",
-            fontSize = 11.sp,
+            text = "Offline Mobile Agent",
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = TextMuted,
-            letterSpacing = 1.sp
+            color = TextPrimary
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "DTU Dept of CSE • GP159 | $activeModel",
+            fontSize = 12.sp,
+            color = TextSecondary
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
 
         val prompts = listOf(
-            "Schedule a BTP review meeting tomorrow at 11 AM",
-            "Set a reminder to verify model training loss at 6 PM",
-            "What is my battery and thermal telemetry?",
-            "How does zero-cloud egress protect my privacy?"
+            "⏰ Remind me to study at 7 PM",
+            "🗓️ What's my schedule for today?",
+            "📝 Take a note: BTP review on Monday",
+            "📱 Open WhatsApp"
         )
 
         prompts.forEach { prompt ->
             Surface(
-                color = CardBackground.copy(alpha = 0.8f),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle.copy(alpha = 0.6f)),
+                color = CardBackground,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable { onPromptSelected(prompt) }
+                    .clickable { onPromptSelected(prompt.substring(3).trim()) }
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = BlueAccent,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = prompt,
-                        fontSize = 12.sp,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = prompt,
+                    fontSize = 13.sp,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-fun MessageBubble(message: ChatMessageEntity) {
+fun CleanMessageBubble(message: ChatMessageEntity) {
     val isUser = message.sender == "user"
-    val bubbleColor = if (isUser) DtuRedPrimary else CardBackground
+    val bubbleColor = if (isUser) Color(0xFF1D4ED8) else CardBackground
     val alignment = if (isUser) Alignment.End else Alignment.Start
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = alignment
     ) {
-        if (!isUser && message.thought.isNotBlank()) {
-            Surface(
-                color = SurfaceDark,
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                modifier = Modifier
-                    .padding(bottom = 4.dp)
-                    .widthIn(max = 310.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Psychology,
-                        contentDescription = "Reasoning",
-                        tint = BlueAccent,
-                        modifier = Modifier
-                            .size(14.dp)
-                            .padding(top = 2.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = message.thought,
-                        fontSize = 11.sp,
-                        color = TextSecondary,
-                        fontFamily = FontFamily.Monospace,
-                        lineHeight = 15.sp
-                    )
-                }
-            }
-        }
-
-        // Tool Badge if action was taken
-        if (!message.toolName.isNullOrBlank()) {
-            Surface(
-                color = EmeraldDark.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(6.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.5f)),
-                modifier = Modifier.padding(bottom = 4.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Build,
-                        contentDescription = "Tool",
-                        tint = EmeraldOffline,
-                        modifier = Modifier.size(11.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Tool Executed: ${message.toolName}",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = EmeraldGlow
-                    )
-                }
-            }
-        }
-
-        // Core Message Content Bubble
+        // Message Content Bubble
         Surface(
             color = bubbleColor,
             shape = RoundedCornerShape(
-                topStart = 14.dp,
-                topEnd = 14.dp,
-                bottomStart = if (isUser) 14.dp else 3.dp,
-                bottomEnd = if (isUser) 3.dp else 14.dp
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (isUser) 16.dp else 4.dp,
+                bottomEnd = if (isUser) 4.dp else 16.dp
             ),
-            modifier = Modifier.widthIn(max = 310.dp)
+            modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Text(
                 text = message.content,
                 color = TextPrimary,
                 fontSize = 14.sp,
-                lineHeight = 19.sp,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
             )
+        }
+
+        // Clean tool badge if action was performed
+        if (!message.toolName.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(3.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "✓ Executed: ${message.toolName}",
+                    fontSize = 10.sp,
+                    color = EmeraldGlow
+                )
+            }
         }
     }
 }
 
 @Composable
-fun AgentProcessingIndicator() {
+fun ProcessingIndicator() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 6.dp)
+        modifier = Modifier.padding(vertical = 4.dp)
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.size(16.dp),
-            strokeWidth = 2.dp,
-            color = DtuRedLight
+            modifier = Modifier.size(13.dp),
+            strokeWidth = 1.5.dp,
+            color = EmeraldOffline
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "Local LLM reasoning with GBNF grammar...",
-            fontSize = 12.sp,
-            color = TextSecondary,
-            fontFamily = FontFamily.Monospace
+            text = "Thinking...",
+            fontSize = 11.sp,
+            color = TextSecondary
         )
     }
 }

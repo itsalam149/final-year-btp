@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,7 +42,7 @@ fun ModelGallerySheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = TextSecondary.copy(alpha = 0.5f)) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = TextSecondary.copy(alpha = 0.4f)) }
     ) {
         Column(
             modifier = Modifier
@@ -65,49 +66,20 @@ fun ModelGallerySheet(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Edge Model Gallery",
-                            fontSize = 19.sp,
+                            text = "On-Device Model Gallery",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
                     }
                     Text(
-                        text = "Download once directly on-device • Runs 100% offline",
+                        text = "Switch or download offline LLM engines • 100% private",
                         fontSize = 12.sp,
-                        color = EmeraldGlow
+                        color = TextSecondary
                     )
                 }
                 IconButton(onClick = onDismiss) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextSecondary)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Info Card
-            Surface(
-                color = CardBackground.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle.copy(alpha = 0.5f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Info",
-                        tint = BlueAccent,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Models are stored in private internal storage. High-speed direct streaming with zero cloud telemetry.",
-                        fontSize = 11.sp,
-                        color = TextSecondary,
-                        lineHeight = 15.sp
-                    )
                 }
             }
 
@@ -143,17 +115,17 @@ fun ModelGallerySheet(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     OutlinedButton(
                         onClick = onImportLocalFile,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = BlueAccent),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BlueAccent.copy(alpha = 0.5f))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
                     ) {
-                        Icon(imageVector = Icons.Default.FileOpen, contentDescription = "Import GGUF", modifier = Modifier.size(18.dp))
+                        Icon(imageVector = Icons.Default.FileOpen, contentDescription = "Import GGUF", modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Import .GGUF from Phone Storage", fontWeight = FontWeight.SemiBold)
+                        Text("Import .GGUF from Storage", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -177,6 +149,15 @@ fun ModelCardItem(
         label = "DownloadProgress"
     )
 
+    // Visual model identity mapping
+    val (icon, iconColor) = when {
+        spec.id.contains("gemma") -> Pair(Icons.Default.AutoAwesome, Color(0xFF60A5FA))
+        spec.id.contains("3b") -> Pair(Icons.Default.Psychology, Color(0xFFA78BFA))
+        spec.id.contains("1b") -> Pair(Icons.Default.Bolt, Color(0xFF38BDF8))
+        spec.id.contains("qwen") -> Pair(Icons.Default.Speed, Color(0xFF34D399))
+        else -> Pair(Icons.Default.ChatBubbleOutline, Color(0xFFFBBF24))
+    }
+
     Surface(
         color = CardBackground,
         shape = RoundedCornerShape(14.dp),
@@ -187,32 +168,52 @@ fun ModelCardItem(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Title & Active Badge
+            // Header with Engine Icon & Active Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = spec.displayName,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "${spec.precision} • ${spec.sizeMb} MB • ~${spec.ramMb} MB RAM",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(iconColor.copy(alpha = 0.15f))
+                            .border(1.dp, iconColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconColor,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = spec.displayName,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${spec.precision} • ${spec.sizeMb} MB • ~${spec.ramMb} MB RAM",
+                            fontSize = 11.sp,
+                            color = TextSecondary
+                        )
+                    }
                 }
 
                 if (isActive) {
                     Surface(
                         color = EmeraldDark.copy(alpha = 0.35f),
                         shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.6f))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.5f))
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -255,11 +256,10 @@ fun ModelCardItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val mbDownloaded = (downloadProgress?.downloadedBytes ?: 0L).toDouble() / (1024.0 * 1024.0)
-                        val totalMb = spec.sizeMb.toDouble()
                         val pctInt = ((downloadProgress?.progressPct ?: 0f) * 100).toInt()
 
                         Text(
-                            text = "Streaming: ${String.format("%.1f", mbDownloaded)} MB / ${spec.sizeMb} MB ($pctInt%)",
+                            text = "Downloading: ${String.format("%.1f", mbDownloaded)} MB / ${spec.sizeMb} MB ($pctInt%)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = BlueAccent,
@@ -270,7 +270,7 @@ fun ModelCardItem(
                             onClick = onCancelDownload,
                             contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Cancel", tint = DtuRedLight, modifier = Modifier.size(14.dp))
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Cancel", tint = DtuRedLight, modifier = Modifier.size(13.dp))
                             Spacer(modifier = Modifier.width(2.dp))
                             Text("Cancel", color = DtuRedLight, fontSize = 11.sp)
                         }
@@ -282,14 +282,14 @@ fun ModelCardItem(
                         progress = { animatedProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp)
+                            .height(5.dp)
                             .clip(RoundedCornerShape(3.dp)),
                         color = EmeraldOffline,
                         trackColor = BorderSubtle
                     )
                 }
             } else {
-                // Not downloading: Show Action Buttons or Error
+                // Actions: Allow instant switching to any engine + optional offline weights download
                 Column(modifier = Modifier.fillMaxWidth()) {
                     if (downloadProgress?.errorMessage != null) {
                         Surface(
@@ -300,7 +300,7 @@ fun ModelCardItem(
                                 .padding(bottom = 8.dp)
                         ) {
                             Text(
-                                text = "Download issue: ${downloadProgress.errorMessage}. Tap to retry.",
+                                text = "Notice: ${downloadProgress.errorMessage}. You can still use the active engine profile.",
                                 color = DtuRedLight,
                                 fontSize = 11.sp,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -310,42 +310,74 @@ fun ModelCardItem(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Offline weights status indicator
                         if (isDownloaded) {
-                            if (!isActive) {
-                                Button(
-                                    onClick = onActivate,
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = BlueAccent),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Load Model", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                            } else {
-                                OutlinedButton(
-                                    onClick = {},
-                                    enabled = false,
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = EmeraldOffline, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Active Engine", fontSize = 12.sp, color = EmeraldOffline)
-                                }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = EmeraldOffline,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Weights on disk",
+                                    fontSize = 11.sp,
+                                    color = EmeraldOffline
+                                )
                             }
                         } else {
-                            Button(
+                            OutlinedButton(
                                 onClick = onDownload,
                                 shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = DtuRedPrimary),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Get GGUF (${spec.sizeMb} MB)", fontSize = 11.sp, color = TextSecondary)
+                            }
+                        }
+
+                        // Switch Engine Button
+                        if (!isActive) {
+                            Button(
+                                onClick = onActivate,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8)),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                             ) {
-                                Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Download (${spec.sizeMb} MB)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Switch Engine", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        } else {
+                            Surface(
+                                color = EmeraldDark.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.4f))
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = EmeraldGlow,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Active Engine",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = EmeraldGlow
+                                    )
+                                }
                             }
                         }
                     }

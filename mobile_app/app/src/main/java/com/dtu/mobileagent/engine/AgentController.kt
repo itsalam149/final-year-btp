@@ -17,8 +17,9 @@ data class AgentUiState(
     val isModelLoaded: Boolean = false,
     val isVoiceOutputEnabled: Boolean = false,
     val pendingConfirmation: PendingAction? = null,
-    val currentTokensPerSec: Double = 28.4,
-    val currentMemoryMb: Double = 804.0
+    val activeModel: ModelSpec = ModelGalleryManager.CATALOG[0],
+    val currentTokensPerSec: Double = 22.4,
+    val currentMemoryMb: Double = 1629.0
 )
 
 data class PendingAction(
@@ -55,28 +56,37 @@ class AgentController(
 
     suspend fun initialize() {
         _uiState.value = _uiState.value.copy(isProcessing = true)
-        val success = llamaBridge.initialize()
+        val initialSpec = ModelGalleryManager.CATALOG[0]
+        val success = llamaBridge.initialize(initialSpec)
         val metrics = llamaBridge.getMetrics()
         hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
         _uiState.value = _uiState.value.copy(
             isProcessing = false,
             isModelLoaded = success,
+            activeModel = initialSpec,
+            currentTokensPerSec = metrics.tokensPerSecond,
+            currentMemoryMb = metrics.memoryFootprintMb
+        )
+    }
+
+    suspend fun switchModel(spec: ModelSpec) {
+        _uiState.value = _uiState.value.copy(isProcessing = true)
+        val success = llamaBridge.initialize(spec)
+        val metrics = llamaBridge.getMetrics()
+        hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
+        _uiState.value = _uiState.value.copy(
+            isProcessing = false,
+            isModelLoaded = success,
+            activeModel = spec,
             currentTokensPerSec = metrics.tokensPerSecond,
             currentMemoryMb = metrics.memoryFootprintMb
         )
     }
 
     suspend fun switchModel(modelFilename: String) {
-        _uiState.value = _uiState.value.copy(isProcessing = true)
-        val success = llamaBridge.initialize(modelFilename)
-        val metrics = llamaBridge.getMetrics()
-        hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
-        _uiState.value = _uiState.value.copy(
-            isProcessing = false,
-            isModelLoaded = success,
-            currentTokensPerSec = metrics.tokensPerSecond,
-            currentMemoryMb = metrics.memoryFootprintMb
-        )
+        val spec = ModelGalleryManager.CATALOG.find { it.filename == modelFilename || it.id == modelFilename }
+            ?: ModelGalleryManager.CATALOG[0]
+        switchModel(spec)
     }
 
     suspend fun handleUserMessage(text: String) {
