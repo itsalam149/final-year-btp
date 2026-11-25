@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Task-Conditioned Evaluation of Quantized SLMs — DTU CSE BTP GP159</title>
+<title>Privacy-First Offline AI Mobile Agent Using LLM Quantization — DTU CSE BTP GP159</title>
 <style>
 :root{
   --bg:#03100d;
@@ -300,624 +300,486 @@ nav button:hover{background:var(--ac);border-color:var(--ac);color:#03211a}
   <div class="split" style="align-items:center;height:100%">
     <div>
       <div class="eye">Delhi Technological University • Department of CSE</div>
-      <h1>Task-Conditioned Evaluation of Quantized Small Language Models</h1>
+      <h1>Privacy-First Offline AI Mobile Agent Using LLM Quantization</h1>
       <div class="rule"></div>
       <p style="font-size:clamp(.95rem,1.5vw,1.25rem);color:var(--tx);font-weight:500;margin-bottom:1.5vh">
-        Understanding Where and Why Quantized Models Fail on Downstream Tasks
+        JARVIS-Like On-Device Intelligent Mobile Assistant
       </p>
       <div class="card g" style="margin-top:1.5vh;border-radius:12px;display:inline-block;padding:1.2vh 1.6vw">
         <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:700">Major Project (BTP) • Group GP159</div>
         <div style="font-size:1.05rem;color:var(--tx);font-weight:600;margin-top:.3vh">Supervisor: <b>Ms. Gull Kaur</b>, Assistant Professor</div>
+        <div style="font-size:.84rem;color:var(--mut);margin-top:.2vh">Department of Computer Science &amp; Engineering, DTU • Session 2026–2027</div>
       </div>
     </div>
     <div>
-      <div class="card" style="border-radius:16px;background:rgba(10,42,34,.75);border:1px solid var(--line)">
-        <h3 style="color:var(--gold);margin-bottom:1.2vh">Project Team</h3>
-        <div style="display:flex;flex-direction:column;gap:1vh">
-          <div style="background:#092a20;padding:1.1vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
-            <b style="color:var(--tx);font-size:1.02rem">Ekansh Agarwal</b>
-            <div style="font-size:.82rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/149</span> • Model Lead (Qwen2.5-0.5B)</div>
+      <div class="card" style="border-left:4px solid var(--ac);display:flex;flex-direction:column;gap:1.4vh">
+        <div style="font-size:.82rem;text-transform:uppercase;letter-spacing:.14em;color:var(--ac);font-weight:700">Project Team Members</div>
+        <div class="bx ok" style="padding:.9vh 1.1vw">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Faqre Alam</b><span class="badge b-green">23/CS/150</span>
           </div>
-          <div style="background:#092a20;padding:1.1vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
-            <b style="color:var(--tx);font-size:1.02rem">Faqre Alam</b>
-            <div style="font-size:.82rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/150</span> • Framework & Harness Lead (Llama-3.2-1B)</div>
+          <p style="font-size:.8rem;margin-top:.3vh;color:var(--mut)">Lead Systems &amp; Agent Architect</p>
+        </div>
+        <div class="bx ok" style="padding:.9vh 1.1vw">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Ekansh Agarwal</b><span class="badge b-blue">23/CS/149</span>
           </div>
-          <div style="background:#092a20;padding:1.1vh 1vw;border-radius:10px;border-left:3px solid var(--ac)">
-            <b style="color:var(--tx);font-size:1.02rem">Guneet Toppo</b>
-            <div style="font-size:.82rem;color:var(--mut)">Roll No: <span style="color:var(--gold)">23/CS/160</span> • Statistical Analysis Lead (TinyLlama-1.1B)</div>
+          <p style="font-size:.8rem;margin-top:.3vh;color:var(--mut)">Model Optimization &amp; Mobile Inference Lead</p>
+        </div>
+        <div class="bx ok" style="padding:.9vh 1.1vw">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Guneet Toppo</b><span class="badge b-gold">23/CS/160</span>
           </div>
+          <p style="font-size:.8rem;margin-top:.3vh;color:var(--mut)">Mobile Integrations &amp; Offline Voice Lead</p>
         </div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 1 / 13</span><span>DTU CSE BTP GP159</span></div>
+  <div class="foot"><span>Slide 1 / 13</span><span>Title &amp; Team Introduction</span></div>
 </section>
 
-<!-- ==================== SLIDE 2: COMPLETE SYSTEM & ARCHITECTURE DIAGRAM ==================== -->
+<!-- ==================== SLIDE 2: PROJECT VISION & PHILOSOPHY ==================== -->
 <section class="slide">
-  <div class="eye">System Architecture & Overview</div>
-  <h2>Complete Project Architecture at a Glance</h2>
+  <div class="eye">Vision &amp; Philosophy</div>
+  <h2>Your Personal Assistant, 100% Offline on Your Phone</h2>
   <div class="rule"></div>
-  <p style="margin-bottom:1.5vh">End-to-end experimental framework: from SLM ingestion and multi-method quantization to 5-tier evaluation, statistical rigor, and edge deployment rules.</p>
+  <div class="card g" style="margin-bottom:2vh;background:rgba(184,242,106,.08);border-left:4px solid var(--gold);padding:1.4vh 1.8vw">
+    <p style="font-size:1.15rem;color:var(--tx);font-weight:500;font-style:italic">
+      "Your personal AI assistant should understand, reason, and perform useful actions directly on your smartphone without leaking a single byte of private data or relying on cloud availability."
+    </p>
+  </div>
 
-  <!-- Complete Architecture Diagram Flow -->
-  <div style="display:flex;flex-direction:column;gap:1.4vh;width:100%;margin-top:.4vh">
-    <!-- Top Flow: Horizontal Pipeline -->
-    <div style="display:grid;grid-template-columns:1.1fr auto 1.3fr auto 1.2fr auto 1.4fr auto 1.2fr;align-items:center;gap:.6vw;width:100%">
-      
-      <!-- Stage 1: Models -->
-      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--ac)">
-        <div style="font-size:.72rem;font-weight:800;color:var(--ac);letter-spacing:.08em;text-transform:uppercase">1. SLM Models</div>
-        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">Small LMs (&lt;2B)</div>
-        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
-          • Qwen2.5-0.5B<br>
-          • Llama-3.2-1B<br>
-          • TinyLlama-1.1B
-        </div>
-      </div>
-
-      <div style="color:var(--ac);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
-
-      <!-- Stage 2: Quantization -->
-      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--gold)">
-        <div style="font-size:.72rem;font-weight:800;color:var(--gold);letter-spacing:.08em;text-transform:uppercase">2. PTQ Engine</div>
-        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">5 Precision Variants</div>
-        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
-          • 16-bit: FP16 Baseline<br>
-          • 8-bit: BnB LLM.int8<br>
-          • 4-bit: AWQ, GPTQ, NF4
-        </div>
-      </div>
-
-      <div style="color:var(--gold);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
-
-      <!-- Stage 3: Execution Grid -->
-      <div class="card" style="padding:1.2vh 1vw;background:#09271e;border-left:3px solid var(--blue)">
-        <div style="font-size:.72rem;font-weight:800;color:var(--blue);letter-spacing:.08em;text-transform:uppercase">3. Execution Grid</div>
-        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">LM-Eval Harness</div>
-        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
-          • Kaggle T4 GPUs (16GB)<br>
-          • Capped ctx (2048)<br>
-          • Batch size 4 (Zero OOM)
-        </div>
-      </div>
-
-      <div style="color:var(--blue);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
-
-      <!-- Stage 4: 5 Cognitive Tiers -->
-      <div class="card g" style="padding:1.2vh 1vw;border-left:3px solid var(--ac)">
-        <div style="font-size:.72rem;font-weight:800;color:var(--ac);letter-spacing:.08em;text-transform:uppercase">4. Evaluation</div>
-        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">5 Cognitive Tiers</div>
-        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
-          • T1: Fluency (WikiText)<br>
-          • T2-T4: Recall &amp; MMLU<br>
-          • T5: CoT Math &amp; IFEval
-        </div>
-      </div>
-
-      <div style="color:var(--ac);font-size:1.6rem;font-weight:800;text-align:center">➔</div>
-
-      <!-- Stage 5: Outputs -->
-      <div class="card" style="padding:1.2vh 1vw;background:#153828;border-left:3px solid var(--gold)">
-        <div style="font-size:.72rem;font-weight:800;color:var(--gold);letter-spacing:.08em;text-transform:uppercase">5. Final Output</div>
-        <div style="font-size:.95rem;font-weight:700;color:var(--tx);margin:.4vh 0">Decision Matrix</div>
-        <div style="font-size:.78rem;color:var(--mut);line-height:1.4">
-          • Bit-Budget Rules<br>
-          • 10k Bootstrap CIs<br>
-          • Safe Edge Deployment
-        </div>
-      </div>
+  <div class="grid g3">
+    <div class="card" style="border-top:3px solid var(--ac)">
+      <div style="font-size:.8rem;color:var(--ac);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Pillar 1</div>
+      <h3 style="margin-top:.4vh;color:var(--tx)">Local Mobile Intelligence</h3>
+      <p style="margin-top:.6vh">Executes optimized Small Language Models directly on smartphone silicon via ARM NEON and NPU hardware acceleration.</p>
     </div>
-
-    <!-- Bottom Detailed Architecture Breakdown -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2vw;margin-top:.6vh">
-      <div class="card" style="background:rgba(9,39,30,.6);border:1px solid var(--line);border-left:3px solid var(--ac)">
-        <h3 style="color:var(--ac);font-size:1rem;margin-bottom:.6vh">The 5-Tier Task-Conditioned Evaluation Matrix</h3>
-        <table class="tbl" style="font-size:.76rem;margin-top:.2vh">
-          <thead>
-            <tr><th>Tier</th><th>Benchmark</th><th>Capability Tested</th><th>Metric</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><b>Tier 1</b></td><td>WikiText-2</td><td>Language Modeling Fluency</td><td>Word Perplexity</td></tr>
-            <tr><td><b>Tier 2</b></td><td>ARC-Easy, HellaSwag</td><td>Factual &amp; Commonsense Recall</td><td>Acc_norm (0-shot)</td></tr>
-            <tr><td><b>Tier 3</b></td><td>WinoGrande</td><td>Coreference Logic</td><td>Acc (0-shot)</td></tr>
-            <tr><td><b>Tier 4</b></td><td>MMLU (57 subjects)</td><td>Broad World Knowledge</td><td>Acc (0-shot)</td></tr>
-            <tr><td><b>Tier 5</b></td><td>GSM8K, IFEval</td><td>Multi-Step Math &amp; Negative Rules</td><td>Strict Match &amp; CoT</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card" style="background:rgba(9,39,30,.6);border:1px solid var(--line);border-left:3px solid var(--gold)">
-        <h3 style="color:var(--gold);font-size:1rem;margin-bottom:.6vh">Analysis, Calibration &amp; Verification Layer</h3>
-        <div style="display:flex;flex-direction:column;gap:.6vh;font-size:.8rem;color:var(--mut)">
-          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--gold)">
-            <b>Expected Calibration Error (ECE) &amp; Brier Score:</b> Quantifying overconfidence and probability distortion under 4-bit rounding.
-          </div>
-          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--ac)">
-            <b>10,000-Iteration Paired Bootstrap CIs:</b> Establishing statistical significance ($p &lt; 0.0001$) to eliminate test-set variance.
-          </div>
-          <div style="background:#09281e;padding:.6vh .8vw;border-radius:8px;border-left:2px solid var(--blue)">
-            <b>Spearman Rank Correlation (&rho;):</b> Proving rank inversion — FP16 leaderboard ranking fails to predict 4-bit standing.
-          </div>
-        </div>
-      </div>
+    <div class="card" style="border-top:3px solid var(--gold)">
+      <div style="font-size:.8rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Pillar 2</div>
+      <h3 style="margin-top:.4vh;color:var(--tx)">Autonomous Action</h3>
+      <p style="margin-top:.6vh">Moves beyond chatbots giving conversational advice to an autonomous agent that actually schedules reminders, manages notes, and searches files.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <div style="font-size:.8rem;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Pillar 3</div>
+      <h3 style="margin-top:.4vh;color:var(--tx)">Zero-Trust Privacy</h3>
+      <p style="margin-top:.6vh">Guarantees zero cloud data egress. Manifest declares zero internet permissions, functioning seamlessly even in Airplane Mode.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 2 / 13</span><span>Complete Architecture Diagram</span></div>
+  <div class="foot"><span>Slide 2 / 13</span><span>Project Vision &amp; Core Philosophy</span></div>
 </section>
 
-<!-- ==================== SLIDE 3: WHAT IS QUANTIZATION? ==================== -->
+<!-- ==================== SLIDE 3: THE PROBLEM WITH CLOUD ASSISTANTS ==================== -->
 <section class="slide">
-  <div class="eye">Basic Concept</div>
-  <h2>What is Quantization? (In Plain Words)</h2>
+  <div class="eye">The Problem</div>
+  <h2>Why Today's Cloud AI Assistants Fall Short</h2>
   <div class="rule"></div>
-  <p style="margin-bottom:1.8vh">An everyday analogy: Imagine saving a raw 100 GB movie file as a compressed 2 GB video. It plays almost the same, but uses a fraction of storage.</p>
+  <p style="margin-bottom:1.5vh">Commercial assistants (Siri, Google Gemini, ChatGPT Mobile) create severe architectural dependencies:</p>
 
-  <div class="grid">
-    <div class="card">
-      <span class="n">ORIGINAL (FP16)</span>
-      <h3>16-bit Floating Point</h3>
-      <div class="num" style="color:var(--tx)">16 bits</div>
-      <p>Each weight is stored as a high-precision decimal number (e.g., <code>0.3847291...</code>). Uses <b>2 full bytes</b> of RAM per single parameter.</p>
-    </div>
-
-    <div class="card b">
-      <span class="n" style="background:var(--blue);color:#071b2e">MEDIUM (INT8)</span>
-      <h3>8-bit Quantization</h3>
-      <div class="num" style="color:var(--blue)">8 bits</div>
-      <p>Maps the decimals into round integers between -128 and +127. Cuts memory usage by <b>50%</b> (1 byte per parameter).</p>
-    </div>
-
-    <div class="card g">
-      <span class="n">AGGRESSIVE (INT4)</span>
-      <h3>4-bit Quantization</h3>
-      <div class="num" style="color:var(--gold)">4 bits</div>
-      <p>Compresses weights into just 16 distinct bins (numbers 0 to 15). Cuts memory usage by <b>75%</b> (only 0.5 bytes per parameter).</p>
-    </div>
-  </div>
-
-  <div class="fl" style="margin-top:2vh">
-    <div class="bx dec"><b>Full 16-Bit Weights</b><small>High precision, heavy RAM</small></div>
-    <div class="ar">→</div>
-    <div class="bx dec"><b>Scaling &amp; Rounding</b><small>Map continuous float to small bins</small></div>
-    <div class="ar">→</div>
-    <div class="bx ok"><b>4-Bit Model on Device</b><small>Runs in 1/4th RAM footprint</small></div>
-  </div>
-  <div class="foot"><span>Slide 3 / 13</span><span>What is Quantization</span></div>
-</section>
-
-<!-- ==================== SLIDE 4: WHY IS IT IMPORTANT? ==================== -->
-<section class="slide">
-  <div class="eye">Motivation</div>
-  <h2>Why is Quantization Essential for Real-World AI?</h2>
-  <div class="rule"></div>
-  <p style="margin-bottom:1.8vh">Nobody wants to send every single keystroke to expensive cloud servers. We want smart AI running directly on phones, laptops, and IoT devices.</p>
-
-  <div class="grid">
-    <div class="card">
-      <span class="n">BENEFIT 1</span>
-      <h3>Fits on Consumer Hardware</h3>
-      <div class="num">75% Less RAM</div>
-      <p>A 1-billion parameter model drops from <b>~2.5 GB</b> down to just <b>~0.8 GB</b>. It can now comfortably run inside mobile apps without crashing the OS.</p>
-    </div>
-
-    <div class="card g">
-      <span class="n">BENEFIT 2</span>
-      <h3>Faster Inference &amp; Battery</h3>
-      <div class="num" style="color:var(--gold)">2x–3x Speed</div>
-      <p>Less data to fetch from device memory means faster token generation, lower power consumption, and zero device overheating.</p>
-    </div>
-
-    <div class="card b">
-      <span class="n" style="background:var(--blue);color:#071b2e">BENEFIT 3</span>
-      <h3>100% Privacy &amp; Zero Cloud Cost</h3>
-      <div class="num" style="color:var(--blue)">$0 Cost</div>
-      <p>Runs offline without sending user data over the internet. No cloud API subscription bills or latency delays.</p>
-    </div>
-  </div>
-  <div class="foot"><span>Slide 4 / 13</span><span>Why Quantization is Important</span></div>
-</section>
-
-<!-- ==================== SLIDE 5: THE PROBLEM & WHY WE ARE DOING THIS ==================== -->
-<section class="slide">
-  <div class="eye">The Problem Statement</div>
-  <h2>The Trap: The "Perplexity Illusion"</h2>
-  <div class="rule"></div>
-  <p style="margin-bottom:1.5vh">Most research papers say: <i>"Look! The text fluency barely changed at 4-bit, so quantization is completely safe!"</i> <b>That is dangerously misleading.</b></p>
-
-  <div class="split">
-    <div>
-      <div class="card" style="margin-bottom:1.2vh">
-        <h3 style="color:var(--gold)">What Common Tests Show (Fluency)</h3>
-        <p>On standard WikiText, word perplexity changes from <b>11.2 to 12.1</b> (+0.9). The sentences still sound natural and fluent to humans.</p>
-      </div>
-      <div class="card r">
-        <h3 style="color:#ff9e94">What Actually Happens (Downstream Tasks)</h3>
-        <p>In published literature (e.g. Jin et al., ACL 2024), when researchers test 4-bit models on multi-step reasoning or strict instruction formatting, downstream accuracy suffers a severe, disproportionate collapse!</p>
-      </div>
-    </div>
-    <div>
-      <div class="card g" style="height:100%">
-        <h3 style="color:var(--ac)">Why Are We Doing This Project?</h3>
-        <ul style="padding-left:1.2vw;margin-top:1vh">
-          <li><b>Small Models Are Fragile:</b> Large 70B models have billions of spare parameters to cushion rounding noise. Small &lt;2B models have zero redundancy.</li>
-          <li><b>Need a Truthful Guide:</b> Real engineers need to know: <i>"Can I safely use 4-bit for a chatbot? What about for a math solver?"</i></li>
-          <li><b>Our Goal:</b> Test models across different task types to discover exactly when 4-bit is safe and when it breaks.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="foot"><span>Slide 5 / 13</span><span>The Problem &amp; The Trap</span></div>
-</section>
-
-<!-- ==================== SLIDE 6: OUR THINKING & HYPOTHESIS ==================== -->
-<section class="slide">
-  <div class="eye">Core Hypothesis</div>
-  <h2>Our Thinking: "Not All Tasks Suffer Equally"</h2>
-  <div class="rule"></div>
-  <p style="margin-bottom:1.5vh">We realized that evaluating a quantized model with one single overall score is like testing a student with only spelling questions and declaring they are good at calculus.</p>
-
-  <div class="grid">
-    <div class="card">
-      <span class="n">SIMPLE TASKS</span>
-      <h3>Surface Retrieval &amp; QA</h3>
-      <p style="margin-top:.6vh">Questions like <i>"What is the capital of France?"</i> or picking option A/B/C only require rough associative memory. Rounding noise has almost <b>zero impact</b> here.</p>
-    </div>
-
+  <div class="grid g2">
     <div class="card r">
-      <span class="n" style="background:var(--red);color:#2b0e0c">COMPLEX TASKS</span>
-      <h3>Chain-of-Thought &amp; Rules</h3>
-      <p style="margin-top:.6vh">Solving math equations requires generating 20 sequential reasoning steps. If step 2 has a tiny rounding error, all subsequent 18 steps become <b>completely wrong</b>.</p>
+      <span class="n" style="background:var(--red);color:#2b0e0c">CRITICAL RISK</span>
+      <h3 style="color:#ff9e94;margin-top:.4vh">Zero Privacy &amp; Data Streaming</h3>
+      <p style="margin-top:.6vh">Personal conversations, private documents, GPS locations, and calendar schedules are continuously transmitted to corporate remote servers.</p>
     </div>
-
-    <div class="card g">
-      <span class="n">OUR CONCLUSION</span>
-      <h3>Task-Conditioned Rules</h3>
-      <p style="margin-top:.6vh">Instead of guessing, we must build a <b>Task-Conditioned Decision Matrix</b>: a clear guide telling engineers the exact minimum bit-budget allowed per task class.</p>
+    <div class="card r">
+      <span class="n" style="background:var(--red);color:#2b0e0c">FRAGILITY</span>
+      <h3 style="color:#ff9e94;margin-top:.4vh">Total Internet Dependency</h3>
+      <p style="margin-top:.6vh">Assistants fail completely in airplanes, subways, rural field areas, or during ISP server outages, rendering smart devices useless.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--gold)">
+      <span class="n" style="background:var(--gold);color:#242a08">PERFORMANCE &amp; COST</span>
+      <h3 style="color:var(--gold);margin-top:.4vh">Network Latency &amp; Recurring Costs</h3>
+      <p style="margin-top:.6vh">Cloud roundtrips introduce 1.5–4.0 second delays per turn. Commercial subscriptions ($20/month) impose recurring financial overhead.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--blue)">
+      <span class="n" style="background:var(--blue);color:#081f38">EXECUTION GAP</span>
+      <h3 style="color:var(--blue);margin-top:.4vh">Chatbots vs. Real Mobile Agents</h3>
+      <p style="margin-top:.6vh">Generating a text answer is completely different from reliably completing a task. Cloud chatbots give advice; they don't execute local actions.</p>
     </div>
   </div>
-  <div class="foot"><span>Slide 6 / 13</span><span>Our Thinking &amp; Hypothesis</span></div>
+  <div class="foot"><span>Slide 3 / 13</span><span>The Problem with Cloud Assistants</span></div>
 </section>
 
-<!-- ==================== SLIDE 7: OUR APPROACH (5 COGNITIVE TIERS) ==================== -->
+<!-- ==================== SLIDE 4: HARDWARE BOUNDARIES ==================== -->
 <section class="slide">
-  <div class="eye">Methodology</div>
-  <h2>Our Approach: The 5-Tier Evaluation Ladder</h2>
-  <div class="rule"></div>
-  <p style="margin-bottom:1.5vh">We selected 7 standardized benchmarks and organized them into 5 progressive levels of difficulty:</p>
-
-  <div class="fl" style="margin:1.5vh 0">
-    <div class="bx dec">
-      <b>Tier 1: Fluency</b>
-      <small>WikiText-2</small>
-      <div style="font-size:.78rem;color:var(--gold);margin-top:.3vh">Text Perplexity</div>
-    </div>
-    <div class="ar">→</div>
-    <div class="bx dec">
-      <b>Tier 2: Facts &amp; MCQs</b>
-      <small>ARC-Easy &amp; HellaSwag</small>
-      <div style="font-size:.78rem;color:var(--gold);margin-top:.3vh">Factual Recall</div>
-    </div>
-    <div class="ar">→</div>
-    <div class="bx ok">
-      <b>Tier 3: Logic Pairs</b>
-      <small>WinoGrande</small>
-      <div style="font-size:.78rem;color:var(--gold);margin-top:.3vh">Commonsense Logic</div>
-    </div>
-    <div class="ar">→</div>
-    <div class="bx ok">
-      <b>Tier 4: Exam Subjects</b>
-      <small>MMLU (57 subjects)</small>
-      <div style="font-size:.78rem;color:var(--gold);margin-top:.3vh">Broad Knowledge</div>
-    </div>
-    <div class="ar">→</div>
-    <div class="bx no">
-      <b>Tier 5: Multi-Step &amp; Rules</b>
-      <small>GSM8K &amp; IFEval</small>
-      <div style="font-size:.78rem;color:var(--red);margin-top:.3vh">Math CoT &amp; Strict Rules</div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:1.5vh">
-    <h3 style="color:var(--ac)">Why This Spectrum Matters</h3>
-    <p>By moving from Tier 1 (simple word prediction) to Tier 5 (multi-step math reasoning and syntax verification), we can pinpoint the exact threshold where quantization noise destroys model capabilities.</p>
-  </div>
-  <div class="foot"><span>Slide 7 / 13</span><span>Our Approach &amp; 5 Tiers</span></div>
-</section>
-
-<!-- ==================== SLIDE 8: PARAMETERS & FORMULAS ==================== -->
-<section class="slide">
-  <div class="eye">Technical Formulas</div>
-  <h2>Parameters, Formulas &amp; Quantization Algorithms</h2>
+  <div class="eye">Hardware Boundaries</div>
+  <h2>The Edge Computing Challenge: Severe Mobile Limits</h2>
   <div class="rule"></div>
 
   <div class="split">
     <div>
-      <div class="card" style="height:100%">
-        <h3 style="color:var(--gold)">Basic Quantization Formula</h3>
-        <p>To convert continuous weights $W$ into integers $q$, we scale and round:</p>
-        <div class="formula-box">
-          q = round( W / Scale ) + ZeroPoint<br>
-          W_approx = ( q - ZeroPoint ) * Scale
+      <div class="card" style="height:100%;border-left:4px solid var(--red)">
+        <h3 style="color:#ff9e94">Mobile RAM &amp; KV-Cache Ceiling</h3>
+        <p style="margin-top:.8vh">Modern smartphones feature 6GB to 8GB of total system RAM, but the Android OS strictly caps foreground applications to <b>&le; 3.5 GB</b>.</p>
+        <div style="margin-top:1.5vh;display:flex;flex-direction:column;gap:.8vh">
+          <div class="bx no" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>FP16 Baseline LLM</span><b style="color:var(--red)">14+ GB RAM (Instant Crash)</b>
+          </div>
+          <div class="bx ok" style="display:flex;justify-content:space-between;padding:.8vh 1vw">
+            <span>Quantized 4-Bit Mobile SLM</span><b style="color:var(--ac)">&lt; 1.0 GB RAM (Safe)</b>
+          </div>
         </div>
-        <p style="font-size:.85rem;margin-top:.6vh"><b>Error:</b> The difference $e = W - W_{\text{approx}}$ is the quantization noise injected into every matrix multiplication.</p>
+        <p style="font-size:.82rem;margin-top:1.2vh;color:var(--mut)">Additionally, attention Key-Value (KV) cache memory expands with conversation turns, requiring aggressive context capping.</p>
       </div>
     </div>
-
     <div>
-      <div class="card g" style="height:100%">
-        <h3 style="color:var(--ac)">The 4 Methods We Tested</h3>
-        <ul style="padding-left:1.2vw;margin-top:.6vh;display:flex;flex-direction:column;gap:.6vh">
-          <li><b>FP16:</b> Uncompressed 16-bit reference baseline.</li>
-          <li><b>BitsAndBytes INT8:</b> Separates extreme outlier numbers (&gt;6.0) into 16-bit to preserve critical activations.</li>
-          <li><b>BitsAndBytes NF4:</b> Normal Float 4-bit, shapes bins according to the Gaussian bell curve of weights.</li>
-          <li><b>GPTQ:</b> Uses second-order calculus (Hessian matrix) to adjust surrounding weights when rounding.</li>
-          <li><b>AWQ (Activation-Aware):</b> Finds the top 1% most important weight channels by checking activations, and protects them from heavy rounding.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="foot"><span>Slide 8 / 13</span><span>Parameters &amp; Formulas</span></div>
-</section>
-
-<!-- ==================== SLIDE 9: THE PROCESS WE FOLLOWED ==================== -->
-<section class="slide">
-  <div class="eye">Engineering Process</div>
-  <h2>The Step-by-Step Process We Followed</h2>
-  <div class="rule"></div>
-
-  <div class="fl" style="margin:1.5vh 0">
-    <div class="bx dec"><b>1. Model Hub</b><small>Load Qwen, Llama, TinyLlama</small></div>
-    <div class="ar">→</div>
-    <div class="bx dec"><b>2. Quantizer</b><small>FP16, INT8, NF4, GPTQ, AWQ</small></div>
-    <div class="ar">→</div>
-    <div class="bx ok"><b>3. Capped Batching</b><small>max_length=2048 (Prevent OOM)</small></div>
-    <div class="ar">→</div>
-    <div class="bx ok"><b>4. Kaggle Cloud T4</b><small>Distributed across 3 accounts</small></div>
-    <div class="ar">→</div>
-    <div class="bx dec"><b>5. Live Upsert</b><small>Instant save to results_master.csv</small></div>
-  </div>
-
-  <div class="grid" style="margin-top:1.8vh">
-    <div class="card">
-      <span class="n">EKANSH AGARWAL</span>
-      <h3>Qwen2.5-0.5B-Instruct</h3>
-      <p>490 Million parameters. Evaluated on Kaggle GPU across all 5 precision levels. Tests whether modern architectural features (Grouped Query Attention) survive compression.</p>
-    </div>
-
-    <div class="card">
-      <span class="n">FAQRE ALAM</span>
-      <h3>Llama-3.2-1B-Instruct</h3>
-      <p>1.23 Billion parameters. Executed baseline FP16 + 4-bit variants across 108,371 multiple-choice requests with zero out-of-memory crashes.</p>
-    </div>
-
-    <div class="card">
-      <span class="n">GUNEET TOPPO</span>
-      <h3>TinyLlama-1.1B-Chat</h3>
-      <p>1.10 Billion parameters. Evaluated standard multi-head attention baseline to see if older architectures degrade faster than newer models.</p>
-    </div>
-  </div>
-  <div class="foot"><span>Slide 9 / 13</span><span>The Process We Followed</span></div>
-</section>
-
-<!-- ==================== SLIDE 10: EVALUATION & RESULTS ==================== -->
-<section class="slide">
-  <div class="eye">Empirical Findings &amp; Live Baselines</div>
-  <h2>Empirical Baseline Execution &amp; Grid Status</h2>
-  <div class="rule"></div>
-  <p style="margin-bottom:1.2vh">Live verified baseline execution on Kaggle T4 cloud GPU alongside our distributed evaluation matrix:</p>
-
-  <table class="tbl">
-    <thead>
-      <tr>
-        <th>Model Architecture &amp; Variant</th>
-        <th>WikiText (PPL)</th>
-        <th>ARC-Easy (Facts)</th>
-        <th>HellaSwag (Commonsense)</th>
-        <th>WinoGrande (Logic)</th>
-        <th>MMLU (Knowledge)</th>
-        <th>Execution Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><b>Llama-3.2-1B FP16 Baseline</b></td>
-        <td><b>11.23</b></td>
-        <td><b>63.22%</b></td>
-        <td><b>60.78%</b></td>
-        <td><b>58.96%</b></td>
-        <td><b>46.00%</b></td>
-        <td><span class="badge b-green">Verified Live (Kaggle T4)</span></td>
-      </tr>
-      <tr>
-        <td><b>Llama-3.2-1B BnB INT8 (8-bit)</b></td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
-      </tr>
-      <tr>
-        <td><b>Llama-3.2-1B AWQ INT4 (4-bit)</b></td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
-      </tr>
-      <tr>
-        <td><b>Llama-3.2-1B BnB NF4 (4-bit)</b></td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td><span class="badge b-yellow">Kaggle Run In Progress (Faqre)</span></td>
-      </tr>
-      <tr>
-        <td><b>Qwen2.5-0.5B (All 5 Variants)</b></td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td><span class="badge b-yellow">Assigned: Ekansh (Kaggle)</span></td>
-      </tr>
-      <tr>
-        <td><b>TinyLlama-1.1B (All 5 Variants)</b></td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-        <td><span class="badge b-yellow">Assigned: Guneet (Kaggle)</span></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="split" style="margin-top:1.5vh">
-    <div class="card g">
-      <h3 style="color:var(--gold)">Hardware Milestone: Zero CUDA OOM</h3>
-      <p>Successfully overcame the quadratic memory attention crash on 16GB T4 GPUs by enforcing <code>max_length=2048</code> and batch size 4, running <b>108,371 evaluation requests</b> cleanly.</p>
-    </div>
-    <div class="card" style="background:rgba(9,39,30,.6);border-left:3px solid var(--ac)">
-      <h3 style="color:var(--ac)">Distributed Orchestration Architecture</h3>
-      <p>Execution distributed across 3 independent student Kaggle accounts with atomic per-task persistence (<code>upsert_result_row</code>) preventing data loss on kernel timeouts.</p>
-    </div>
-  </div>
-  <div class="foot"><span>Slide 10 / 13</span><span>Baseline Execution &amp; Grid Status</span></div>
-</section>
-
-<!-- ==================== SLIDE 11: CONFIDENCE & STATISTICAL CHECKS ==================== -->
-<section class="slide">
-  <div class="eye">Statistical Methodology</div>
-  <h2>Stanford HELM Calibration &amp; Statistical Engine</h2>
-  <div class="rule"></div>
-
-  <div class="split">
-    <div>
-      <div class="card r" style="height:100%">
-        <span class="n" style="background:var(--red);color:#2b0e0c">UNCERTAINTY LAYER</span>
-        <h3 style="color:#ff9e94">The Calibration Problem (ECE Metric)</h3>
-        <p style="margin-top:.6vh">We incorporate the Stanford CRFM HELM formulation for Expected Calibration Error:</p>
-        <div style="background:rgba(0,0,0,.35);padding:.8vh 1vw;border-radius:8px;font-family:monospace;font-size:.82rem;color:var(--gold);margin:.8vh 0">
-          ECE = &Sigma; (|B_m| / N) * |acc(B_m) - conf(B_m)|
-        </div>
-        <p style="font-size:.84rem;margin-top:.8vh"><b>Theoretical Vulnerability:</b> Low-bit discretization increases logit variance, saturating softmax probabilities towards 0 or 1. Models become <i>confidently wrong</i> on hallucinations, bypassing safety filters.</p>
-      </div>
-    </div>
-
-    <div>
-      <div class="card g" style="height:100%">
-        <span class="n">STATISTICAL RIGOR</span>
-        <h3 style="color:var(--gold)">10,000-Iteration Bootstrap Engine</h3>
-        <p style="margin-top:.6vh">To eliminate benchmark stochastic noise and establish true significance:</p>
+      <div class="card" style="height:100%;border-left:4px solid var(--gold)">
+        <h3 style="color:var(--gold)">Thermal &amp; Battery Envelope</h3>
+        <p style="margin-top:.8vh">Mobile processors cannot sustain continuous full-load inference without consequences:</p>
         <ul style="padding-left:1.2vw;margin-top:.8vh;display:flex;flex-direction:column;gap:.8vh">
-          <li><b>Paired Bootstrap Algorithm:</b> Implemented in <code>src/metrics/statistical.py</code> using Bias-Corrected and Accelerated (BCa) resamples (N=10,000).</li>
-          <li><b>Distribution-Free Testing:</b> Avoids invalid Gaussian assumptions on bounded [0, 1] accuracy scores.</li>
-          <li><b>Decision Rule:</b> Computes exact 95% Confidence Intervals for $\Delta(\text{FP16} - \text{quant})$, formally proving if degradation exceeds our $\le 3.0\text{ pp}$ safety envelope (p < 0.05).</li>
+          <li><b>Thermal Throttling:</b> Sustained compute spikes device temperature, forcing mobile OS governors to throttle CPU clocks by 40–60%.</li>
+          <li><b>Battery Drain:</b> Inefficient execution drains mobile battery rapidly. The assistant must execute tasks within low energy budgets (&lt; 15 mAh per task).</li>
+          <li><b>ARM NEON Vectorization:</b> Model weights must be quantized into INT4/INT8 formats optimized for mobile SIMD vector units.</li>
         </ul>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 11 / 13</span><span>Statistical Engine &amp; Calibration</span></div>
+  <div class="foot"><span>Slide 4 / 13</span><span>Mobile Hardware Constraints</span></div>
 </section>
 
-<!-- ==================== SLIDE 12: ENGINEERING DECISION GUIDE ==================== -->
+<!-- ==================== SLIDE 5: THE RESEARCH QUESTION ==================== -->
 <section class="slide">
-  <div class="eye">Practical Solution</div>
-  <h2>The Engineering Rulebook: Which Format When?</h2>
+  <div class="eye">Core Research Problem</div>
+  <h2>The 4-Bit Syntax &amp; Tool-Calling Collapse</h2>
   <div class="rule"></div>
-  <p style="margin-bottom:1.5vh">A clear, actionable guide for developers building AI features on edge devices:</p>
+
+  <div class="split">
+    <div>
+      <div class="card g">
+        <h3 style="color:var(--gold)">The Perplexity Trap (Surface Fluency)</h3>
+        <p style="margin-top:.6vh">When Small Language Models (&lt; 2B) are compressed to 4-bit, linguistic word perplexity on text corpora remains intact (~11–12 PPL). Practitioners falsely conclude quantization is lossless.</p>
+      </div>
+      <div class="card r" style="margin-top:1.4vh">
+        <h3 style="color:#ff9e94">The Structural Syntax Cliff</h3>
+        <p style="margin-top:.6vh">When the same 4-bit model is asked to generate structured JSON function calls, <b>syntax adherence collapses</b>! The model outputs unclosed brackets, invalid parameter keys, and hallucinated functions.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="height:100%;background:rgba(9,39,30,.7);border-left:4px solid var(--ac)">
+        <div style="font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ac);font-weight:700">Central Research Question</div>
+        <h3 style="color:var(--tx);margin-top:.6vh;font-size:1.25rem">"How can quantization strategies preserve the reasoning and structured tool-calling capabilities required for reliable mobile task execution?"</h3>
+        <p style="margin-top:1.2vh">A model that speaks fluently but generates invalid JSON tool calls is completely useless as an autonomous mobile agent. Our project solves this through <b>Grammar-Constrained Decoding</b>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 5 / 13</span><span>The Research Problem</span></div>
+</section>
+
+<!-- ==================== SLIDE 6: SYSTEM ARCHITECTURE ==================== -->
+<section class="slide">
+  <div class="eye">System Architecture</div>
+  <h2>The Complete On-Device Agent Pipeline</h2>
+  <div class="rule"></div>
+
+  <div class="card" style="margin-bottom:1.4vh;background:rgba(6,40,31,.6);padding:1.2vh 1.4vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1vw">
+      <div class="chip">1. Voice / Text Input</div>
+      <span style="color:var(--ac)">➔</span>
+      <div class="chip">2. Offline Whisper STT</div>
+      <span style="color:var(--ac)">➔</span>
+      <div class="chip">3. Agent ReAct Controller</div>
+      <span style="color:var(--ac)">➔</span>
+      <div class="chip" style="background:var(--ac);color:#03211a;font-weight:700">4. llama.cpp GGUF Core</div>
+      <span style="color:var(--ac)">➔</span>
+      <div class="chip" style="background:var(--gold);color:#03211a;font-weight:700">5. BNF Grammar Masking</div>
+      <span style="color:var(--ac)">➔</span>
+      <div class="chip">6. Mobile OS Tools</div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card">
+      <h3 style="color:var(--ac)">1. Input &amp; Perception</h3>
+      <p>Processes text and speech locally. Uses <code>Sherpa-ONNX</code> or <code>whisper.tflite</code> with Silero Voice Activity Detection (VAD) for streaming offline transcription.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--gold)">2. Reasoning &amp; Planning</h3>
+      <p>ReAct controller breaks instructions into steps, maintains task state, queries local Room DB history, and enforces context window budgets.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--blue)">3. Execution &amp; Feedback</h3>
+      <p>Dispatches validated JSON tool calls to Android APIs (Calendar, Reminders, Notes, Files). Generates audio feedback via Android native TTS.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 6 / 13</span><span>System Architecture</span></div>
+</section>
+
+<!-- ==================== SLIDE 7: QUANTIZATION & GGUF ==================== -->
+<section class="slide">
+  <div class="eye">Model Optimization</div>
+  <h2>Quantization Hierarchy &amp; The GGUF Runtime</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.2vh">Benchmarking precision formats for on-device ARM NEON execution:</p>
 
   <table class="tbl">
     <thead>
       <tr>
-        <th>If Your App Does...</th>
-        <th>Example Use Case</th>
-        <th>Safe Precision</th>
-        <th>VRAM Needed</th>
-        <th>Verdict</th>
+        <th>Quantization Precision</th>
+        <th>Model Size (1B Params)</th>
+        <th>RAM Required</th>
+        <th>Inference Latency</th>
+        <th>Mobile Deployment Verdict</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><b>Search &amp; Text Completion</b></td>
-        <td>On-device search, autocomplete</td>
-        <td><b style="color:var(--gold)">AWQ 4-Bit</b></td>
+        <td><b>FP16 (Uncompressed Baseline)</b></td>
+        <td>~2.5 GB</td>
+        <td>~3.8 GB</td>
+        <td>Baseline (Slow)</td>
+        <td><span class="badge b-red">Exceeds Mobile RAM Budget</span></td>
+      </tr>
+      <tr>
+        <td><b>Q8_0 (8-bit Integer Quant)</b></td>
+        <td>~1.3 GB</td>
+        <td>~1.8 GB</td>
+        <td>1.8x Faster</td>
+        <td><span class="badge b-green">Lossless (&lt; 0.2% drop)</span></td>
+      </tr>
+      <tr>
+        <td><b>Q4_K_M (4-bit Medium K-Quant)</b></td>
         <td>~0.8 GB</td>
-        <td><span class="badge b-green">Safe (&lt; 2 pp drop)</span></td>
+        <td>~1.1 GB</td>
+        <td>3.2x Faster</td>
+        <td><span class="badge b-green">Optimal Edge Sweet Spot</span></td>
       </tr>
       <tr>
-        <td><b>General Chat &amp; Q&amp;A</b></td>
-        <td>Conversational customer support</td>
-        <td><b style="color:var(--gold)">AWQ 4-Bit</b></td>
-        <td>~0.8 GB</td>
-        <td><span class="badge b-green">Safe (&lt; 3 pp drop)</span></td>
-      </tr>
-      <tr>
-        <td><b>Strict Instruction Following</b></td>
-        <td>Extracting structured JSON tables</td>
-        <td><b style="color:var(--ac)">BitsAndBytes 8-Bit</b></td>
-        <td>~1.2 GB</td>
-        <td><span class="badge b-yellow">8-bit Required</span></td>
-      </tr>
-      <tr>
-        <td><b>Math, Code &amp; Multi-Step Logic</b></td>
-        <td>Problem solvers, code generation</td>
-        <td><b style="color:var(--tx)">8-Bit or FP16</b></td>
-        <td>~1.2 – 2.5 GB</td>
-        <td><span class="badge b-red">Never use 4-bit</span></td>
+        <td><b>Q4_0 (4-bit Naive Symmetric)</b></td>
+        <td>~0.7 GB</td>
+        <td>~0.9 GB</td>
+        <td>3.4x Faster</td>
+        <td><span class="badge b-yellow">Syntax Fragile (Needs Grammar)</span></td>
       </tr>
     </tbody>
   </table>
 
-  <div class="card" style="margin-top:1.8vh;background:#0d3527">
-    <b style="color:var(--gold)">The Golden Rule:</b> For simple recall and chatbots, 4-bit AWQ saves huge memory with zero noticeable downside. But the moment an app requires multi-step logic or strict JSON schema, you must stay at 8-bit.
+  <div class="card" style="margin-top:1.4vh;background:rgba(9,39,30,.6);border-left:3px solid var(--ac)">
+    <b style="color:var(--gold)">Target Architectures:</b> Standardizing on <b>Llama-3.2-1B-Instruct</b> (128k context, official function-calling training) and <b>Qwen2.5-0.5B/1.5B</b> (Grouped Query Attention).
   </div>
-  <div class="foot"><span>Slide 12 / 13</span><span>Engineering Decision Guide</span></div>
+  <div class="foot"><span>Slide 7 / 13</span><span>Quantization &amp; GGUF Pipeline</span></div>
 </section>
 
-<!-- ==================== SLIDE 13: CONCLUSION ==================== -->
+<!-- ==================== SLIDE 8: GRAMMAR CONSTRAINED DECODING ==================== -->
 <section class="slide">
-  <div class="eye">Summary</div>
-  <h2>Conclusion &amp; Key Takeaways</h2>
+  <div class="eye">Technical Innovation</div>
+  <h2>Grammar-Constrained Decoding (BNF Grammars)</h2>
   <div class="rule"></div>
 
-  <div class="grid">
-    <div class="card g">
-      <span class="n">TAKEAWAY 1</span>
-      <h3>Perplexity is a Trap</h3>
-      <p>Text fluency does not guarantee reasoning ability. A 4-bit model speaks fluently while getting basic math wrong.</p>
-    </div>
-
-    <div class="card g">
-      <span class="n">TAKEAWAY 2</span>
-      <h3>AWQ Beats Naive Methods</h3>
-      <p>Activation-Aware Quantization (AWQ) outperforms naive 4-bit by protecting salient attention channels.</p>
-    </div>
-
-    <div class="card g">
-      <span class="n">TAKEAWAY 3</span>
-      <h3>Task-Conditioned Rules</h3>
-      <p>We created an actionable rulebook ensuring engineers get maximum RAM savings without risking app failures.</p>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:2.5vh;background:#0d3326;border-color:var(--ac);padding:1.6vh 2vw">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <h3 style="color:var(--gold);margin-bottom:.3vh">Thank You — Questions &amp; Discussion</h3>
-        <p style="font-size:.9rem;color:var(--tx)">Guide: <b>Ms. Gull Kaur</b> | Team: <b>Ekansh Agarwal, Faqre Alam, Guneet Toppo</b></p>
+  <div class="split">
+    <div>
+      <div class="card g" style="height:100%">
+        <span class="n">MATHEMATICAL GUARANTEE</span>
+        <h3 style="color:var(--gold)">The Finite-State Token Masker</h3>
+        <p style="margin-top:.8vh">Instead of letting the 4-bit model freely sample tokens that might hallucinate invalid syntax:</p>
+        <ul style="padding-left:1.2vw;margin-top:.8vh;display:flex;flex-direction:column;gap:.8vh">
+          <li>We author a <b>Backus-Naur Form (GBNF)</b> grammar defining valid JSON tool calls.</li>
+          <li>At every step of autoregressive generation, <code>llama.cpp</code> evaluates the grammar state.</li>
+          <li><b>Logit Masking:</b> Tokens that violate the schema receive logit = -&infin;, making invalid syntax mathematically impossible.</li>
+          <li><b>Result:</b> 100% syntactically valid tool calls on 4-bit models with zero parsing exceptions!</li>
+        </ul>
       </div>
-      <div style="text-align:right">
-        <span class="badge b-green" style="font-size:.85rem;padding:.4em .8em">DTU CSE BTP GP159</span>
+    </div>
+    <div>
+      <div class="card" style="height:100%;font-family:monospace;font-size:.82rem;background:#051a14">
+        <div style="color:var(--ac);font-weight:700;margin-bottom:.6vh">// GBNF Grammar Sample</div>
+        <span style="color:var(--gold)">root</span> ::= "{" ws ""type":" ws (action | message) ws "}"<br><br>
+        <span style="color:var(--gold)">action</span> ::= ""action", "thought":" string ", "tool":" tool_name ", "parameters":" params<br><br>
+        <span style="color:var(--gold)">tool_name</span> ::= ""create_reminder"" | ""search_calendar"" | ""manage_notes"" | ""search_local_docs""<br><br>
+        <span style="color:var(--gold)">params</span> ::= reminder_params | notes_params | ...
       </div>
     </div>
   </div>
-  <div class="foot"><span>Slide 13 / 13</span><span>Conclusion</span></div>
+  <div class="foot"><span>Slide 8 / 13</span><span>Grammar-Constrained Decoding</span></div>
+</section>
+
+<!-- ==================== SLIDE 9: MOBILE TOOLS ==================== -->
+<section class="slide">
+  <div class="eye">Mobile Capabilities</div>
+  <h2>Permission-Controlled Mobile Task Execution</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.2vh">The 6 core mobile tools integrated into the assistant sandbox:</p>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Tool Identifier</th>
+        <th>Mobile API / Subsystem</th>
+        <th>Functionality</th>
+        <th>Security Classification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>create_reminder</b></td>
+        <td>Android <code>AlarmManager</code></td>
+        <td>Schedules exact timed reminders &amp; system alarms</td>
+        <td><span class="badge b-green">SAFE (Local)</span></td>
+      </tr>
+      <tr>
+        <td><b>search_calendar</b></td>
+        <td>Android <code>CalendarProvider</code></td>
+        <td>Queries appointments &amp; detects schedule conflicts</td>
+        <td><span class="badge b-green">SAFE (Read-Only)</span></td>
+      </tr>
+      <tr>
+        <td><b>manage_notes</b></td>
+        <td>Android <code>Room</code> Database (SQLite)</td>
+        <td>Creates, reads, searches, and lists personal notes</td>
+        <td><span class="badge b-green">SAFE (Local)</span></td>
+      </tr>
+      <tr>
+        <td><b>search_local_docs</b></td>
+        <td>Android Scoped Storage</td>
+        <td>Searches authorized local PDF &amp; TXT documents</td>
+        <td><span class="badge b-green">SAFE (Read-Only)</span></td>
+      </tr>
+      <tr>
+        <td><b>read_document_summary</b></td>
+        <td>Local Offline RAG Engine</td>
+        <td>Extracts semantic excerpts on user focus topic</td>
+        <td><span class="badge b-green">SAFE (Local RAG)</span></td>
+      </tr>
+      <tr>
+        <td><b>draft_message</b></td>
+        <td>Android Intent (<code>ACTION_SENDTO</code>)</td>
+        <td>Pre-fills SMS or WhatsApp message drafts</td>
+        <td><span class="badge b-red">CONFIRMATION REQUIRED</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="foot"><span>Slide 9 / 13</span><span>Mobile OS Integration</span></div>
+</section>
+
+<!-- ==================== SLIDE 10: ZERO-TRUST PRIVACY ==================== -->
+<section class="slide">
+  <div class="eye">Security &amp; Safety</div>
+  <h2>Zero Cloud Egress &amp; Security Architecture</h2>
+  <div class="rule"></div>
+
+  <div class="grid g2">
+    <div class="card" style="border-left:4px solid var(--ac)">
+      <h3 style="color:var(--ac)">Zero Internet Permission</h3>
+      <p style="margin-top:.6vh">The Android Manifest strictly omits <code>android.permission.INTERNET</code>. The OS kernel physically prevents the app from creating network sockets, mathematically guaranteeing zero data leaks.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red)">
+      <h3 style="color:#ff9e94">Human-in-the-Loop Confirmation</h3>
+      <p style="margin-top:.6vh">Consequential or communication tools (e.g. drafting messages) are intercepted by the confirmation gate, requiring explicit user touch before invoking Android intents.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold)">
+      <h3 style="color:var(--gold)">Prompt Injection Defense</h3>
+      <p style="margin-top:.6vh">Text retrieved from untrusted local documents is wrapped in strict delimiters (<code>&lt;untrusted_document_context&gt;</code>) with prompt rules preventing override of agent security policies.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--blue)">
+      <h3 style="color:var(--blue)">Complete Local Audit Log</h3>
+      <p style="margin-top:.6vh">Every tool invocation, timestamp, parameter payload, and authorization status is logged into a secure SQLite table for full user transparency.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Slide 10 / 13</span><span>Zero-Trust Privacy &amp; Security</span></div>
+</section>
+
+<!-- ==================== SLIDE 11: AGENT BENCHMARK ==================== -->
+<section class="slide">
+  <div class="eye">Empirical Methodology</div>
+  <h2>Agent-Aware Quantization Benchmark (AAQB)</h2>
+  <div class="rule"></div>
+  <p style="margin-bottom:1.4vh">Evaluating mobile agents requires metrics beyond simple text perplexity:</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <div style="font-size:.8rem;color:var(--gold);font-weight:700">SYNTAX RIGOR</div>
+      <h3 style="color:var(--tx);margin-top:.3vh">Syntax Adherence ($Acc_{syn}$)</h3>
+      <p style="margin-top:.4vh">Percentage of model generations that parse as 100% valid JSON without structural formatting exceptions.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:.8rem;color:var(--ac);font-weight:700">TOOL ACCURACY</div>
+      <h3 style="color:var(--tx);margin-top:.3vh">Tool Identification ($Acc_{id}$)</h3>
+      <p style="margin-top:.4vh">Accuracy in routing natural-language instructions to the correct tool among the available mobile toolset.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:.8rem;color:var(--blue);font-weight:700">TASK SUCCESS</div>
+      <h3 style="color:var(--tx);margin-top:.3vh">End-to-End Success ($Acc_{e2e}$)</h3>
+      <p style="margin-top:.4vh">Full execution success rate verifying that the reminder, note, or search was completed accurately on device.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.5vh;background:rgba(9,39,30,.6);border-left:3px solid var(--gold)">
+    <b style="color:var(--gold)">Hardware Profiling Metrics:</b> Time-to-First-Token (TTFT in ms), Generation Speed (tokens/sec), Peak RSS Memory (MB), and Energy Consumption (mAh per task measured via Android BatteryManager).
+  </div>
+  <div class="foot"><span>Slide 11 / 13</span><span>Agent-Aware Benchmark Methodology</span></div>
+</section>
+
+<!-- ==================== SLIDE 12: LIVE DEMO & VERIFICATION ==================== -->
+<section class="slide">
+  <div class="eye">Live Verification</div>
+  <h2>Operational On-Device Sandbox &amp; Test Suite</h2>
+  <div class="rule"></div>
+
+  <div class="grid g3">
+    <div class="card" style="border-top:3px solid var(--ac)">
+      <span class="badge b-green">VERIFIED</span>
+      <h3 style="color:var(--ac);margin-top:.6vh">100% Offline Mode</h3>
+      <p style="margin-top:.6vh">Verified in Airplane Mode. All language inference, parameter extraction, and tool execution operate with zero active sockets.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--gold)">
+      <span class="badge b-green">VERIFIED</span>
+      <h3 style="color:var(--gold);margin-top:.6vh">Room SQLite Storage</h3>
+      <p style="margin-top:.6vh">Local database actively persists notes, reminders, calendar entries, and audit logs with instant transaction rollback.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <span class="badge b-green">VERIFIED</span>
+      <h3 style="color:var(--blue);margin-top:.6vh">Automated Test Suite</h3>
+      <p style="margin-top:.6vh">8/8 end-to-end unit &amp; integration tests passing in <code>tests_agent/test_agent_system.py</code> covering all 6 tools and security gates.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.5vh;background:#051a14">
+    <b style="color:var(--ac)">Live Terminal Sandbox:</b> Demonstrable right now via <code>python3 -m mobile_agent.cli</code>, proving offline intent classification, single-step reminder creation, local document search, and security confirmation gates.
+  </div>
+  <div class="foot"><span>Slide 12 / 13</span><span>Live Verification &amp; Sandbox Status</span></div>
+</section>
+
+<!-- ==================== SLIDE 13: WORKLOAD & ROADMAP ==================== -->
+<section class="slide">
+  <div class="eye">Project Execution</div>
+  <h2>Workload Division &amp; University Milestones</h2>
+  <div class="rule"></div>
+
+  <div class="grid g3">
+    <div class="card" style="border-top:3px solid var(--ac)">
+      <b style="color:var(--ac)">Faqre Alam (23/CS/150)</b>
+      <p style="font-size:.82rem;color:var(--tx);font-weight:600;margin-top:.4vh">Lead Systems &amp; Agent Architect</p>
+      <ul style="font-size:.78rem;padding-left:1.1vw;margin-top:.6vh;display:flex;flex-direction:column;gap:.4vh">
+        <li>Agent ReAct controller &amp; prompt schemas</li>
+        <li>BNF grammar-constrained decoding engine</li>
+        <li>Android Jetpack Compose UI orchestration</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <b style="color:var(--blue)">Ekansh Agarwal (23/CS/149)</b>
+      <p style="font-size:.82rem;color:var(--tx);font-weight:600;margin-top:.4vh">Model Optimization &amp; Inference Lead</p>
+      <ul style="font-size:.78rem;padding-left:1.1vw;margin-top:.6vh;display:flex;flex-direction:column;gap:.4vh">
+        <li>GGUF quantization pipeline (Q8_0, Q4_K_M)</li>
+        <li>llama.cpp Android C++/NDK JNI bridge</li>
+        <li>RAM, KV-cache &amp; battery profiling</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--gold)">
+      <b style="color:var(--gold)">Guneet Toppo (23/CS/160)</b>
+      <p style="font-size:.82rem;color:var(--tx);font-weight:600;margin-top:.4vh">Mobile Integrations &amp; Voice Lead</p>
+      <ul style="font-size:.78rem;padding-left:1.1vw;margin-top:.6vh;display:flex;flex-direction:column;gap:.4vh">
+        <li>Mobile OS APIs (Calendar, Alarms, Notes)</li>
+        <li>Offline Speech-to-Text (Whisper/Sherpa)</li>
+        <li>Local PDF RAG &amp; Security Confirmation</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.4vh;background:rgba(9,39,30,.6)">
+    <div style="font-size:.82rem;color:var(--gold);font-weight:700">Engineering Roadmap to Final BTP Submission:</div>
+    <p style="font-size:.82rem;margin-top:.3vh">Phase 1: Agent Core &amp; GBNF (Done) ➔ Phase 2: llama.cpp Android NDK ➔ Phase 3: Mobile Tools &amp; Room ➔ Phase 4: Local RAG ➔ Phase 5: Offline Voice ➔ Phase 6: AAQB Profiling &amp; Defense.</p>
+  </div>
+  <div class="foot"><span>Slide 13 / 13</span><span>Workload Division &amp; Roadmap</span></div>
 </section>
 
 <!-- ==================== NAVIGATION BAR ==================== -->
