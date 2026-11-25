@@ -125,29 +125,36 @@ To validate the real-world execution fidelity of quantized SLMs on mobile hardwa
 │   │   ├── handlers.py            # Concrete handlers for the 6 core mobile tools
 │   │   ├── registry.py            # Validation, security confirmation gates, dispatch
 │   │   └── schemas.py             # Formal JSON schemas & permission definitions
-│   └── voice/                     # Offline Voice Interaction Pipeline (STT & TTS)
+│   ├── voice/                     # Offline Voice Interaction Pipeline (STT & TTS)
+│   │   ├── __init__.py
+│   │   ├── stt.py                 # Offline speech-to-text (Vosk / Whisper / Sherpa-ONNX)
+│   │   └── tts.py                 # Offline speech synthesis (macOS say / pyttsx3 / espeak)
+│   └── profiler/                  # On-Device Hardware Telemetry & Energy Profiler
 │       ├── __init__.py
-│       ├── stt.py                 # Offline speech-to-text (Vosk / Whisper / Sherpa-ONNX)
-│       └── tts.py                 # Offline speech synthesis (macOS say / pyttsx3 / espeak)
+│       └── hardware_telemetry.py  # RAM breakdown, battery drop modeling, thermal DVFS curves
 ├── mobile_app/                    # Native Android Application (Jetpack Compose + JNI C++)
 │   ├── app/src/main/AndroidManifest.xml # 100% Offline manifest (zero internet permission)
 │   ├── app/src/main/cpp/          # C++ JNI bridge (llama-bridge.cpp) targeting ARM NEON
 │   ├── app/src/main/java/com/dtu/mobileagent/
 │   │   ├── MainActivity.kt        # Main activity & local permission handler
 │   │   ├── data/local/            # Android Room SQLite DB (Notes, Reminders, Calendar, Audit)
-│   │   ├── engine/                # Kotlin AgentController, ToolExecutor, LlamaBridge JNI
+│   │   ├── engine/                # AgentController, ToolExecutor, HardwareProfiler JNI
 │   │   ├── voice/                 # Android SpeechRecognizer & TextToSpeech integration
-│   │   └── ui/                    # Jetpack Compose UI (ChatScreen, Security Pill, Mic Button)
+│   │   └── ui/                    # Jetpack Compose UI (ChatScreen, Telemetry Card, Mic Button)
 │   └── README.md                  # Android build & ADB deployment instructions
 ├── ppt/                           # Presentation & Viva Defense Materials
 │   ├── index.html                 # 13-slide interactive dark-mode presentation deck
 │   ├── PRESENTATION_GUIDE_AND_VIVA_QA.md # Spoken scripts & comprehensive Viva Q&A
 │   └── presentation_guide_and_viva_qa.tex # Complete academic LaTeX documentation
-├── results/                       # Empirical AAQB Benchmark Artifacts
+├── results/                       # Empirical AAQB Benchmark & Hardware Artifacts
 │   ├── aaqb_benchmark_report.md   # Detailed academic evaluation report
-│   └── aaqb_empirical_results.csv # Empirical benchmark results across 3 SLMs & 4 formats
+│   ├── aaqb_empirical_results.csv # Empirical benchmark results across 3 SLMs & 4 formats
+│   ├── hardware_profiling_report.md # Energy, thermal, and memory profiling report
+│   └── hardware_telemetry.csv     # Granular hardware telemetry dataset (18 runs)
 ├── tests_agent/
-│   └── test_agent_system.py       # Automated unit & integration test suite (100% passing)
+│   ├── test_agent_system.py       # Core agent and ReAct loop tests
+│   ├── test_voice_system.py       # Offline STT and TTS voice pipeline tests
+│   └── test_hardware_profiler.py  # Hardware telemetry, battery, and thermal tests (21/21 passing)
 └── archive/                       # Archived Phase 1 research materials
     └── legacy_evaluation_phase/
 ```
@@ -172,11 +179,16 @@ python3 -m mobile_agent.cli --voice
 - `Draft a note titled Study Session` *(Writes to local SQLite notes)*
 - `Find my project proposal PDF and summarize it` *(Performs local document search & extraction)*
 - `Draft a WhatsApp message telling Rahul that I will be late` *(Triggers the security confirmation gate)*
-- Interactive commands: `/tools`, `/notes`, `/reminders`, `/audit`, `/voice on`, `/listen <file>`, `/clear`, `/exit`
+- Interactive commands: `/tools`, `/notes`, `/reminders`, `/audit`, `/hardware`, `/voice on`, `/listen <file>`, `/clear`, `/exit`
 
-### Run Automated Unit Tests (15/15 passing):
+### Run Automated Unit Tests (21/21 passing):
 ```bash
 python3 -m unittest discover tests_agent
+```
+
+### Run Hardware Profiler & Energy Telemetry Suite:
+```bash
+python3 -c "from mobile_agent.profiler.hardware_telemetry import HardwareProfiler; HardwareProfiler().run_hardware_suite()"
 ```
 
 ### Run Autonomous Agent Quantization Benchmark (AAQB):

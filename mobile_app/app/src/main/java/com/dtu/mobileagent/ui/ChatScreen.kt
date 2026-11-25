@@ -39,6 +39,9 @@ fun ChatScreen(
     val voiceState by voiceManager?.inputState?.collectAsState() ?: remember { mutableStateOf(VoiceInputState.Idle) }
     val isListening = voiceState is VoiceInputState.Listening
 
+    val hardwareTelemetry by controller.hardwareProfiler.telemetry.collectAsState()
+    var showDetailedTelemetry by remember { mutableStateOf(false) }
+
     val listState = rememberLazyListState()
 
     var inputText by remember { mutableStateOf("") }
@@ -69,6 +72,15 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    // Hardware Telemetry Toggle
+                    IconButton(onClick = { showDetailedTelemetry = !showDetailedTelemetry }) {
+                        Icon(
+                            imageVector = Icons.Default.Analytics,
+                            contentDescription = "Toggle Hardware Telemetry",
+                            tint = if (showDetailedTelemetry) BlueAccent else TextSecondary
+                        )
+                    }
+
                     // Offline Text-to-Speech Toggle
                     IconButton(onClick = { controller.toggleVoiceOutput() }) {
                         Icon(
@@ -111,6 +123,10 @@ fun ChatScreen(
                     tokensPerSec = uiState.currentTokensPerSec,
                     memoryMb = uiState.currentMemoryMb
                 )
+                if (showDetailedTelemetry) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HardwareTelemetryCard(telemetry = hardwareTelemetry)
+                }
             }
 
             // Message stream

@@ -28,6 +28,7 @@ venv.bak/
 
 # Logs & temp files
 *.log
+*.db
 results/**/*.tmp
 results/**/lm_eval_output/
 

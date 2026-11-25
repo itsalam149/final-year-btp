@@ -36,6 +36,7 @@ class AgentController(
     private val gson = Gson()
     private val llamaBridge = LlamaBridge(context)
     private val toolExecutor = ToolExecutor(context, database)
+    val hardwareProfiler = HardwareProfiler(context)
     private var speechCallback: ((String) -> Unit)? = null
 
     private val _uiState = MutableStateFlow(AgentUiState())
@@ -56,6 +57,7 @@ class AgentController(
         _uiState.value = _uiState.value.copy(isProcessing = true)
         val success = llamaBridge.initialize()
         val metrics = llamaBridge.getMetrics()
+        hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
         _uiState.value = _uiState.value.copy(
             isProcessing = false,
             isModelLoaded = success,
@@ -153,6 +155,7 @@ class AgentController(
 
             // Update performance stats
             val metrics = llamaBridge.getMetrics()
+            hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
             _uiState.value = _uiState.value.copy(
                 currentTokensPerSec = metrics.tokensPerSecond,
                 currentMemoryMb = metrics.memoryFootprintMb

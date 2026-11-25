@@ -114,6 +114,64 @@ fun ModelMetricsBar(
 }
 
 @Composable
+fun HardwareTelemetryCard(
+    telemetry: com.dtu.mobileagent.engine.HardwareTelemetry,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = CardBackground,
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Hardware Telemetry & Energy Profiler",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = telemetry.thermalState,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (telemetry.thermalState == "OPTIMAL_NORMAL") EmeraldGlow else WarningAmber
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Battery", fontSize = 10.sp, color = TextMuted)
+                    Text("${telemetry.batteryPct}% (${telemetry.batteryTempC}°C)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+                Column {
+                    Text("Energy Cost", fontSize = 10.sp, color = TextMuted)
+                    Text("${telemetry.energyJoulesPerToken} J/tok", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BlueAccent)
+                }
+                Column {
+                    Text("Total RAM", fontSize = 10.sp, color = TextMuted)
+                    Text("${telemetry.totalRamMb.toInt()} MB", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = WarningAmber)
+                }
+                Column {
+                    Text("Power Draw", fontSize = 10.sp, color = TextMuted)
+                    Text("${telemetry.powerWatts} W", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun ConfirmationDialog(
     pending: PendingAction,
     onConfirm: (Boolean) -> Unit
