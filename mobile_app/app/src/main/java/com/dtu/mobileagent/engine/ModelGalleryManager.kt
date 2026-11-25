@@ -51,6 +51,26 @@ class ModelGalleryManager(private val context: Context) {
 
         val CATALOG = listOf(
             ModelSpec(
+                id = "gemma-2-2b",
+                displayName = "Gemma-2-2B-Instruct",
+                filename = "gemma-2-2b-it-q4_k_m.gguf",
+                sizeMb = 1629,
+                ramMb = 2200,
+                precision = "GGUF Q4_K_M (4-bit)",
+                downloadUrl = "https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf",
+                description = "Google's premier 2.6B parameter edge model. Exceptional reasoning, wide general knowledge, and conversational depth."
+            ),
+            ModelSpec(
+                id = "llama-3.2-3b",
+                displayName = "Llama-3.2-3B-Instruct",
+                filename = "llama-3.2-3b-instruct-q4_k_m.gguf",
+                sizeMb = 1925,
+                ramMb = 2600,
+                precision = "GGUF Q4_K_M (4-bit)",
+                downloadUrl = "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+                description = "Higher capacity 3-billion parameter model. Rich conversational vocabulary and complex multi-step reasoning."
+            ),
+            ModelSpec(
                 id = "llama-3.2-1b",
                 displayName = "Llama-3.2-1B-Instruct",
                 filename = "llama-3.2-1b-instruct-q4_k_m.gguf",
@@ -58,7 +78,7 @@ class ModelGalleryManager(private val context: Context) {
                 ramMb = 1040,
                 precision = "GGUF Q4_K_M (4-bit)",
                 downloadUrl = "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
-                description = "Recommended for primary edge tasks. Excellent instruction following and grammar-guided tool calling."
+                description = "Fast edge model for standard mobile tasks. Excellent instruction following and grammar-guided tool calling."
             ),
             ModelSpec(
                 id = "qwen2.5-0.5b",
@@ -78,7 +98,7 @@ class ModelGalleryManager(private val context: Context) {
                 ramMb = 880,
                 precision = "GGUF Q4_K_M (4-bit)",
                 downloadUrl = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
-                description = "Fast conversational chat model trained on 3 trillion tokens. Smooth mobile dialogue."
+                description = "Conversational chat model trained on 3 trillion tokens. Smooth mobile dialogue."
             )
         )
     }
