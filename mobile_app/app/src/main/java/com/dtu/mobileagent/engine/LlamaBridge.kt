@@ -119,7 +119,8 @@ class LlamaBridge(private val context: Context) {
     }
 
     private fun simulateGrammarConstrainedInference(prompt: String): String {
-        val lower = prompt.lowercase()
+        val userPos = prompt.lastIndexOf("<|user|>")
+        val lower = if (userPos != -1) prompt.substring(userPos).lowercase() else prompt.lowercase()
         return when {
             "remind" in lower -> {
                 """{"type": "action", "thought": "User wants to create a reminder. Calling create_reminder.", "tool": "create_reminder", "parameters": {"title": "Team sync", "due_time_iso": "2026-11-26T15:00:00", "priority": "normal"}}"""
@@ -127,17 +128,30 @@ class LlamaBridge(private val context: Context) {
             "calendar" in lower || "meeting" in lower || "schedule" in lower -> {
                 """{"type": "action", "thought": "User wants to check agenda. Calling search_calendar.", "tool": "search_calendar", "parameters": {"date_iso": "2026-11-26", "query": "meeting"}}"""
             }
+            "open " in lower || "launch " in lower -> {
+                val app = when {
+                    "maps" in lower -> "maps"
+                    "youtube" in lower -> "youtube"
+                    "whatsapp" in lower -> "whatsapp"
+                    "settings" in lower -> "settings"
+                    else -> "spotify"
+                }
+                """{"type": "action", "thought": "User wants to launch app. Calling open_app.", "tool": "open_app", "parameters": {"app_name": "$app"}}"""
+            }
+            "screen" in lower -> {
+                """{"type": "action", "thought": "User wants screen inspection. Calling automate_ui.", "tool": "automate_ui", "parameters": {"action": "read_screen"}}"""
+            }
             "note" in lower || "write down" in lower -> {
-                """{"type": "action", "thought": "User wants to write a note. Calling manage_notes.", "tool": "manage_notes", "parameters": {"action": "create", "title": "BTP Discussion", "content": "Grammar-guided inference works completely offline."}}"""
+                """{"type": "action", "thought": "User wants to write a note. Calling manage_notes.", "tool": "manage_notes", "parameters": {"action": "create", "title": "Quick Note", "content": "Grammar-guided inference works completely offline."}}"""
             }
             "document" in lower || "doc" in lower || "pdf" in lower -> {
                 """{"type": "action", "thought": "User wants to search local docs. Calling search_local_docs.", "tool": "search_local_docs", "parameters": {"query": "project", "max_results": 3}}"""
             }
             "message" in lower || "send text" in lower || "whatsapp" in lower -> {
-                """{"type": "action", "thought": "User requests sending an external message. This requires user confirmation.", "tool": "draft_message", "parameters": {"recipient": "Ms. Gull Kaur", "message_body": "Offline agent prototype is operational.", "platform": "sms"}}"""
+                """{"type": "action", "thought": "User requests sending an external message. This requires user confirmation.", "tool": "draft_message", "parameters": {"recipient": "Rahul", "message_body": "Offline agent prototype is operational.", "platform": "sms"}}"""
             }
             else -> {
-                """{"type": "message", "thought": "Direct conversational request.", "content": "I am your offline mobile AI assistant running locally on your device with zero internet connectivity. All your data stays private and on-device."}"""
+                """{"type": "message", "thought": "Direct conversational greeting or query.", "content": "Hello! I am your offline mobile AI assistant running locally on your device with zero internet connectivity. All your data stays private and on-device."}"""
             }
         }
     }

@@ -53,18 +53,34 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
     std::string lowerPrompt = prompt;
     for (auto &c : lowerPrompt) c = tolower(c);
 
-    if (lowerPrompt.find("remind") != std::string::npos || lowerPrompt.find("reminder") != std::string::npos) {
+    // Isolate the user query from the prompt (after <|user|>) so system prompt tool names don't false-trigger
+    std::string userQuery = lowerPrompt;
+    size_t userPos = lowerPrompt.rfind("<|user|>");
+    if (userPos != std::string::npos) {
+        userQuery = lowerPrompt.substr(userPos + 8);
+    }
+
+    if (userQuery.find("remind") != std::string::npos || userQuery.find("reminder") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"User wants to schedule a reminder. I will call create_reminder.\", \"tool\": \"create_reminder\", \"parameters\": {\"title\": \"Follow up on task\", \"due_time_iso\": \"2026-11-26T14:00:00\", \"priority\": \"normal\"}}";
-    } else if (lowerPrompt.find("calendar") != std::string::npos || lowerPrompt.find("meeting") != std::string::npos || lowerPrompt.find("schedule") != std::string::npos) {
+    } else if (userQuery.find("calendar") != std::string::npos || userQuery.find("meeting") != std::string::npos || userQuery.find("schedule") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"User is checking agenda. I will search local calendar events.\", \"tool\": \"search_calendar\", \"parameters\": {\"date_iso\": \"2026-11-26\", \"query\": \"meeting\"}}";
-    } else if (lowerPrompt.find("note") != std::string::npos || lowerPrompt.find("write down") != std::string::npos) {
-        responseJson = "{\"type\": \"action\", \"thought\": \"User wants to record information into local notes.\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Quick Note\", \"content\": \"Captured from voice assistant\"}}";
-    } else if (lowerPrompt.find("document") != std::string::npos || lowerPrompt.find("pdf") != std::string::npos || lowerPrompt.find("search docs") != std::string::npos) {
+    } else if (userQuery.find("note") != std::string::npos || userQuery.find("write down") != std::string::npos) {
+        responseJson = "{\"type\": \"action\", \"thought\": \"User wants to record information into local notes.\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Quick Note\", \"content\": \"Captured from mobile assistant\"}}";
+    } else if (userQuery.find("open ") != std::string::npos || userQuery.find("launch ") != std::string::npos) {
+        std::string appName = "spotify";
+        if (userQuery.find("maps") != std::string::npos) appName = "maps";
+        else if (userQuery.find("youtube") != std::string::npos) appName = "youtube";
+        else if (userQuery.find("whatsapp") != std::string::npos) appName = "whatsapp";
+        else if (userQuery.find("settings") != std::string::npos) appName = "settings";
+        responseJson = "{\"type\": \"action\", \"thought\": \"User wants to launch an installed application.\", \"tool\": \"open_app\", \"parameters\": {\"app_name\": \"" + appName + "\"}}";
+    } else if (userQuery.find("screen") != std::string::npos) {
+        responseJson = "{\"type\": \"action\", \"thought\": \"User requests screen inspection via Accessibility.\", \"tool\": \"automate_ui\", \"parameters\": {\"action\": \"read_screen\"}}";
+    } else if (userQuery.find("document") != std::string::npos || userQuery.find("pdf") != std::string::npos || userQuery.find("search docs") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"User requests search over indexed local documents.\", \"tool\": \"search_local_docs\", \"parameters\": {\"query\": \"project overview\", \"max_results\": 3}}";
-    } else if (lowerPrompt.find("message") != std::string::npos || lowerPrompt.find("send text") != std::string::npos || lowerPrompt.find("whatsapp") != std::string::npos) {
-        responseJson = "{\"type\": \"action\", \"thought\": \"User requested drafting an external message. This requires confirmation.\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"Gull Kaur\", \"message_body\": \"The BTP Phase 1 report is ready for review.\", \"platform\": \"sms\"}}";
+    } else if (userQuery.find("message") != std::string::npos || userQuery.find("send text") != std::string::npos || userQuery.find("whatsapp") != std::string::npos) {
+        responseJson = "{\"type\": \"action\", \"thought\": \"User requested drafting an external message. This requires confirmation.\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"Rahul\", \"message_body\": \"I will be there in 15 minutes.\", \"platform\": \"sms\"}}";
     } else {
-        responseJson = "{\"type\": \"message\", \"thought\": \"General query not requiring mobile tools. Providing direct offline answer.\", \"content\": \"Hello! I am your privacy-first, on-device mobile AI assistant running locally on your device with zero cloud connectivity. How may I assist you today?\"}";
+        responseJson = "{\"type\": \"message\", \"thought\": \"User sent a greeting or general query. Providing direct conversational reply.\", \"content\": \"Hello! I am your privacy-first, on-device mobile AI assistant running locally on your phone with zero cloud egress. How can I help you today?\"}";
     }
 
     // Token generation simulation (~28 tokens/sec on Snapdragon 8 Gen 2 / ARM NEON)
