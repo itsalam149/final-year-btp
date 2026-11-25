@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Offline Mobile Agent</string>
-    <string name="app_subtitle">DTU BTP Group 159 — On-Device JARVIS</string>
+    <string name="app_subtitle">DTU BTP GP159 — On-Device Agent</string>
     <string name="privacy_badge">100% Offline | Zero Egress Guaranteed</string>
     <string name="model_status_loaded">Model Loaded: Llama-3.2-1B-Instruct (Q4_K_M)</string>
     <string name="model_status_unloaded">Model Not Loaded</string>

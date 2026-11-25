@@ -221,7 +221,7 @@ class AgentController(
 
         return """
             <|system|>
-            You are an offline mobile AI assistant (JARVIS) running locally on an Android device.
+            You are an offline mobile AI assistant running locally on an Android device for DTU CSE GP159.
             You must output JSON matching the system GBNF schema.
             Permitted tools: create_reminder, search_calendar, manage_notes, search_local_docs, read_document_summary, draft_message.
             <|history|>
