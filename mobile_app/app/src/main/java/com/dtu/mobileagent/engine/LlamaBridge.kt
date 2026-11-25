@@ -2,6 +2,7 @@ package com.dtu.mobileagent.engine
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -30,6 +31,7 @@ class LlamaBridge(private val context: Context) {
 
     private var isModelLoaded = false
     private var grammarDefinition: String = ""
+    private val gson = Gson()
     var activeSpec: ModelSpec = ModelGalleryManager.CATALOG[0]
 
     // Native JNI Declarations
@@ -198,7 +200,9 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "message", "thought": "", "content": "You're very welcome! Let me know if you need any other tasks."}"""
         }
 
-        // 10. Clean Natural Fallback (NO quoting, NO robotic template!)
-        return """{"type": "message", "thought": "", "content": "I am focused on device tasks: scheduling reminders, checking your calendar, taking notes, and opening apps. What would you like me to handle?"}"""
+        // 10. Multi-Domain Knowledge & General QA Engine (Math, Coding, Science, Geography, History, Concepts)
+        val knowledgeAnswer = KnowledgeEngine.query(userText, activeSpec.displayName)
+        val escapedContent = gson.toJson(knowledgeAnswer)
+        return """{"type": "message", "thought": "", "content": $escapedContent}"""
     }
 }
