@@ -181,6 +181,24 @@ class TestMobileAgentSystem(unittest.TestCase):
         self.assertIn("search_calendar", content)
         self.assertIn("manage_notes", content)
 
+    def test_quantization_manager_and_aaqb(self):
+        """Verify GGUF model manager and AAQB benchmark execution."""
+        from mobile_agent.quantization.manager import GGUFModelManager, ModelPrecision
+        from mobile_agent.benchmark.aaqb import AAQBRunner
+
+        mgr = GGUFModelManager()
+        spec = mgr.get_spec("llama-3.2-1b", ModelPrecision.Q4_K_M)
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec.precision, ModelPrecision.Q4_K_M)
+        self.assertGreater(spec.estimated_size_mb, 0)
+
+        # Run quick AAQB benchmark on first 5 tasks as smoke test
+        from mobile_agent.benchmark.tasks import AAQB_50_TASKS
+        runner = AAQBRunner(tasks=AAQB_50_TASKS[:5])
+        summary = runner.evaluate_configuration("Smoke Test", precision=ModelPrecision.Q4_K_M, use_grammar=True)
+        self.assertEqual(summary.total_tasks, 5)
+        self.assertGreaterEqual(summary.syntax_adherence_pct, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

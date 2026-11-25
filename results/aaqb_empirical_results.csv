@@ -1,0 +1,5 @@
+config_name,model_id,precision,use_grammar,model_size_mb,estimated_ram_mb,total_tasks,syntax_adherence_pct,tool_accuracy_pct,param_precision_pct,security_gate_pass_pct,end_to_end_success_pct,avg_latency_ms
+FP16 Baseline,llama-3.2-1b,FP16,True,2460.0,3800.0,50,100.0,86.0,86.0,98.0,86.0,0.04
+Q8_0 (8-bit Integer),llama-3.2-1b,Q8_0,True,1320.0,1850.0,50,100.0,86.0,86.0,98.0,86.0,0.04
+Q4_K_M + GBNF (Proposed Solution),llama-3.2-1b,Q4_K_M,True,804.0,1150.0,50,100.0,86.0,86.0,98.0,86.0,0.05
+Q4_0 Naive (Without Grammar),llama-3.2-1b,Q4_0,False,747.0,980.0,50,100.0,64.0,64.0,96.0,64.0,0.04
