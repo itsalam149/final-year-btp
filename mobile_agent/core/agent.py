@@ -159,11 +159,57 @@ class MockLocalInferenceEngine:
                 }
             })
 
+        # Check for app opening intent (Level 2)
+        if "open " in user_msg or "launch " in user_msg or "start " in user_msg:
+            app_target = user_msg.replace("open ", "").replace("launch ", "").replace("start ", "").replace("app", "").strip()
+            return json.dumps({
+                "type": "action",
+                "thought": f"User requests launching mobile app '{app_target}'.",
+                "tool": "open_app",
+                "parameters": {
+                    "app_name": app_target or "settings"
+                }
+            })
+
+        # Check for UI automation intent (Level 3 Accessibility)
+        if any(w in user_msg for w in ["click", "tap", "press", "type in", "read screen", "inspect screen"]):
+            if "read screen" in user_msg or "inspect screen" in user_msg or "what is on my screen" in user_msg:
+                return json.dumps({
+                    "type": "action",
+                    "thought": "User requests inspecting visible screen text via Accessibility Service.",
+                    "tool": "automate_ui",
+                    "parameters": {
+                        "action": "read_screen"
+                    }
+                })
+            elif "type" in user_msg:
+                return json.dumps({
+                    "type": "action",
+                    "thought": "User requests entering text into an active UI field.",
+                    "tool": "automate_ui",
+                    "parameters": {
+                        "action": "type",
+                        "target": "search",
+                        "input_text": "BTP final year report"
+                    }
+                })
+            else:
+                target_btn = user_msg.replace("click ", "").replace("tap ", "").replace("press ", "").strip()
+                return json.dumps({
+                    "type": "action",
+                    "thought": f"User requests clicking UI button '{target_btn}' via Accessibility.",
+                    "tool": "automate_ui",
+                    "parameters": {
+                        "action": "click",
+                        "target": target_btn or "confirm"
+                    }
+                })
+
         # Default conversational message
         return json.dumps({
             "type": "message",
             "thought": "Standard conversational response.",
-            "content": f"I am your offline assistant. I can help manage notes, create reminders, check your schedule, or search local documents without internet connectivity."
+            "content": f"I am your offline assistant. I can help manage notes, create reminders, check your schedule, launch apps, or interact with screens without internet connectivity."
         })
 
 
@@ -190,6 +236,8 @@ class MobileAgent:
         self.registry.bind_handler("search_local_docs", self.handlers.search_local_docs)
         self.registry.bind_handler("read_document_summary", self.handlers.read_document_summary)
         self.registry.bind_handler("draft_message", self.handlers.draft_message)
+        self.registry.bind_handler("open_app", self.handlers.open_app)
+        self.registry.bind_handler("automate_ui", self.handlers.automate_ui)
 
         self.llm_engine = llm_engine or MockLocalInferenceEngine()
         self.session_id = session_id

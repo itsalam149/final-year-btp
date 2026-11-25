@@ -127,3 +127,55 @@ class MobileToolHandlers:
             "user_action_required": "Please review and tap Send in your messaging app.",
             "message": f"Prepared {platform.upper()} draft for {recipient}: '{message_body}'"
         }
+
+    def open_app(self, app_name: str) -> Dict[str, Any]:
+        """Launches target app on phone (Level 2/3 App Interaction)."""
+        clean_app = app_name.strip().lower()
+        package_map = {
+            "spotify": "com.spotify.music",
+            "maps": "com.google.android.apps.maps",
+            "google maps": "com.google.android.apps.maps",
+            "youtube": "com.google.android.youtube",
+            "whatsapp": "com.whatsapp",
+            "gmail": "com.google.android.gm",
+            "settings": "com.android.settings",
+            "calculator": "com.google.android.calculator",
+            "clock": "com.google.android.deskclock"
+        }
+        pkg = package_map.get(clean_app, f"com.{clean_app}.app")
+        return {
+            "status": "LAUNCHED",
+            "app_name": app_name,
+            "package_name": pkg,
+            "message": f"Launched {app_name.capitalize()} on device ({pkg})."
+        }
+
+    def automate_ui(self, action: str, target: Optional[str] = None, input_text: Optional[str] = None) -> Dict[str, Any]:
+        """Interacts with screen elements via Accessibility Service (Level 3 Automation)."""
+        clean_action = action.strip().lower()
+        if clean_action == "click":
+            return {
+                "status": "CLICKED",
+                "target": target or "element",
+                "message": f"Accessibility Service clicked UI element matching '{target}'."
+            }
+        elif clean_action == "type":
+            return {
+                "status": "TEXT_ENTERED",
+                "target": target or "input_field",
+                "input_text": input_text or "",
+                "message": f"Accessibility Service entered '{input_text}' into field '{target}'."
+            }
+        elif clean_action == "read_screen":
+            sample_screen = ["DTU Library Portal", "Search Catalog", "Borrowed Books (2)", "Due Date: Nov 28", "Renew All"]
+            return {
+                "status": "SCREEN_READ",
+                "visible_elements": sample_screen,
+                "message": f"Screen contains {len(sample_screen)} visible elements: {', '.join(sample_screen[:3])}..."
+            }
+        else: # navigate
+            return {
+                "status": "NAVIGATED",
+                "action": clean_action,
+                "message": f"Executed global navigation: {target or 'back'}."
+            }

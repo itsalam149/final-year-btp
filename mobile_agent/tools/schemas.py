@@ -172,11 +172,56 @@ DRAFT_MESSAGE_TOOL = ToolDefinition(
     }
 )
 
+OPEN_APP_TOOL = ToolDefinition(
+    name="open_app",
+    description="Launch an installed application on the mobile device (e.g., 'spotify', 'maps', 'youtube', 'whatsapp', 'settings').",
+    security_level=SecurityLevel.SAFE,
+    required_permissions=[],
+    parameters_schema={
+        "type": "object",
+        "properties": {
+            "app_name": {
+                "type": "string",
+                "description": "Common name or package identifier of the app to open."
+            }
+        },
+        "required": ["app_name"]
+    }
+)
+
+AUTOMATE_UI_TOOL = ToolDefinition(
+    name="automate_ui",
+    description="Interact with active app UI elements on screen via Android Accessibility Service (click buttons, enter text, inspect screen).",
+    security_level=SecurityLevel.REQUIRES_CONFIRMATION,
+    required_permissions=["android.permission.BIND_ACCESSIBILITY_SERVICE"],
+    parameters_schema={
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": ["click", "type", "read_screen", "navigate"],
+                "description": "UI automation action to perform."
+            },
+            "target": {
+                "type": "string",
+                "description": "Visible text or label of the button or field to interact with."
+            },
+            "input_text": {
+                "type": "string",
+                "description": "Text to enter if action is 'type'."
+            }
+        },
+        "required": ["action"]
+    }
+)
+
 ALL_CORE_TOOLS = [
     CREATE_REMINDER_TOOL,
     SEARCH_CALENDAR_TOOL,
     MANAGE_NOTES_TOOL,
     SEARCH_LOCAL_DOCS_TOOL,
     READ_DOCUMENT_SUMMARY_TOOL,
-    DRAFT_MESSAGE_TOOL
+    DRAFT_MESSAGE_TOOL,
+    OPEN_APP_TOOL,
+    AUTOMATE_UI_TOOL
 ]

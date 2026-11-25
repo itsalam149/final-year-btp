@@ -14,10 +14,10 @@ action_payload ::= "\"action\"," ws "\"thought\":" ws string "," ws "\"tool\":" 
 # A message payload delivers direct conversational response to the user
 message_payload ::= "\"message\"," ws "\"thought\":" ws string "," ws "\"content\":" ws string
 
-# Permitted 6 core mobile tools
-tool_name ::= "\"create_reminder\"" | "\"search_calendar\"" | "\"manage_notes\"" | "\"search_local_docs\"" | "\"read_document_summary\"" | "\"draft_message\""
+# Permitted core mobile tools (Levels 1, 2, and 3)
+tool_name ::= "\"create_reminder\"" | "\"search_calendar\"" | "\"manage_notes\"" | "\"search_local_docs\"" | "\"read_document_summary\"" | "\"draft_message\"" | "\"open_app\"" | "\"automate_ui\""
 
-tool_params ::= reminder_params | calendar_params | notes_params | docs_params | summary_params | message_params
+tool_params ::= reminder_params | calendar_params | notes_params | docs_params | summary_params | message_params | open_app_params | automate_ui_params
 
 reminder_params ::= "{" ws "\"title\":" ws string "," ws "\"due_time_iso\":" ws string ("," ws "\"priority\":" ws ("\"low\"" | "\"normal\"" | "\"high\""))? ws "}"
 
@@ -30,6 +30,10 @@ docs_params ::= "{" ws "\"query\":" ws string ("," ws "\"max_results\":" ws [0-9
 summary_params ::= "{" ws "\"filename\":" ws string ("," ws "\"focus_topic\":" ws string)? ws "}"
 
 message_params ::= "{" ws "\"recipient\":" ws string "," ws "\"message_body\":" ws string ("," ws "\"platform\":" ws ("\"sms\"" | "\"whatsapp\""))? ws "}"
+
+open_app_params ::= "{" ws "\"app_name\":" ws string ws "}"
+
+automate_ui_params ::= "{" ws "\"action\":" ws ("\"click\"" | "\"type\"" | "\"read_screen\"" | "\"navigate\"") ("," ws "\"target\":" ws string)? ("," ws "\"input_text\":" ws string)? ws "}"
 
 # JSON Primitives & Whitespace
 string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]))* "\""

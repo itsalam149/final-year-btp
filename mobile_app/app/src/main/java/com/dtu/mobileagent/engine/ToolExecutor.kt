@@ -8,6 +8,7 @@ import com.dtu.mobileagent.data.local.entities.AuditLogEntity
 import com.dtu.mobileagent.data.local.entities.CalendarEventEntity
 import com.dtu.mobileagent.data.local.entities.NoteEntity
 import com.dtu.mobileagent.data.local.entities.ReminderEntity
+import com.dtu.mobileagent.service.AgentAccessibilityService
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
@@ -42,12 +43,18 @@ class ToolExecutor(
             }
 
             // Check if confirmation is required before actual execution
-            if (toolDef.safetyLevel == ToolSafetyLevel.REQUIRES_CONFIRMATION) {
+            val isReadScreen = toolName == "automate_ui" && parameters.has("action") && parameters.get("action").asString == "read_screen"
+            if (toolDef.safetyLevel == ToolSafetyLevel.REQUIRES_CONFIRMATION && !isReadScreen) {
                 logAudit(toolName, parameters, "CONFIRMATION_REQUIRED", "Awaiting user approval before dispatch.")
+                val desc = if (toolName == "draft_message") {
+                    "Send message to '${parameters.get("recipient")?.asString ?: "contact"}'"
+                } else {
+                    "UI Action: ${parameters.get("action")?.asString ?: "automate"} on '${parameters.get("target")?.asString ?: "screen"}'"
+                }
                 return@withContext ExecutionResult(
                     toolName = toolName,
                     success = true,
-                    resultSummary = "Action requires confirmation: Send message to '${parameters.get("recipient").asString}'",
+                    resultSummary = "Action requires confirmation: $desc",
                     data = parameters,
                     requiresConfirmation = true
                 )
@@ -61,6 +68,8 @@ class ToolExecutor(
                     "manage_notes" -> executeManageNotes(parameters)
                     "search_local_docs" -> executeSearchLocalDocs(parameters)
                     "read_document_summary" -> executeReadDocSummary(parameters)
+                    "open_app" -> executeOpenApp(parameters)
+                    "automate_ui" -> executeAutomateUi(parameters)
                     else -> ExecutionResult(toolName, false, "Unhandled tool $toolName")
                 }
             } catch (e: Exception) {
@@ -94,6 +103,8 @@ class ToolExecutor(
                     logAudit(toolName, parameters, "FAILED", err)
                     ExecutionResult(toolName, false, err)
                 }
+            } else if (toolName == "automate_ui") {
+                executeAutomateUi(parameters)
             } else {
                 ExecutionResult(toolName, false, "Unknown confirmation action: $toolName")
             }
@@ -199,6 +210,97 @@ class ToolExecutor(
         }
         logAudit("read_document_summary", params, "EXECUTED", "Read summary for $filename")
         return ExecutionResult("read_document_summary", doc != null, msg)
+    }
+
+    private suspend fun executeOpenApp(params: JsonObject): ExecutionResult {
+        val appName = params.get("app_name").asString.trim()
+        val packageName = when (appName.lowercase()) {
+            "whatsapp" -> "com.whatsapp"
+            "maps", "google maps" -> "com.google.android.apps.maps"
+            "spotify" -> "com.spotify.music"
+            "youtube" -> "com.google.android.youtube"
+            "gmail" -> "com.google.android.gm"
+            "clock", "alarm" -> "com.google.android.deskclock"
+            "calculator" -> "com.google.android.calculator"
+            "calendar" -> "com.google.android.calendar"
+            "settings" -> "com.android.settings"
+            "camera" -> "com.android.camera2"
+            else -> if (appName.contains(".")) appName else ""
+        }
+
+        val launchIntent = if (packageName.isNotBlank()) {
+            context.packageManager.getLaunchIntentForPackage(packageName)
+        } else {
+            null
+        }
+
+        return if (launchIntent != null) {
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(launchIntent)
+            val summary = "Successfully launched $appName ($packageName)"
+            logAudit("open_app", params, "EXECUTED", summary)
+            ExecutionResult("open_app", true, summary)
+        } else {
+            val err = "Could not find installed application matching '$appName'. Ensure package is installed or provide full package name."
+            logAudit("open_app", params, "FAILED", err)
+            ExecutionResult("open_app", false, err)
+        }
+    }
+
+    private suspend fun executeAutomateUi(params: JsonObject): ExecutionResult {
+        val service = AgentAccessibilityService.instance
+        if (service == null) {
+            val err = "Accessibility Service is not enabled. Please enable 'Agent Accessibility Service' in Android Settings -> Accessibility."
+            logAudit("automate_ui", params, "FAILED", err)
+            return ExecutionResult("automate_ui", false, err)
+        }
+
+        val action = params.get("action").asString.lowercase()
+        val target = if (params.has("target") && !params.get("target").isJsonNull) params.get("target").asString else ""
+        val textInput = if (params.has("input_text") && !params.get("input_text").isJsonNull) {
+            params.get("input_text").asString
+        } else if (params.has("text_input") && !params.get("text_input").isJsonNull) {
+            params.get("text_input").asString
+        } else {
+            ""
+        }
+
+        return when (action) {
+            "click" -> {
+                val ok = service.clickElementByText(target)
+                val summary = if (ok) "Successfully clicked element matching '$target'" else "Failed to find clickable element matching '$target'"
+                logAudit("automate_ui", params, if (ok) "EXECUTED" else "FAILED", summary)
+                ExecutionResult("automate_ui", ok, summary)
+            }
+            "type" -> {
+                val ok = service.enterTextInField(target, textInput)
+                val summary = if (ok) "Entered '$textInput' into field matching '$target'" else "Could not locate editable field matching '$target'"
+                logAudit("automate_ui", params, if (ok) "EXECUTED" else "FAILED", summary)
+                ExecutionResult("automate_ui", ok, summary)
+            }
+            "read_screen" -> {
+                val texts = service.dumpVisibleScreenText()
+                val summary = if (texts.isEmpty()) {
+                    "No readable elements on active screen."
+                } else {
+                    "Active screen elements (${texts.size}):\n" + texts.take(15).joinToString("\n") { "• $it" }
+                }
+                logAudit("automate_ui", params, "EXECUTED", "Read ${texts.size} screen elements")
+                ExecutionResult("automate_ui", true, summary, data = params)
+            }
+            "navigate", "back", "home", "recents" -> {
+                val navTarget = if (action == "navigate") (if (target.isNotBlank()) target else "back") else action
+                val ok = service.performNavigation(navTarget)
+                val summary = if (ok) "Performed global navigation: $navTarget" else "Navigation action failed: $navTarget"
+                logAudit("automate_ui", params, if (ok) "EXECUTED" else "FAILED", summary)
+                ExecutionResult("automate_ui", ok, summary)
+            }
+            else -> {
+                val err = "Unsupported UI action '$action'. Permitted: click, type, read_screen, navigate."
+                logAudit("automate_ui", params, "FAILED", err)
+                ExecutionResult("automate_ui", false, err)
+            }
+        }
     }
 
     private suspend fun logAudit(tool: String, params: JsonObject, status: String, details: String) {

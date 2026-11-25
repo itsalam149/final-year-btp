@@ -55,6 +55,32 @@
             </intent-filter>
         </activity>
 
+        <!-- Level 3: Accessibility Service for UI Automation -->
+        <service
+            android:name=".service.AgentAccessibilityService"
+            android:exported="true"
+            android:label="Offline Mobile Agent Accessibility"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
+
+    <!-- Query installed apps for Level 2 & 3 App Automation -->
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.google.android.apps.maps" />
+        <package android:name="com.spotify.music" />
+        <package android:name="com.google.android.youtube" />
+        <package android:name="com.google.android.gm" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+    </queries>
 
 </manifest>

@@ -199,6 +199,51 @@ class TestMobileAgentSystem(unittest.TestCase):
         self.assertEqual(summary.total_tasks, 5)
         self.assertGreaterEqual(summary.syntax_adherence_pct, 0.0)
 
+    def test_open_app_flow(self):
+        """Test agent parsing and launching installed apps via intents (Level 2)."""
+        response = self.agent.process_message("Open Spotify")
+        self.assertEqual(response["status"], "COMPLETED")
+        self.assertEqual(response["response_type"], "ACTION_EXECUTED")
+        self.assertEqual(response["tool"], "open_app")
+        self.assertEqual(response["result_data"]["app_name"], "spotify")
+        self.assertEqual(response["result_data"]["package_name"], "com.spotify.music")
+
+    def test_automate_ui_read_screen_autonomous(self):
+        """Test agent reading screen elements autonomously without confirmation (Level 3 Safe)."""
+        response = self.agent.process_message("Read screen")
+        self.assertEqual(response["status"], "COMPLETED")
+        self.assertEqual(response["response_type"], "ACTION_EXECUTED")
+        self.assertEqual(response["tool"], "automate_ui")
+        self.assertEqual(response["result_data"]["status"], "SCREEN_READ")
+        self.assertGreater(len(response["result_data"]["visible_elements"]), 0)
+
+    def test_automate_ui_click_confirmation_gate(self):
+        """Test that clicking UI elements is gated by user confirmation (Level 3 Sensitive)."""
+        # Step 1: Without confirmation
+        response = self.agent.process_message("Click Renew All", user_confirmed=False)
+        self.assertEqual(response["status"], "AWAITING_CONFIRMATION")
+        self.assertEqual(response["response_type"], "ACTION_CONFIRMATION_REQUIRED")
+        self.assertEqual(response["tool"], "automate_ui")
+        self.assertEqual(response["parameters"]["action"], "click")
+
+        # Step 2: With confirmation
+        response_confirmed = self.agent.process_message("Click Renew All", user_confirmed=True)
+        self.assertEqual(response_confirmed["status"], "COMPLETED")
+        self.assertEqual(response_confirmed["response_type"], "ACTION_EXECUTED")
+        self.assertEqual(response_confirmed["tool"], "automate_ui")
+        self.assertEqual(response_confirmed["result_data"]["status"], "CLICKED")
+
+    def test_gbnf_grammar_includes_level2_and_3(self):
+        """Verify the GBNF grammar definition includes Level 2 & 3 tools."""
+        grammar_path = os.path.join(
+            os.path.dirname(__file__), "..", "mobile_agent", "grammar", "tool_calling.gbnf"
+        )
+        with open(grammar_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("open_app", content)
+        self.assertIn("automate_ui", content)
+        self.assertIn("read_screen", content)
+
 
 if __name__ == "__main__":
     unittest.main()

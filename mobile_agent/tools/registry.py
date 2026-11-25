@@ -112,7 +112,9 @@ class ToolRegistry:
         tool_def = self.get_tool(tool_name)
 
         # Step 2: Enforce security confirmation gate
-        if tool_def.security_level == SecurityLevel.REQUIRES_CONFIRMATION and not user_confirmed:
+        # Safe read-only inspection (such as read_screen) does not mutate system state
+        is_read_screen = tool_name == "automate_ui" and parameters.get("action") == "read_screen"
+        if tool_def.security_level == SecurityLevel.REQUIRES_CONFIRMATION and not user_confirmed and not is_read_screen:
             return {
                 "status": "CONFIRMATION_REQUIRED",
                 "tool": tool_name,

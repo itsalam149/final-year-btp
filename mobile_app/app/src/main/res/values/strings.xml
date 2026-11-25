@@ -11,4 +11,5 @@
     <string name="btn_reject">Cancel</string>
     <string name="clear_history">Clear History</string>
     <string name="audit_log_title">Privacy &amp; Security Audit Log</string>
+    <string name="accessibility_service_desc">Enables your offline on-device AI agent to navigate and interact with permitted apps on your screen.</string>
 </resources>

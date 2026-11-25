@@ -51,6 +51,18 @@ object ToolRegistry {
             description = "Prepares an SMS or messaging intent to send to a contact. REQUIRES EXPLICIT USER CONFIRMATION.",
             safetyLevel = ToolSafetyLevel.REQUIRES_CONFIRMATION,
             requiredParameters = listOf("recipient", "message_body")
+        ),
+        "open_app" to ToolDefinition(
+            name = "open_app",
+            description = "Launches an installed application on the mobile phone (Level 2 App Integration).",
+            safetyLevel = ToolSafetyLevel.SAFE_AUTONOMOUS,
+            requiredParameters = listOf("app_name")
+        ),
+        "automate_ui" to ToolDefinition(
+            name = "automate_ui",
+            description = "Automates UI interaction via Accessibility Service (clicks, text input, screen reading). REQUIRES CONFIRMATION FOR CLICKS/TEXT.",
+            safetyLevel = ToolSafetyLevel.REQUIRES_CONFIRMATION,
+            requiredParameters = listOf("action")
         )
     )
 

@@ -56,7 +56,30 @@ Unlike conventional cloud assistants (Siri, Google Assistant, ChatGPT App), this
    `res/xml/data_extraction_rules.xml` excludes database and preference files from Android Auto Cloud Backup.
 
 3. **Human-in-the-Loop Safety Gate:**
-   Safe operations (`manage_notes`, `search_calendar`, `create_reminder`, `search_local_docs`) execute autonomously. External operations (`draft_message` via SMS/messaging) trigger a modal `ConfirmationDialog` before any intent is dispatched.
+   Safe operations (`manage_notes`, `search_calendar`, `create_reminder`, `search_local_docs`, `open_app`, `read_screen`) execute autonomously. External operations or mutating UI actions (`draft_message`, `click`, `type`) trigger a modal `ConfirmationDialog` before any intent or accessibility click is dispatched.
+
+---
+
+## 📱 3-Tier Mobile App Interaction Architecture
+
+Android sandboxes each app in its own Linux UID. To let the on-device agent control apps across the entire phone, we implemented 3 distinct interaction tiers:
+
+1. **Level 1: System-Integrated Local Storage & Providers**
+   - High-throughput direct database queries using Android Room SQLite (`NoteEntity`, `ReminderEntity`, `CalendarEventEntity`, `DocumentEntity`).
+   - Android OS integration for alarms via `AlarmManager` and calendar via `CalendarProvider`.
+
+2. **Level 2: Third-Party Inter-App Communication (Intents & Deep Links)**
+   - Launch arbitrary installed applications by name using `PackageManager.getLaunchIntentForPackage()` (e.g. Spotify, Maps, YouTube, WhatsApp, Settings).
+   - Pre-fill message drafts with recipients and content via `Intent.ACTION_VIEW` and `Intent.ACTION_SENDTO` (WhatsApp & SMS).
+
+3. **Level 3: Arbitrary App UI Automation (Accessibility Service)**
+   - Powered by `AgentAccessibilityService` extending Android's `AccessibilityService`.
+   - Traverses the active window's `AccessibilityNodeInfo` hierarchy to:
+     - Find and click buttons by label or description (`clickElementByText`)
+     - Focus and enter text into input fields (`enterTextInField`)
+     - Inspect all visible elements on screen (`dumpVisibleScreenText`)
+     - Execute global system navigation (`performNavigation`: Back, Home, Recents)
+   - Read operations (`read_screen`) execute safely without blocking; mutating operations (`click`, `type`) are gated by user confirmation.
 
 ---
 
@@ -94,8 +117,10 @@ mobile_app/
             │   ├── engine/
             │   │   ├── LlamaBridge.kt            # JNI wrapper & fallback simulation
             │   │   ├── ToolSchemas.kt            # Tool definitions, safety levels, JSON models
-            │   │   ├── ToolExecutor.kt           # Autonomous & confirmed tool dispatch
+            │   │   ├── ToolExecutor.kt           # Autonomous & confirmed tool dispatch (Levels 1-3)
             │   │   └── AgentController.kt        # ReAct orchestration & prompt budgeting
+            │   ├── service/
+            │   │   └── AgentAccessibilityService.kt # Level 3 UI Automation (NodeInfo tree clicking & typing)
             │   ├── voice/
             │   │   └── VoiceManager.kt           # Offline Android SpeechRecognizer & TextToSpeech
             │   └── ui/
@@ -106,6 +131,7 @@ mobile_app/
             └── res/
                 ├── values/                       # strings.xml, colors.xml, themes.xml
                 └── xml/
+                    ├── accessibility_service_config.xml # Accessibility permissions & event filters
                     └── data_extraction_rules.xml # Zero cloud backup rules
 ```
 

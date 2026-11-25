@@ -59,18 +59,46 @@ Compact Small Language Models ($<2\text{B}$ parameters) subjected to 4-bit quant
 
 ---
 
-## 3. The 6 Core Mobile Tools
+## 3. 3-Tier Mobile Tool & Interaction Architecture
 
-The assistant operates within a strict permission-controlled mobile sandbox:
+To interact with arbitrary mobile applications without violating Android's Linux UID process isolation sandbox, the system organizes tool operations into three progressive capability tiers:
 
-| Tool Identifier | Functionality | Mobile API / Subsystem | Security Level |
-|---|---|---|:---:|
-| `create_reminder` | Schedule timed alarms & system notifications | Android `AlarmManager` | **SAFE** |
-| `search_calendar` | Query calendar schedule & check free slots | Android `CalendarProvider` | **SAFE** |
-| `manage_notes` | Full CRUD operations for personal notes | Local `Room` Database (SQLite) | **SAFE** |
-| `search_local_docs` | Search authorized local PDF / TXT files | Scoped Storage (`READ_MEDIA_DOCS`) | **SAFE** |
-| `read_document_summary` | Chunk & extract semantic context from files | Local Offline RAG Engine | **SAFE** |
-| `draft_message` | Prepare pre-filled SMS or WhatsApp drafts | Android Intent (`ACTION_SENDTO`) | **REQUIRES CONFIRMATION** |
+```
++---------------------------------------------------------------------------------------------------+
+| LEVEL 1: System-Integrated Local Storage & Providers                                              |
+| - Direct high-speed access to encrypted local SQLite via Android Room ORM                         |
+| - CalendarProvider, AlarmManager, and Scoped Storage for notes, schedules, reminders, and docs    |
+| - Tools: create_reminder, search_calendar, manage_notes, search_local_docs, read_document_summary |
++---------------------------------------------------------------------------------------------------+
+                                                  |
++---------------------------------------------------------------------------------------------------+
+| LEVEL 2: Third-Party Inter-App Communication (Intents & Deep Links)                               |
+| - Inter-app message passing using Android Intent system (ACTION_VIEW, ACTION_SENDTO)              |
+| - Launch installed apps (Spotify, Maps, YouTube, Settings) and pre-fill drafts (WhatsApp, SMS)    |
+| - Tools: open_app, draft_message                                                                  |
++---------------------------------------------------------------------------------------------------+
+                                                  |
++---------------------------------------------------------------------------------------------------+
+| LEVEL 3: Arbitrary App UI Automation (Android Accessibility Service)                             |
+| - Real-time DOM inspection via AccessibilityNodeInfo tree parsing                                 |
+| - Programmatically click buttons, fill input fields, read active screens, and execute navigation  |
+| - Autonomous screen reading + Confirmation-Gated UI mutation (click, type, back)                 |
+| - Tool: automate_ui                                                                               |
++---------------------------------------------------------------------------------------------------+
+```
+
+### Complete Toolset Matrix (8 Tools Across 3 Levels)
+
+| Tool Identifier | Interaction Level | Functionality | Mobile API / Subsystem | Security Level |
+|---|---|---|---|:---:|
+| `create_reminder` | **Level 1** | Schedule timed alarms & notifications | Android `AlarmManager` | **SAFE** |
+| `search_calendar` | **Level 1** | Query calendar schedule & free slots | Android `CalendarProvider` | **SAFE** |
+| `manage_notes` | **Level 1** | Full CRUD operations for personal notes | Local `Room` Database (SQLite) | **SAFE** |
+| `search_local_docs` | **Level 1** | Search authorized local PDF / TXT files | Scoped Storage (`READ_MEDIA_DOCS`) | **SAFE** |
+| `read_document_summary` | **Level 1** | Chunk & extract semantic context from files | Local Offline RAG Engine | **SAFE** |
+| `open_app` | **Level 2** | Launch installed apps by name/package | `PackageManager.getLaunchIntentForPackage` | **SAFE** |
+| `draft_message` | **Level 2** | Pre-fill SMS or WhatsApp message drafts | Android Intent (`ACTION_SENDTO`) | **REQUIRES CONFIRMATION** |
+| `automate_ui` | **Level 3** | Click UI, fill forms, read screen, navigate | `AgentAccessibilityService` (`NodeInfo`) | **REQUIRES CONFIRMATION / READ SAFE** |
 
 ---
 
