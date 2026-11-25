@@ -22,12 +22,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android NDK & CMake
+      - name: Accept Android SDK Licenses & Install Components
         run: |
-          sdkmanager --install "ndk;26.1.10909125" "cmake;3.22.1"
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "cmake;3.22.1" "ndk;26.1.10909125" || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
