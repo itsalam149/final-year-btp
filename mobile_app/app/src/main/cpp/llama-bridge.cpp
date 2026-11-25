@@ -6,6 +6,13 @@
 
 static std::unique_ptr<MobileLlamaEngine> g_engine = nullptr;
 
+static inline std::string trim(const std::string& s) {
+    size_t start = s.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) return "";
+    size_t end = s.find_last_not_of(" \t\n\r");
+    return s.substr(start, end - start + 1);
+}
+
 MobileLlamaEngine::MobileLlamaEngine() {}
 
 MobileLlamaEngine::~MobileLlamaEngine() {
@@ -63,6 +70,7 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
             userQuery = userQuery.substr(0, assistantPos);
         }
     }
+    userQuery = trim(userQuery);
 
     // 1. User corrections, complaints, or negative feedback
     if (userQuery.find("not to") != std::string::npos ||
@@ -162,6 +170,24 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
     }
     else if (userQuery.find("capital of usa") != std::string::npos || userQuery.find("capital of america") != std::string::npos) {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"The capital of the United States is Washington, D.C.\"}";
+    }
+    // Math evaluation
+    else if (std::regex_search(userQuery, std::regex(R"((\d+(?:\.\d+)?)\s*([\+\-\*\/xX])\s*(\d+(?:\.\d+)?))"))) {
+        std::smatch match;
+        std::regex_search(userQuery, match, std::regex(R"((\d+(?:\.\d+)?)\s*([\+\-\*\/xX])\s*(\d+(?:\.\d+)?))"));
+        double a = std::stod(match[1]);
+        std::string op = match[2];
+        double b = std::stod(match[3]);
+        double res = 0;
+        char opChar = op[0];
+        if (opChar == '+') res = a + b;
+        else if (opChar == '-') res = a - b;
+        else if (opChar == '*' || opChar == 'x' || opChar == 'X') res = a * b;
+        else if (opChar == '/') res = (b != 0) ? (a / b) : 0;
+
+        std::ostringstream ss;
+        ss << match[1] << " " << opChar << " " << match[3] << " = " << res;
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"" + ss.str() + "\"}";
     }
     // 11. Intelligent Multi-Domain Fallback Synthesis
     else {

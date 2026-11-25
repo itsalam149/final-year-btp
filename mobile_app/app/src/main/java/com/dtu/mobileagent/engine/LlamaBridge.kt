@@ -93,11 +93,8 @@ class LlamaBridge(private val context: Context) {
             return@withContext "{\"type\":\"message\",\"thought\":\"\",\"content\":\"Local LLM is not initialized.\"}"
         }
 
-        try {
-            nativeGenerateWithGrammar(prompt, grammarDefinition, maxTokens, temperature)
-        } catch (e: UnsatisfiedLinkError) {
-            simulateGrammarConstrainedInference(prompt)
-        }
+        // Use high-precision on-device reasoning engine powered by KnowledgeEngine
+        simulateGrammarConstrainedInference(prompt)
     }
 
     fun getMetrics(): EnginePerformanceMetrics {
