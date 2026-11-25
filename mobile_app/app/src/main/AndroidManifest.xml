@@ -58,7 +58,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Level 3: Accessibility Service for UI Automation -->
+        <!-- 
+          Level 3: Accessibility Service for UI Automation 
+          Commented out to prevent Android 14 Google Play Protect sideload blocking.
+          Can be re-enabled if installed via ADB development mode.
+        -->
+        <!--
         <service
             android:name=".service.AgentAccessibilityService"
             android:exported="true"
@@ -71,6 +76,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        -->
 
     </application>
 
