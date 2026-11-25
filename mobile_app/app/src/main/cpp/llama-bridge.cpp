@@ -132,7 +132,7 @@ Java_com_dtu_mobileagent_engine_LlamaBridge_nativeGenerateWithGrammar(
         jfloat temperature) {
     if (!g_engine) {
         LOGE("Native engine instance is null");
-        return env->NewStringUTF8("{\"type\":\"message\",\"content\":\"Engine not initialized\"}");
+        return env->NewStringUTF("{\"type\":\"message\",\"content\":\"Engine not initialized\"}");
     }
 
     const char* nativePrompt = env->GetStringUTFChars(promptStr, nullptr);
@@ -148,7 +148,7 @@ Java_com_dtu_mobileagent_engine_LlamaBridge_nativeGenerateWithGrammar(
     env->ReleaseStringUTFChars(promptStr, nativePrompt);
     env->ReleaseStringUTFChars(grammarStr, nativeGrammar);
 
-    return env->NewStringUTF8(result.c_str());
+    return env->NewStringUTF(result.c_str());
 }
 
 JNIEXPORT void JNICALL

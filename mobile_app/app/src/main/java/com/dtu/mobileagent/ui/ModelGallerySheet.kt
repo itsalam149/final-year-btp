@@ -225,7 +225,7 @@ fun ModelCardItem(
                         Button(
                             onClick = onDownload,
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary),
+                            colors = ButtonDefaults.buttonColors(containerColor = DtuRedPrimary),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         ) {
                             Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
