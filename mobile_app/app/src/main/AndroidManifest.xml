@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 
+      PRIVACY GUARANTEE:
+      Notice the complete absence of android.permission.INTERNET.
+      This guarantees at the OS sandbox level that the application CANNOT transmit
+      user voice, notes, documents, or conversation history to external servers.
+    -->
+
+    <!-- Local alarm & reminder scheduling -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Calendar integration (permitted local operations) -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+    <!-- Document indexing (Scoped storage / user-authorized media) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" 
+        tools:ignore="SelectedPhotoAccess" />
+
+    <!-- Foreground service for long-running on-device LLM batch inference / indexing -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- Haptic feedback for user confirmation prompts -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".MobileAgentApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.OfflineMobileAgent"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.OfflineMobileAgent"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

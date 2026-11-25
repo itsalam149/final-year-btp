@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Offline Mobile Agent</string>
+    <string name="app_subtitle">DTU BTP Group 159 — On-Device JARVIS</string>
+    <string name="privacy_badge">100% Offline | Zero Egress Guaranteed</string>
+    <string name="model_status_loaded">Model Loaded: Llama-3.2-1B-Instruct (Q4_K_M)</string>
+    <string name="model_status_unloaded">Model Not Loaded</string>
+    <string name="input_placeholder">Ask your offline agent anything...</string>
+    <string name="confirm_action_title">Security Confirmation Required</string>
+    <string name="confirm_action_desc">This action creates an external intent or modifies external state.</string>
+    <string name="btn_approve">Authorize Execution</string>
+    <string name="btn_reject">Cancel</string>
+    <string name="clear_history">Clear History</string>
+    <string name="audit_log_title">Privacy &amp; Security Audit Log</string>
+</resources>
