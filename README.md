@@ -101,6 +101,11 @@ To validate the real-world execution fidelity of quantized SLMs on mobile hardwa
 .
 ├── NEW_PROJECT_BUILD_PLAN.md      # Comprehensive Architectural Master Plan
 ├── README.md                      # This file
+├── docs/                          # Official DTU BTP Phase-1 Synopsis & Project Report
+│   ├── dtu_btp_phase1_report.pdf  # 11-page compiled vector PDF report for submission
+│   ├── dtu_btp_phase1_report.tex  # Complete LaTeX source conforming to DTU thesis guidelines
+│   ├── dtu_btp_phase1_report.html # Print-ready academic HTML manuscript
+│   └── SYNOPSIS_AND_PROJECT_REPORT.md # Markdown executive summary & project synopsis
 ├── mobile_agent/                  # Core Python/Android Agent Engine
 │   ├── __init__.py
 │   ├── cli.py                     # Interactive offline terminal assistant
