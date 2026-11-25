@@ -35,3 +35,12 @@ results/**/lm_eval_output/
 .DS_Store
 .vscode/
 .idea/
+
+# Gradle & Android build artifacts
+.gradle/
+build/
+**/build/
+*.apk
+*.aab
+.cxx/
+local.properties

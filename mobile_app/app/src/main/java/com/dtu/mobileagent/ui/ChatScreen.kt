@@ -22,17 +22,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dtu.mobileagent.data.local.entities.ChatMessageEntity
 import com.dtu.mobileagent.engine.AgentController
+import com.dtu.mobileagent.voice.VoiceInputState
+import com.dtu.mobileagent.voice.VoiceManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     controller: AgentController,
+    voiceManager: VoiceManager? = null,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
     val uiState by controller.uiState.collectAsState()
     val messages by controller.messages.collectAsState(initial = emptyList())
+    val voiceState by voiceManager?.inputState?.collectAsState() ?: remember { mutableStateOf(VoiceInputState.Idle) }
+    val isListening = voiceState is VoiceInputState.Listening
+
     val listState = rememberLazyListState()
 
     var inputText by remember { mutableStateOf("") }
@@ -50,7 +56,7 @@ fun ChatScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Offline Mobile Agent (JARVIS)",
+                            text = "Offline Mobile AI Agent",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -63,6 +69,16 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    // Offline Text-to-Speech Toggle
+                    IconButton(onClick = { controller.toggleVoiceOutput() }) {
+                        Icon(
+                            imageVector = if (uiState.isVoiceOutputEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                            contentDescription = "Toggle Spoken Replies",
+                            tint = if (uiState.isVoiceOutputEnabled) EmeraldGlow else TextSecondary
+                        )
+                    }
+
+                    // Clear Chat History
                     IconButton(onClick = { coroutineScope.launch { controller.clearHistory() } }) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
@@ -154,7 +170,32 @@ fun ChatScreen(
                             .heightIn(min = 48.dp)
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Offline Voice Input Button (Microphone)
+                    IconButton(
+                        onClick = {
+                            if (isListening) {
+                                voiceManager?.stopListening()
+                            } else {
+                                voiceManager?.startListening()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(if (isListening) EmeraldOffline else CardBackground)
+                            .border(1.dp, if (isListening) EmeraldGlow else BorderSubtle, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Input",
+                            tint = if (isListening) Color.White else TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     IconButton(
                         onClick = {
@@ -168,7 +209,7 @@ fun ChatScreen(
                         },
                         enabled = inputText.isNotBlank() && !uiState.isProcessing,
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(if (inputText.isNotBlank()) DtuRedPrimary else BorderSubtle)
                     ) {

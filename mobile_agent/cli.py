@@ -7,11 +7,14 @@ and verifying security confirmation gates.
 import sys
 import os
 import json
+import argparse
 from datetime import datetime
 
 from mobile_agent.storage.db import LocalStorage
 from mobile_agent.tools.registry import ToolRegistry
 from mobile_agent.core.agent import MobileAgent, MockLocalInferenceEngine
+from mobile_agent.voice.tts import OfflineTTSEngine
+from mobile_agent.voice.stt import OfflineSTTEngine
 
 
 # ANSI Color formatting
@@ -23,21 +26,31 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 
-def print_banner():
+def print_banner(voice_enabled: bool = False):
+    voice_status = f"{GREEN}ON{RESET}" if voice_enabled else f"{RED}OFF{RESET}"
     banner = f"""{CYAN}{BOLD}
 ======================================================================
   JARVIS: Privacy-First Offline AI Mobile Agent (DTU GP159)
   Zero Cloud Reliance | 100% Local Inference & SQLite Storage
+  Voice Mode: {voice_status} | Offline Audio Synthesizer Active
 ======================================================================{RESET}
 Type any instruction (e.g. 'Remind me to call Rahul tomorrow at 10 am',
 'Check my schedule for tomorrow', 'Save a note titled Project Ideas',
 'Find my project proposal PDF', 'Draft a message to Rahul').
-Commands: {YELLOW}/tools{RESET}, {YELLOW}/notes{RESET}, {YELLOW}/reminders{RESET}, {YELLOW}/audit{RESET}, {YELLOW}/clear{RESET}, {YELLOW}/exit{RESET}
+Commands: {YELLOW}/tools{RESET}, {YELLOW}/notes{RESET}, {YELLOW}/reminders{RESET}, {YELLOW}/audit{RESET}, {YELLOW}/voice [on|off]{RESET}, {YELLOW}/listen <file>{RESET}, {YELLOW}/clear{RESET}, {YELLOW}/exit{RESET}
 """
     print(banner)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Privacy-First Offline AI Mobile Agent CLI")
+    parser.add_argument("--voice", action="store_true", help="Enable offline text-to-speech spoken responses")
+    args = parser.parse_args()
+
+    voice_mode = args.voice
+    tts_engine = OfflineTTSEngine()
+    stt_engine = OfflineSTTEngine()
+
     db_file = os.path.join(os.path.dirname(__file__), "..", "results", "local_mobile_sandbox.db")
     storage = LocalStorage(db_file)
     registry = ToolRegistry()
@@ -64,7 +77,7 @@ def main():
             location="DTU Cabin 204"
         )
 
-    print_banner()
+    print_banner(voice_mode)
 
     pending_confirmation = None
 
@@ -115,9 +128,44 @@ def main():
                 print()
                 continue
 
+            elif user_input.lower().startswith("/voice"):
+                parts = user_input.strip().split()
+                if len(parts) > 1 and parts[1].lower() in ["on", "enable", "true", "1"]:
+                    voice_mode = True
+                    print(f"{GREEN}Offline Voice Mode enabled. Spoken replies active.{RESET}")
+                    tts_engine.speak("Voice output enabled.")
+                elif len(parts) > 1 and parts[1].lower() in ["off", "disable", "false", "0"]:
+                    voice_mode = False
+                    print(f"{YELLOW}Offline Voice Mode disabled. Spoken replies muted.{RESET}")
+                else:
+                    voice_mode = not voice_mode
+                    status_str = f"{GREEN}ON{RESET}" if voice_mode else f"{RED}OFF{RESET}"
+                    print(f"Voice Mode toggled: {status_str}")
+                continue
+
+            elif user_input.lower().startswith("/speak"):
+                text_to_speak = user_input[6:].strip()
+                if text_to_speak:
+                    print(f"{CYAN}[Speaking offline: '{text_to_speak}']{RESET}")
+                    tts_engine.speak(text_to_speak)
+                continue
+
+            elif user_input.lower().startswith("/listen"):
+                parts = user_input.strip().split(maxsplit=1)
+                audio_path = parts[1].strip() if len(parts) > 1 else "sample_voice.wav"
+                print(f"{CYAN}[Offline STT Processing: {audio_path}...]{RESET}")
+                stt_res = stt_engine.transcribe_audio_file(audio_path)
+                recognized = stt_res.get("text", "")
+                if recognized:
+                    print(f"{GREEN}[Recognized Audio]:{RESET} \"{recognized}\"")
+                    user_input = recognized
+                else:
+                    print(f"{RED}Could not decode speech from {audio_path}{RESET}")
+                    continue
+
             elif user_input.lower() == "/clear":
                 os.system("clear" if os.name == "posix" else "cls")
-                print_banner()
+                print_banner(voice_mode)
                 continue
 
             # Handle pending confirmation response
@@ -128,8 +176,12 @@ def main():
                     response = agent.process_message(pending_confirmation["original_input"], user_confirmed=True)
                     pending_confirmation = None
                     print(f"\n{GREEN}{BOLD}Result:{RESET} {response['display_text']}\n")
+                    if voice_mode:
+                        tts_engine.speak(response['display_text'], blocking=False)
                 else:
                     print(f"{RED}Action cancelled by user.{RESET}\n")
+                    if voice_mode:
+                        tts_engine.speak("Action cancelled.", blocking=False)
                     pending_confirmation = None
                 continue
 
@@ -144,6 +196,8 @@ def main():
                 print(f"\n{YELLOW}{BOLD}SECURITY CONFIRMATION REQUIRED:{RESET}")
                 print(response["display_text"])
                 print(f"{YELLOW}Proceed with this action? (y/n){RESET}")
+                if voice_mode:
+                    tts_engine.speak("Confirmation required. Should I proceed?", blocking=False)
                 pending_confirmation = {
                     "original_input": user_input,
                     "tool": response.get("tool"),
@@ -154,8 +208,12 @@ def main():
                 if tool_used:
                     print(f"{GREEN}[Tool Invoked: {tool_used}]{RESET}")
                 print(f"\n{BOLD}{response['display_text']}{RESET}\n")
+                if voice_mode:
+                    tts_engine.speak(response['display_text'], blocking=False)
             else:
                 print(f"\n{RED}{response['display_text']}{RESET}\n")
+                if voice_mode:
+                    tts_engine.speak(response['display_text'], blocking=False)
 
         except (KeyboardInterrupt, EOFError):
             print(f"\n{CYAN}Session ended.{RESET}")

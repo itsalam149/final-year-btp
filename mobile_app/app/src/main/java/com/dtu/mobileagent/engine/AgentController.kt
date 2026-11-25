@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 data class AgentUiState(
     val isProcessing: Boolean = false,
     val isModelLoaded: Boolean = false,
+    val isVoiceOutputEnabled: Boolean = false,
     val pendingConfirmation: PendingAction? = null,
     val currentTokensPerSec: Double = 28.4,
     val currentMemoryMb: Double = 804.0
@@ -35,9 +36,19 @@ class AgentController(
     private val gson = Gson()
     private val llamaBridge = LlamaBridge(context)
     private val toolExecutor = ToolExecutor(context, database)
+    private var speechCallback: ((String) -> Unit)? = null
 
     private val _uiState = MutableStateFlow(AgentUiState())
     val uiState: StateFlow<AgentUiState> = _uiState.asStateFlow()
+
+    fun setSpeechOutputCallback(callback: (String) -> Unit) {
+        speechCallback = callback
+    }
+
+    fun toggleVoiceOutput() {
+        val nextState = !_uiState.value.isVoiceOutputEnabled
+        _uiState.value = _uiState.value.copy(isVoiceOutputEnabled = nextState)
+    }
 
     val messages: Flow<List<ChatMessageEntity>> = database.chatMessageDao().getAllMessages()
 
@@ -109,6 +120,9 @@ class AgentController(
                                 toolParamsJson = gson.toJson(params)
                             )
                         )
+                        if (_uiState.value.isVoiceOutputEnabled) {
+                            speechCallback?.invoke(execution.resultSummary)
+                        }
                         _uiState.value = _uiState.value.copy(isProcessing = false)
                     }
                 }
@@ -120,6 +134,9 @@ class AgentController(
                             thought = parsed.thought
                         )
                     )
+                    if (_uiState.value.isVoiceOutputEnabled) {
+                        speechCallback?.invoke(parsed.content)
+                    }
                     _uiState.value = _uiState.value.copy(isProcessing = false)
                 }
                 is ModelResponse.ParseError -> {

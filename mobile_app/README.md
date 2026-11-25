@@ -96,11 +96,13 @@ mobile_app/
             │   │   ├── ToolSchemas.kt            # Tool definitions, safety levels, JSON models
             │   │   ├── ToolExecutor.kt           # Autonomous & confirmed tool dispatch
             │   │   └── AgentController.kt        # ReAct orchestration & prompt budgeting
+            │   ├── voice/
+            │   │   └── VoiceManager.kt           # Offline Android SpeechRecognizer & TextToSpeech
             │   └── ui/
             │       ├── Theme.kt                  # Material3 Dark Theme
             │       ├── Color.kt                  # DTU Crimson (#B91C1C) & Emerald Offline
             │       ├── Components.kt             # Security badge, metrics bar, confirmation modal
-            │       └── ChatScreen.kt             # Chat interface with streaming & thought display
+            │       └── ChatScreen.kt             # Chat interface with streaming & voice controls
             └── res/
                 ├── values/                       # strings.xml, colors.xml, themes.xml
                 └── xml/

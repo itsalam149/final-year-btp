@@ -116,10 +116,14 @@ To validate the real-world execution fidelity of quantized SLMs on mobile hardwa
 │   │   └── aaqb.py                # Autonomous Agent Quantization Benchmark (AAQB) runner
 │   ├── storage/
 │   │   └── db.py                  # Offline SQLite storage (mirroring Android Room DB)
-│   └── tools/
-│       ├── handlers.py            # Concrete handlers for the 6 core mobile tools
-│       ├── registry.py            # Validation, security confirmation gates, dispatch
-│       └── schemas.py             # Formal JSON schemas & permission definitions
+│   ├── tools/
+│   │   ├── handlers.py            # Concrete handlers for the 6 core mobile tools
+│   │   ├── registry.py            # Validation, security confirmation gates, dispatch
+│   │   └── schemas.py             # Formal JSON schemas & permission definitions
+│   └── voice/                     # Offline Voice Interaction Pipeline (STT & TTS)
+│       ├── __init__.py
+│       ├── stt.py                 # Offline speech-to-text (Vosk / Whisper / Sherpa-ONNX)
+│       └── tts.py                 # Offline speech synthesis (macOS say / pyttsx3 / espeak)
 ├── mobile_app/                    # Native Android Application (Jetpack Compose + JNI C++)
 │   ├── app/src/main/AndroidManifest.xml # 100% Offline manifest (zero internet permission)
 │   ├── app/src/main/cpp/          # C++ JNI bridge (llama-bridge.cpp) targeting ARM NEON
@@ -127,7 +131,8 @@ To validate the real-world execution fidelity of quantized SLMs on mobile hardwa
 │   │   ├── MainActivity.kt        # Main activity & local permission handler
 │   │   ├── data/local/            # Android Room SQLite DB (Notes, Reminders, Calendar, Audit)
 │   │   ├── engine/                # Kotlin AgentController, ToolExecutor, LlamaBridge JNI
-│   │   └── ui/                    # Jetpack Compose UI (ChatScreen, Security Pill, Metrics)
+│   │   ├── voice/                 # Android SpeechRecognizer & TextToSpeech integration
+│   │   └── ui/                    # Jetpack Compose UI (ChatScreen, Security Pill, Mic Button)
 │   └── README.md                  # Android build & ADB deployment instructions
 ├── ppt/                           # Presentation & Viva Defense Materials
 │   ├── index.html                 # 13-slide interactive dark-mode presentation deck
@@ -149,8 +154,11 @@ To validate the real-world execution fidelity of quantized SLMs on mobile hardwa
 You can run and interact with the offline agent immediately via the interactive CLI:
 
 ```bash
-# Run the interactive JARVIS offline terminal assistant
+# Run the interactive offline terminal assistant
 python3 -m mobile_agent.cli
+
+# Or run with spoken audio feedback enabled (Offline TTS)
+python3 -m mobile_agent.cli --voice
 ```
 
 ### Example Commands in CLI:
@@ -159,11 +167,11 @@ python3 -m mobile_agent.cli
 - `Draft a note titled Study Session` *(Writes to local SQLite notes)*
 - `Find my project proposal PDF and summarize it` *(Performs local document search & extraction)*
 - `Draft a WhatsApp message telling Rahul that I will be late` *(Triggers the security confirmation gate)*
-- Interactive commands: `/tools`, `/notes`, `/reminders`, `/audit`, `/clear`, `/exit`
+- Interactive commands: `/tools`, `/notes`, `/reminders`, `/audit`, `/voice on`, `/listen <file>`, `/clear`, `/exit`
 
-### Run Automated Unit Tests:
+### Run Automated Unit Tests (15/15 passing):
 ```bash
-python3 -m unittest tests_agent/test_agent_system.py
+python3 -m unittest discover tests_agent
 ```
 
 ### Run Autonomous Agent Quantization Benchmark (AAQB):

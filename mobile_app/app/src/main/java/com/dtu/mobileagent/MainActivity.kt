@@ -12,11 +12,13 @@ import androidx.lifecycle.lifecycleScope
 import com.dtu.mobileagent.engine.AgentController
 import com.dtu.mobileagent.ui.ChatScreen
 import com.dtu.mobileagent.ui.OfflineMobileAgentTheme
+import com.dtu.mobileagent.voice.VoiceManager
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var agentController: AgentController
+    private lateinit var voiceManager: VoiceManager
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -30,7 +32,19 @@ class MainActivity : ComponentActivity() {
         val app = application as MobileAgentApplication
         agentController = AgentController(this, app.database)
 
-        // Request local device permissions (Calendar, Notifications)
+        // Initialize offline voice pipeline
+        voiceManager = VoiceManager(this) { transcript ->
+            lifecycleScope.launch {
+                agentController.handleUserMessage(transcript)
+            }
+        }
+
+        // Connect agent speech output to native offline TTS
+        agentController.setSpeechOutputCallback { responseText ->
+            voiceManager.speak(responseText)
+        }
+
+        // Request local device permissions (Calendar, Notifications, Audio)
         requestLocalPermissions()
 
         // Initialize local LLM engine in background
@@ -40,7 +54,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             OfflineMobileAgentTheme {
-                ChatScreen(controller = agentController)
+                ChatScreen(
+                    controller = agentController,
+                    voiceManager = voiceManager
+                )
             }
         }
     }
@@ -55,6 +72,11 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.RECORD_AUDIO)
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
             != PackageManager.PERMISSION_GRANTED) {
             permissions.add(Manifest.permission.READ_CALENDAR)
@@ -63,5 +85,10 @@ class MainActivity : ComponentActivity() {
         if (permissions.isNotEmpty()) {
             permissionLauncher.launch(permissions.toTypedArray())
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        voiceManager.destroy()
     }
 }

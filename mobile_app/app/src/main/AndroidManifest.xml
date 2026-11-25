@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Offline voice input (SpeechRecognizer / on-device STT) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- Calendar integration (permitted local operations) -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
