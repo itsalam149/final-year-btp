@@ -194,7 +194,7 @@ Llama-3.2-3B & $\sim 6.4\,\text{GB}$ & $\sim 3.2\,\text{GB}$ & $\sim 1.92\,\text
 \end{tabular}
 \end{table}
 
-As illustrated, a full-precision FP16 model of 2B or 3B parameters requires upwards of $5$ to $7\,\text{GB}$ of memory strictly for model weights, rendering it entirely incompatible with mobile operating system background memory allocations, where individual apps are restricted to $1.5$ to $2.5\,\text{GB}$ of resident memory before triggering low-memory killer (LMK) eviction.
+As demonstrated in Table~\ref{tab:memory_footprints}, a full-precision FP16 model in the 2B to 3B parameter regime requires upwards of $5$ to $7\,\text{GB}$ of memory strictly for storing model weights, rendering it entirely incompatible with mobile operating system background memory allocations, where individual applications are restricted to $1.5$ to $2.5\,\text{GB}$ of resident memory before triggering Low-Memory Killer (LMK) eviction.
 
 \section{Post-Training Quantization and the Prevalent Consensus}
 To mitigate this memory crisis without requiring prohibitive full-parameter retraining, Post-Training Quantization (PTQ) has emerged as the industry-standard compression technique. Foundational PTQ methodologies, including GPTQ \cite{frantar2023gptq} and AWQ \cite{lin2024awq}, demonstrated that 4-bit weight-only quantization could achieve near-lossless compression on benchmark tasks, reducing memory traffic by nearly $4\times$. Furthermore, comprehensive benchmark surveys, such as Jin et al.~\cite{jin2024comprehensive}, evaluated quantized models across ten tasks and concluded that language-modelling perplexity (PPL), which is computationally inexpensive to calculate, serves as a dependable indicator of overall quantized model quality.

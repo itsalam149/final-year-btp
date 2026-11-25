@@ -293,6 +293,10 @@
     </tbody>
   </table>
 
+  <p>
+    As demonstrated in Table 1.1, a full-precision FP16 model in the 2B to 3B parameter regime requires upwards of 5 to 7 GB of memory strictly for storing model weights, rendering it entirely incompatible with mobile operating system background memory allocations, where individual applications are restricted to 1.5 to 2.5 GB of resident memory before triggering Low-Memory Killer (LMK) eviction.
+  </p>
+
   <h3 class="section-title">1.2 Research Questions</h3>
   <ul>
     <li><strong>RQ1 (Task-Conditioned Sensitivity):</strong> How much does quantization degrade distinct cognitive task families (factual knowledge recall, commonsense reasoning, multi-step symbolic arithmetic, and instruction following) across diverse compact architectures?</li>
