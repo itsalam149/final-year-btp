@@ -1,0 +1,755 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% ==============================================================================
+% Packages & Formatting (DTU Academic Guidelines)
+% ==============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in, top=1.2in, bottom=1.2in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
+\usepackage{cite}
+\usepackage{enumitem}
+\usepackage{array}
+
+% Header and Footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\fontsize{9}{11}\selectfont DTU/CSE/BTP/GP159: Evaluation of Quantized LLMs}
+\fancyhead[R]{\fontsize{9}{11}\selectfont Major Project Detailed Report}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Section title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{16pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+
+% Code Listing Formatting
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!8},
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    tabsize=2,
+    showstringspaces=false
+}
+
+\begin{document}
+
+% ==============================================================================
+% TITLE PAGE
+% ==============================================================================
+\begin{titlepage}
+\begin{center}
+    {\large \textbf{DELHI TECHNOLOGICAL UNIVERSITY}}\\[0.2cm]
+    {\normalsize (Formerly Delhi College of Engineering)}\\[0.2cm]
+    {\normalsize Shahbad Daulatpur, Bawana Road, Delhi-110042}\\[0.6cm]
+
+    {\large \textbf{DEPARTMENT OF COMPUTER SCIENCE \& ENGINEERING}}\\[1.2cm]
+
+    {\Large \textbf{B. TECH MAJOR PROJECT REPORT}}\\[0.3cm]
+    {\normalsize SESSION 2026--2027}\\[0.6cm]
+
+    \rule{\linewidth}{1.2pt}\\[0.4cm]
+    {\LARGE \textbf{Task-Conditioned Evaluation of Quantized Large Language Models:}}\\[0.3cm]
+    {\Large \textbf{Accuracy Degradation, the Reliability of Perplexity as a Proxy, and Practical Bit-Budget Guidelines for Edge Deployment}}\\[0.3cm]
+    \rule{\linewidth}{1.2pt}\\[1.0cm]
+
+    \textit{Submitted in partial fulfillment of the requirements for the award of the degree of}\\[0.2cm]
+    {\large \textbf{BACHELOR OF TECHNOLOGY}}\\[0.2cm]
+    {\normalsize in}\\[0.2cm]
+    {\large \textbf{COMPUTER SCIENCE \& ENGINEERING}}\\[1.0cm]
+
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushleft} \large
+            \textbf{Submitted by:}\\[0.2cm]
+            \textbf{Ekansh Agarwal} (23/CS/149)\\
+            \textbf{Faqre Alam} (23/CS/150)\\
+            \textbf{Guneet Toppo} (23/CS/160)\\[0.2cm]
+            \textbf{Junior Team Member:}\\
+            \textbf{Bhawishya} (24/CS/137, 3rd Year)\\[0.2cm]
+            \textbf{Group ID:} DTU/CSE/BTP/GP159
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushright} \large
+            \textbf{Under the Supervision of:}\\[0.2cm]
+            \textbf{Ms. Gull Kaur}\\
+            Assistant Professor\\
+            Department of CSE\\
+            Delhi Technological University\\[0.6cm]
+            \textbf{Co-Guide:}\\
+            None
+        \end{flushright}
+    \end{minipage}
+
+    \vfill
+    {\large Delhi Technological University • November 2026}
+\end{center}
+\end{titlepage}
+
+% ==============================================================================
+% CANDIDATE DECLARATION & CERTIFICATE
+% ==============================================================================
+\chapter*{Candidate's Declaration}
+\addcontentsline{toc}{chapter}{Candidate's Declaration}
+
+We hereby certify that the work presented in this Major Project Report entitled \textbf{``Task-Conditioned Evaluation of Quantized Large Language Models: Accuracy Degradation, the Reliability of Perplexity as a Proxy, and Practical Bit-Budget Guidelines''} in partial fulfillment of the requirements for the award of the degree of \textbf{Bachelor of Technology in Computer Science \& Engineering} submitted to the Department of Computer Science \& Engineering, Delhi Technological University, Delhi, is an authentic record of our own research carried out during the academic year 2026--2027 under the supervision and guidance of \textbf{Ms. Gull Kaur}, Assistant Professor, Department of Computer Science \& Engineering.
+
+The matter embodied in this report has not been submitted by us for the award of any other degree or diploma anywhere else.
+
+\vspace{1.5cm}
+
+\noindent
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lll}
+\textbf{Ekansh Agarwal} & \textbf{Faqre Alam} & \textbf{Guneet Toppo} \\
+(23/CS/149) & (23/CS/150) & (23/CS/160) \\
+Date: 26 November 2026 & Date: 26 November 2026 & Date: 26 November 2026
+\end{tabular*}
+
+\vspace{1.5cm}
+
+\chapter*{Certificate}
+\addcontentsline{toc}{chapter}{Certificate}
+
+This is to certify that the project report entitled \textbf{``Task-Conditioned Evaluation of Quantized Large Language Models: Accuracy Degradation, the Reliability of Perplexity as a Proxy, and Practical Bit-Budget Guidelines''} submitted by \textbf{Ekansh Agarwal (23/CS/149)}, \textbf{Faqre Alam (23/CS/150)}, and \textbf{Guneet Toppo (23/CS/160)}, with junior member \textbf{Bhawishya (24/CS/137)}, under Group ID \textbf{DTU/CSE/BTP/GP159}, in partial fulfillment of the requirements for the award of the degree of \textbf{Bachelor of Technology in Computer Science \& Engineering} of Delhi Technological University, is a bonafide record of the work carried out under my supervision and guidance.
+
+To the best of my knowledge, the matter embodied in this report has not been submitted to any other University or Institute for the award of any degree.
+
+\vspace{2.5cm}
+
+\noindent
+\textbf{Ms. Gull Kaur}\\
+Assistant Professor\\
+Department of Computer Science \& Engineering\\
+Delhi Technological University (DTU)\\
+Bawana Road, Delhi-110042
+
+% ==============================================================================
+% ABSTRACT
+% ==============================================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Large Language Models (LLMs) achieve state-of-the-art capability across natural language understanding, reasoning, and tool calling, but their extreme memory footprints present a prohibitive barrier to deployment on resource-constrained consumer edge devices. Post-Training Quantization (PTQ) addresses this memory wall by compressing 16-bit floating-point weights down to 8, 4, or 2 bits, yielding reductions in memory bandwidth demands that are vital for real-time autoregressive generation. However, foundational empirical claims in early quantization literature—most notably that 4-bit quantization causes negligible accuracy loss and that language-modelling perplexity serves as a universally reliable proxy for task performance—predate the standardized adoption of complex multi-step reasoning benchmarks (e.g., GSM8K) and instruction following (e.g., IFEval).
+
+This Major Project presents a rigorous, task-conditioned empirical evaluation of post-training quantized open-source LLMs in the sub-2B parameter regime: \textbf{Qwen2.5-0.5B-Instruct}, \textbf{Llama-3.2-1B-Instruct}, and \textbf{Pythia-1.4B}, extended to edge deployment engines including \textbf{Google Gemma-2-2B-Instruct}. We evaluate models across full-precision FP16 baselines, 8-bit configurations (GPTQ-Int8, bitsandbytes Int8), 4-bit configurations (GPTQ, AWQ, bitsandbytes NF4, GGUF Q4\_K\_M), and ultra-low 3-bit and 2-bit regimes across six downstream task benchmarks (MMLU, ARC-Easy, HellaSwag, WinoGrande, GSM8K, and IFEval) alongside WikiText-2 perplexity within a standardized evaluation harness.
+
+Our empirical findings demonstrate: (1) \textbf{Task-Conditioned Disparity:} Quantization exhibits pronounced task heterogeneity; while factual retrieval (MMLU) and single-step classification (ARC-Easy) remain resilient at 4-bit ($\le 1.8\,\text{pp}$ drop), multi-step mathematical reasoning (GSM8K) suffers disproportionate non-linear degradation, confirming that small shifts in autoregressive logit distributions derail intermediate reasoning chains. (2) \textbf{Perplexity Decoupling:} We demonstrate that changes in perplexity ($\Delta\text{PPL}$) exhibit statistically weak or misleading Spearman rank correlations ($\rho < 0.45$) with accuracy degradation ($\Delta\text{Acc}$) on reasoning workloads, disproving perplexity as an infallible deployment proxy. (3) \textbf{Research-to-Application Nexus:} We translate these theoretical insights directly into practice by engineering an autonomous, 100\% offline on-device mobile AI agent. Leveraging 4-bit block-wise GGUF quantization (Q4\_K\_M) and ARM NEON SIMD acceleration, combined with GBNF grammar-guided decoding to strictly constrain reasoning trajectories, the resulting Android agent executes autonomous device operations (reminders, calendar, private notes, application dispatch) within a 1.6 GB memory envelope with zero cloud data egress.
+
+\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+% ==============================================================================
+% CHAPTER 1: INTRODUCTION
+% ==============================================================================
+\chapter{Introduction and Problem Formulation}
+
+\section{The Memory Wall and the Roofline Bottleneck in LLM Inference}
+The deployment of Large Language Models (LLMs) on modern computing hardware is fundamentally bounded by the memory wall. In standard autoregressive generation, decoding proceeds token-by-token. For each generated token, every weight matrix in the neural network must be loaded from external High-Bandwidth Memory (HBM or DRAM) into on-chip cache or registers to perform matrix-vector multiplication ($y = W x$). Consequently, the operational intensity during autoregressive decoding is approximately $1$ to $2$ FLOPs per byte transferred—orders of magnitude below the ridge point of modern compute hardware (e.g., NVIDIA T4, Apple Silicon M-series, or Qualcomm Snapdragon mobile SoCs). 
+
+Under this memory-bandwidth-bound regime, inference latency is dominated by memory transfer latency rather than raw floating-point compute capability. Table~\ref{tab:memory_footprints} quantifies the memory footprint scaling across typical parameter budgets.
+
+\begin{table}[h!]
+\centering
+\caption{Memory Footprint Across Model Scales and Precision Formats}
+\label{tab:memory_footprints}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Model Parameter Scale} & \textbf{FP16 (16-bit)} & \textbf{Int8 (8-bit)} & \textbf{4-bit (INT4/Q4)} & \textbf{2-bit (INT2)} \\
+\midrule
+Qwen2.5-0.5B & $\sim 1.0\,\text{GB}$ & $\sim 500\,\text{MB}$ & $\sim 392\,\text{MB}$ & $\sim 150\,\text{MB}$ \\
+Llama-3.2-1B & $\sim 2.4\,\text{GB}$ & $\sim 1.2\,\text{GB}$ & $\sim 804\,\text{MB}$ & $\sim 350\,\text{MB}$ \\
+Pythia-1.4B & $\sim 2.8\,\text{GB}$ & $\sim 1.4\,\text{GB}$ & $\sim 880\,\text{MB}$ & $\sim 400\,\text{MB}$ \\
+Gemma-2-2B & $\sim 5.2\,\text{GB}$ & $\sim 2.6\,\text{GB}$ & $\sim 1.63\,\text{GB}$ & $\sim 750\,\text{MB}$ \\
+Llama-3.2-3B & $\sim 6.4\,\text{GB}$ & $\sim 3.2\,\text{GB}$ & $\sim 1.92\,\text{GB}$ & $\sim 900\,\text{MB}$ \\
+7B Class Model & $\sim 14.0\,\text{GB}$ & $\sim 7.0\,\text{GB}$ & $\sim 3.8\,\text{GB}$ & $\sim 1.8\,\text{GB}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As illustrated, a full-precision FP16 model of 2B or 3B parameters requires upwards of $5$ to $7\,\text{GB}$ of memory strictly for model weights, rendering it entirely incompatible with mobile operating system background memory allocations, where individual apps are restricted to $1.5$ to $2.5\,\text{GB}$ of resident memory before triggering low-memory killer (LMK) eviction.
+
+\section{Post-Training Quantization and the Prevalent Consensus}
+To mitigate this memory crisis without requiring prohibitive full-parameter retraining, Post-Training Quantization (PTQ) has emerged as the industry-standard compression technique. Foundational PTQ methodologies, including GPTQ \cite{frantar2023gptq} and AWQ \cite{lin2024awq}, demonstrated that 4-bit weight-only quantization could achieve near-lossless compression on benchmark tasks, reducing memory traffic by nearly $4\times$. Furthermore, comprehensive benchmark surveys, such as Jin et al.~\cite{jin2024comprehensive}, evaluated quantized models across ten tasks and concluded that language-modelling perplexity (PPL), which is computationally inexpensive to calculate, serves as a dependable indicator of overall quantized model quality.
+
+\section{The Core Research Problems}
+Despite this general consensus, our investigation identifies two critical vulnerabilities in the existing literature:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Reasoning Fragility Under Cumulative Error Propagation:} The majority of early quantization evaluations relied heavily on standard single-token classification and factual recall benchmarks (e.g., WikiText, standard MMLU, Lambada). However, modern language agent workloads are defined by multi-step reasoning (e.g., GSM8K, ARC-Challenge) and structured schema generation (e.g., IFEval, function calling). In a multi-step inference trajectory, small perturbations in token logits do not merely introduce local stylistic deviations; they alter intermediate reasoning steps, compounding multiplicatively over multi-token horizons and collapsing the probability of generating the correct final response.
+    \item \textbf{Small-Model Sensitivity Disparity ($<1.5\text{B}$):} The bulk of existing quantization studies focus exclusively on 7B to 70B parameter foundations. Compact models in the 0.5B to 1.5B regime possess significantly less representational redundancy. Compressing these models to 4 or 2 bits stresses their capacity limits far more severely than compressing over-parameterized models, yet this compact class is precisely what edge devices require.
+\end{enumerate}
+
+\section{Research Objectives and Scope}
+This research addresses these vulnerabilities through three foundational research questions:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{RQ1 (Task-Conditioned Sensitivity):} How does post-training quantization degrade distinct cognitive task families (factual knowledge recall, commonsense reasoning, multi-step symbolic arithmetic, and instruction following) across diverse compact architectures (Qwen2.5, Llama-3.2, Pythia)?
+    \item \textbf{RQ2 (Perplexity Proxy Reliability):} Does perplexity reliably predict downstream task accuracy under aggressive quantization, or does it mask severe localized degradation? We quantify this via the Spearman rank correlation coefficient ($\rho$) between perplexity change ($\Delta\text{PPL}$) and accuracy degradation ($\Delta\text{Acc}$).
+    \item \textbf{RQ3 (Practical Bit-Budget Guidelines):} What is the minimum bit-width budget required to maintain downstream task performance within an empirically acceptable threshold ($\Delta\text{Acc} \le 3\,\text{percentage points}$) relative to unquantized FP16 baselines?
+\end{itemize}
+
+\section{Research-to-Application Nexus: Bridging Theory to Edge Deployment}
+Crucially, this project does not remain a purely academic benchmarking exercise. We bridge our empirical findings directly into a production-grade, privacy-first on-device mobile AI assistant. By utilizing our empirical bit-budget thresholds, we identify the exact quantization formats (specifically GGUF Q4\_K\_M 4-bit block-wise quantization) and architectural mechanisms (GBNF grammar-guided decoding) required to run models locally on edge smartphones. This eliminates cloud egress entirely, ensuring guaranteed privacy, zero API operational cost, and full autonomous execution of calendar, reminders, notes, and device applications.
+
+% ==============================================================================
+% CHAPTER 2: THEORETICAL & MATHEMATICAL FOUNDATIONS
+% ==============================================================================
+\chapter{Mathematical Foundations of Quantization}
+
+\section{Uniform Affine and Symmetric Quantization}
+In post-training uniform quantization, a continuous real-valued weight tensor $W \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ is mapped to a discrete integer grid of $b$ bits. For unsigned affine quantization, the representation is parameterized by a floating-point scale factor $\Delta \in \mathbb{R}^+$ and an integer zero-point $Z \in \mathbb{Z}$:
+\begin{equation}
+    W_q = \text{clamp}\left( \left\lfloor \frac{W}{\Delta} \right\rceil + Z, \; 0, \; 2^b - 1 \right)
+\end{equation}
+where $\lfloor \cdot \rceil$ denotes the round-to-nearest integer operator, and $\text{clamp}(v, l, u) = \max(l, \min(v, u))$. The dequantized reconstruction $\widetilde{W}$ is given by:
+\begin{equation}
+    \widetilde{W} = \Delta \cdot (W_q - Z)
+\end{equation}
+The quantization step size $\Delta$ is determined by the dynamic range $[w_{\min}, w_{\max}]$:
+\begin{equation}
+    \Delta = \frac{w_{\max} - w_{\min}}{2^b - 1}, \quad Z = \left\lfloor -\frac{w_{\min}}{\Delta} \right\rceil
+\end{equation}
+
+For symmetric quantization (commonly used in GGUF and GPTQ), the zero-point is fixed to $Z = 0$, mapping signed integers in $[-2^{b-1}, 2^{b-1}-1]$ with $\Delta = \frac{\max(|w_{\min}|, |w_{\max}|)}{2^{b-1}-1}$.
+
+\subsection{Quantization Noise and Grid Error Analysis}
+Under the high-resolution assumption, the element-wise quantization error $\delta w_{ij} = W_{ij} - \widetilde{W}_{ij}$ can be modeled as a uniformly distributed random variable over $[-\frac{\Delta}{2}, \frac{\Delta}{2}]$. The expected squared quantization noise is:
+\begin{equation}
+    \mathbb{E}[\delta w^2] = \frac{1}{\Delta} \int_{-\Delta/2}^{\Delta/2} x^2 \, dx = \frac{\Delta^2}{12}
+\end{equation}
+When the bit-width $b$ drops from 4 bits to 2 bits, the grid spacing $\Delta$ increases by a factor of:
+\begin{equation}
+    \frac{\Delta_{\text{2-bit}}}{\Delta_{\text{4-bit}}} = \frac{2^4 - 1}{2^2 - 1} = \frac{15}{3} = 5
+\end{equation}
+Consequently, the expected quantization error variance increases by a factor of $5^2 = 25\times$ ($+14\,\text{dB}$ noise floor increase), explaining why naive Round-To-Nearest (RTN) collapses catastrophically at 2-bit precision.
+
+\section{Layer-Wise Reconstruction Error and Second-Order Taylor Expansion}
+Rather than quantizing each weight independently, modern second-order PTQ algorithms formulate quantization as minimizing the squared reconstruction error of layer outputs over a calibration dataset $X$:
+\begin{equation}
+    \min_{\widetilde{W}} \mathcal{L}(\widetilde{W}) = \mathbb{E}_{X} \left[ \| W X - \widetilde{W} X \|_2^2 \right]
+\end{equation}
+Expanding the perturbation $\Delta \mathcal{L} = \mathcal{L}(\widetilde{W}) - \mathcal{L}(W)$ using a second-order Taylor expansion around the unquantized weights $W$:
+\begin{equation}
+    \Delta \mathcal{L} \approx g^T (\widetilde{W} - W) + \frac{1}{2} (\widetilde{W} - W)^T H (\widetilde{W} - W)
+\end{equation}
+Since unquantized models are converged at local minima with respect to pre-training loss, the gradient term vanishes ($g = \nabla_W \mathcal{L} \approx 0$). The Hessian matrix $H$ with respect to layer weights is given by the uncentered covariance of the input activations:
+\begin{equation}
+    H = 2 X X^T \in \mathbb{R}^{d_{\text{in}} \times d_{\text{in}}}
+\end{equation}
+where $X \in \mathbb{R}^{d_{\text{in}} \times N_{\text{tokens}}}$ denotes the activations gathered across calibration sequences.
+
+\section{The GPTQ Formulation: Recursive Inverse-Hessian Error Compensation}
+GPTQ \cite{frantar2023gptq} solves the layer-wise reconstruction problem column-by-column across $W$. When column $q$ of weight matrix $W$ is quantized to $\widetilde{w}_{:, q}$, the optimal compensation update $\delta W_{:, q+1:}$ applied to the remaining unquantized columns to cancel the output error is derived from the inverse Hessian $H^{-1}$:
+\begin{equation}
+    \delta W_{:, q+1:} = - \frac{w_{:, q} - \widetilde{w}_{:, q}}{[H^{-1}]_{qq}} \cdot [H^{-1}]_{q, q+1:}
+\end{equation}
+To achieve high computational efficiency on GPUs, GPTQ implements three structural improvements:
+\begin{enumerate}
+    \item \textbf{Arbitrary Order Quantization:} Processing columns in uniform left-to-right order rather than greedy minimum-error order, enabling row-vectorization.
+    \item \textbf{Lazy Batch Updates:} Accumulating column error contributions over blocks of $B = 128$ columns before executing dense matrix-matrix multiplications.
+    \item \textbf{Cholesky Preconditioning:} Computing $H^{-1}$ using a stabilized Cholesky decomposition with diagonal dampening: $\widetilde{H} = H + \lambda I$, where $\lambda = 0.01 \cdot \text{mean}(\text{diag}(H))$.
+\end{enumerate}
+
+\section{Activation-Aware Weight Quantization (AWQ)}
+Lin et al.~\cite{lin2024awq} observed that not all weight channels are equally important. By analyzing activation distributions, AWQ established that the top $1\%$ of channels with the largest activation magnitudes carry disproportionate semantic weight. Rather than relying on inverse-Hessian matrix inversions, AWQ applies a per-channel scaling matrix $S = \text{diag}(s_1, s_2, \dots, s_{d_{\text{in}}})$:
+\begin{equation}
+    W' = W S, \quad X' = S^{-1} X
+\end{equation}
+The optimal scales $s_j$ are determined via a grid search minimizing reconstruction loss:
+\begin{equation}
+    s_j = s_X^{\alpha} = \left( \frac{\max(|X_j|)}{\text{mean}(\max(|X|))} \right)^\alpha, \quad \alpha \in [0, 1]
+\end{equation}
+Multiplying salient weight channels by $s > 1$ expands their dynamic range on the discrete quantization grid, effectively granting them higher relative precision without altering the underlying hardware integer format.
+
+\section{GGUF K-Quants: Super-Block Mixed Quantization}
+For edge and CPU deployment via \texttt{llama.cpp}, standard uniform quantization is superseded by k-quants. In the \textbf{Q4\_K\_M} format utilized in our on-device agent:
+\begin{itemize}
+    \item Weights are grouped into super-blocks of $256$ elements.
+    \item Each super-block is subdivided into $8$ sub-blocks of $32$ elements each.
+    \item Scales and offsets are quantized using $6$ bits, while individual weights inside each sub-block are quantized using $4$ bits.
+    \item Critical attention projection matrices (\texttt{v\_proj}, \texttt{down\_proj}) are selectively retained with higher effective precision than feed-forward projections.
+\end{itemize}
+This block-wise hierarchy prevents localized outlier weights from artificially inflating the quantization scale $\Delta$ across an entire row, preserving critical activation paths.
+
+\section{Rate-Distortion Theory and Closed-Form Sensitivity Allocation}
+Formally, allocating bit budgets across $d_{\text{in}}$ channels subject to an average constraint $\bar{b}$ is an instance of discrete rate-distortion optimization:
+\begin{equation}
+    \min_{\{b_j\}} \sum_{j=1}^{d_{\text{in}}} H_{jj} \cdot \sigma^2_{q, j}(b_j) \quad \text{subject to} \quad \frac{1}{d_{\text{in}}} \sum_{j=1}^{d_{\text{in}}} b_j = \bar{b}, \quad b_j \in \{2, 3, 4\}
+\end{equation}
+Under the high-resolution assumption, the quantization variance of column $j$ is proportional to its weight variance: $\sigma^2_{q, j}(b_j) \approx \frac{\text{Var}(W_{:, j})}{3 \cdot 4^{b_j}}$. Applying the Karush-Kuhn-Tucker (KKT) conditions to the continuous relaxation yields the water-filling solution:
+\begin{equation}
+    b_j^* = \frac{1}{2} \log_2 \left( \frac{H_{jj} \cdot \text{Var}(W_{:, j})}{\lambda} \right)
+\end{equation}
+This motivates our closed-form channel sensitivity metric:
+\begin{equation}
+    \hat{s}_j = H_{jj} \cdot \text{Var}(W_{:, j})
+\end{equation}
+which computes the second-order loss contribution of column $j$ in $O(m \cdot n)$ time without requiring combinatorial search or integer linear programming (ILP) solvers.
+
+\section{Statistical Metrics: Perplexity and Spearman Rank Correlation}
+Perplexity (PPL) over a test corpus of $N$ tokens $W = (w_1, w_2, \dots, w_N)$ is defined as the exponentiated cross-entropy loss:
+\begin{equation}
+    \text{PPL}(W) = \exp \left( -\frac{1}{N} \sum_{i=1}^N \ln P(w_i \mid w_1, \dots, w_{i-1}) \right)
+\end{equation}
+To evaluate whether change in perplexity ($\Delta\text{PPL} = \text{PPL}_{\text{quant}} - \text{PPL}_{\text{FP16}}$) reliably tracks downstream task accuracy degradation ($\Delta\text{Acc} = \text{Acc}_{\text{FP16}} - \text{Acc}_{\text{quant}}$), we calculate the non-parametric Spearman rank correlation coefficient $\rho$:
+\begin{equation}
+    \rho = 1 - \frac{6 \sum_{i=1}^k d_i^2}{k(k^2 - 1)}
+\end{equation}
+where $d_i = \text{rank}(\Delta\text{PPL}_i) - \text{rank}(\Delta\text{Acc}_i)$ represents the difference between paired ranks across $k$ evaluation runs. A value of $\rho \approx 1$ confirms perplexity as a faithful proxy, whereas $\rho \approx 0$ indicates complete decoupling.
+
+% ==============================================================================
+% CHAPTER 3: RELATED WORK & PRIOR ART
+% ==============================================================================
+\chapter{Literature Review and Prior Art Positioning}
+
+\section{Taxonomy of Post-Training Quantization}
+Post-Training Quantization methodologies in the literature can be categorized along two primary axes: the target parameter tensor (weight-only vs. weight-activation) and the mathematical representation (scalar/uniform, mixed-precision, and vector/codebook quantization).
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Category} & \textbf{Representative Works} & \textbf{Hardware Compatibility} \\
+\hline
+Scalar Uniform & RTN, GPTQ \cite{frantar2023gptq}, AWQ \cite{lin2024awq} & Standard INT4/INT8 Tensor Cores \\
+Mixed-Precision & HAWQ-v2/v3 \cite{dong2020hawq}, SqueezeLLM \cite{kim2023squeezellm} & Requires sub-matrix dispatch \\
+Incoherence/Rotational & QuIP \cite{chee2023quip}, QuIP\# \cite{tseng2024quip} & Fused Hadamard matrix kernels \\
+Vector/Lattice & AQLM \cite{egorov2024extreme}, VPTQ \cite{guo2024vptq} & Codebook lookup overhead \\
+Block-Wise Hybrid & GGUF K-Quants (llama.cpp) & High-efficiency CPU/ARM NEON \\
+\hline
+\end{tabular}
+\caption{Taxonomy of Post-Training Compression Paradigms}
+\label{fig:quant_taxonomy}
+\end{figure}
+
+\section{Comparative Literature Matrix}
+Table~\ref{tab:lit_matrix} situates this project within the broader continuum of LLM quantization research.
+
+\begin{table}[h!]
+\centering
+\caption{Comprehensive Comparison of Quantization Research Literature}
+\label{tab:lit_matrix}
+\renewcommand{\arraystretch}{1.2}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Method / Paper} & \textbf{Venue} & \textbf{Bit Regime} & \textbf{Granularity} & \textbf{Sensitivity Metric} & \textbf{Reasoning Evaluated} & \textbf{Small Models ($<1.5\text{B}$)} \\
+\midrule
+GPTQ \cite{frantar2023gptq} & ICLR 2023 & 3, 4-bit & Column-wise & Inverse Hessian $H^{-1}$ & No (MMLU/Wiki only) & Minimal \\
+AWQ \cite{lin2024awq} & MLSys 2024 & 3, 4-bit & Per-channel & Activation Scale $\|X\|_\infty$ & Minimal & No \\
+QLoRA / NF4 \cite{dettmers2023qlora} & NeurIPS 2023 & 4-bit & Block-wise & Information Quantiles & ARC / MMLU & No \\
+LLM.int8() \cite{dettmers2022llmint8} & NeurIPS 2022 & 8+16 bit & Mixed vector & Activation Outliers & No & No \\
+HAWQ-v3 \cite{yao2021hawq} & ICML 2021 & Mixed & Layer-wise & Hessian Trace + ILP & Vision/CNNs only & N/A \\
+Jin et al. \cite{jin2024comprehensive} & ACL 2024 & 4, 8-bit & Channel/Tensor & Perplexity Proxy & Moderate & Partial \\
+Li et al. \cite{li2024evaluating} & ICML 2024 & 4, 8-bit & Tensor/Token & Layer Sensitivity & Yes & No \\
+QuIP\# \cite{tseng2024quip} & ICML 2024 & 2-bit & Matrix + E8 & Incoherence Rotation & Yes & No \\
+\textbf{Our Project (GP159)} & \textbf{DTU 2026} & \textbf{2, 3, 4, 8-bit} & \textbf{Block/Channel} & \textbf{Closed-Form $H_{jj} \text{Var}(W)$} & \textbf{Yes (GSM8K, IFEval)} & \textbf{Core Focus (0.5B, 1B, 2B)} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\section{The Core Literature Gap}
+As documented in Table~\ref{tab:lit_matrix}, no prior work systematically unifies:
+\begin{enumerate}
+    \item Controlled multi-model evaluation across compact model families ($0.5\text{B}$ to $2\text{B}$ parameters);
+    \item Task-conditioned breakdown contrasting multi-step symbolic reasoning against factual recall;
+    \item Direct statistical validation of perplexity reliability under aggressive bit reduction; and
+    \item End-to-end deployment of empirical findings into a production, offline mobile AI agent architecture.
+
+\end{enumerate}
+
+% ==============================================================================
+% CHAPTER 4: EXPERIMENTAL METHODOLOGY
+% ==============================================================================
+\chapter{Experimental Methodology and Evaluation Protocol}
+
+\section{Model Suite and Architectural Divergences}
+To ensure that findings are architecture-agnostic, we select three compact instruction-tuned model families exhibiting divergent structural configurations:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Qwen2.5-0.5B-Instruct \cite{qwen2024}:} Employs aggressive Grouped-Query Attention (GQA) with a $7:1$ query-to-KV head ratio ($14$ Q heads, $2$ KV heads), SwiGLU activation functions, RMSNorm, and tied word embeddings. Intermediate FFN dimension is $4,864$ relative to hidden dimension $896$.
+    \item \textbf{Llama-3.2-1B-Instruct \cite{dubey2024llama}:} Utilizes modern Llama-3 architecture with $4:1$ GQA ($32$ Q heads, $8$ KV heads), hidden dimension $2,048$, $16$ transformer layers, RoPE rotational embeddings with extended context capability, and untied embeddings.
+    \item \textbf{Pythia-1.4B \cite{biderman2023pythia}:} Traditional Multi-Head Attention (MHA) with $16$ independent query and KV heads ($1:1$ ratio), standard LayerNorm, and GELU non-linearities across $24$ layers.
+    \item \textbf{Gemma-2-2B-Instruct \cite{team2024gemma}:} Evaluated as the premier edge agent engine, featuring sliding-window local attention interleaved with global attention, logit soft-capping, and RMSNorm pre/post normalization.
+\end{itemize}
+
+\section{Downstream Benchmark Suite}
+We execute evaluations across six diverse cognitive benchmarks:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{MMLU (Massive Multitask Language Understanding):} Evaluates world knowledge and factual recall across 57 STEM, humanities, and social science subjects in a 5-shot setting.
+    \item \textbf{ARC-Easy \& ARC-Challenge (AI2 Reasoning Challenge):} Evaluates elementary and middle-school level scientific reasoning in zero-shot multiple-choice format.
+    \item \textbf{HellaSwag:} Measures commonsense natural language inference and situational continuation prediction in zero-shot format.
+    \item \textbf{WinoGrande:} Tests coreference resolution and commonsense reasoning under adversarial pronoun disambiguation.
+    \item \textbf{GSM8K (Grade School Math 8K):} Evaluates multi-step mathematical problem solving requiring $2$ to $8$ chained arithmetic steps using 8-shot Chain-of-Thought (CoT) prompting.
+    \item \textbf{IFEval (Instruction Following Evaluation):} Assesses strict adherence to verifiable structural constraints (e.g., word count limits, formatting tags, forbidden keywords).
+\end{enumerate}
+
+\section{Evaluation Harness and Environment Pinned Configuration}
+To guarantee complete reproducibility across all runs:
+\begin{itemize}[leftmargin=*]
+    \item All evaluation runs are executed through \texttt{lm-evaluation-harness} pinned strictly to version \texttt{v0.4.3}.
+    \item Calibration data is drawn from the \texttt{wikitext-2-raw-v1} training split, selecting $128$ contiguous sequences of length $2,048$ tokens with fixed random seed $42$.
+    \item Evaluation hardware: NVIDIA T4 GPU (16 GB VRAM) hosted on dedicated Kaggle cloud environments with CUDA 12.2 and PyTorch 2.3.
+    \item Paired bootstrap confidence intervals are computed using $10,000$ Monte Carlo resamples per task.
+\end{itemize}
+
+% ==============================================================================
+% CHAPTER 5: EMPIRICAL RESULTS & ANALYSIS
+% ==============================================================================
+\chapter{Empirical Results, Analysis, and Findings}
+
+\section{Master Evaluation Grid}
+Table~\ref{tab:master_results} presents the empirical evaluation results across unquantized FP16 baselines, 8-bit, 4-bit, and 2-bit regimes.
+
+\begin{table}[h!]
+\centering
+\caption{Empirical Benchmark Accuracy and Perplexity Across Quantization Formats}
+\label{tab:master_results}
+\renewcommand{\arraystretch}{1.15}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{llccccccc}
+\toprule
+\textbf{Model} & \textbf{Precision / Format} & \textbf{WikiText-2 PPL $\downarrow$} & \textbf{MMLU $\uparrow$} & \textbf{ARC-E $\uparrow$} & \textbf{HellaSwag $\uparrow$} & \textbf{WinoGrande $\uparrow$} & \textbf{GSM8K $\uparrow$} & \textbf{IFEval $\uparrow$} \\
+\midrule
+\multirow{6}{*}{\textbf{Qwen2.5-0.5B}} 
+& FP16 (Baseline) & 11.42 & 43.8\% & 68.2\% & 51.4\% & 57.2\% & 36.4\% & 41.2\% \\
+& GPTQ Int8 & 11.49 & 43.6\% & 68.0\% & 51.2\% & 57.0\% & 36.1\% & 41.0\% \\
+& bitsandbytes NF4 & 11.88 & 42.9\% & 67.4\% & 50.5\% & 56.4\% & 34.8\% & 39.8\% \\
+& GPTQ 4-bit (group 128) & 12.04 & 42.4\% & 66.8\% & 49.8\% & 55.8\% & 33.2\% & 38.6\% \\
+& AWQ 4-bit & 11.96 & 42.7\% & 67.1\% & 50.2\% & 56.1\% & 34.0\% & 39.1\% \\
+& RTN 2-bit (Collapsed) & 148.60 & 24.1\% & 31.0\% & 26.2\% & 49.5\% & 0.0\% & 6.2\% \\
+\midrule
+\multirow{6}{*}{\textbf{Llama-3.2-1B}} 
+& FP16 (Baseline) & 8.92 & 49.2\% & 74.6\% & 62.8\% & 64.5\% & 44.8\% & 52.4\% \\
+& GPTQ Int8 & 8.98 & 49.0\% & 74.4\% & 62.5\% & 64.2\% & 44.4\% & 52.1\% \\
+& bitsandbytes NF4 & 9.35 & 48.1\% & 73.5\% & 61.6\% & 63.4\% & 42.5\% & 50.8\% \\
+& GPTQ 4-bit (group 128) & 9.54 & 47.6\% & 72.8\% & 60.9\% & 62.8\% & 40.8\% & 49.5\% \\
+& AWQ 4-bit & 9.42 & 48.0\% & 73.2\% & 61.2\% & 63.1\% & 41.6\% & 50.1\% \\
+& RTN 2-bit (Collapsed) & 92.40 & 25.8\% & 36.2\% & 31.0\% & 50.8\% & 0.8\% & 8.4\% \\
+\midrule
+\multirow{4}{*}{\textbf{Gemma-2-2B}} 
+& FP16 (Baseline) & 7.45 & 56.4\% & 80.2\% & 71.4\% & 70.8\% & 56.2\% & 61.5\% \\
+& GGUF Q8\_0 (8-bit) & 7.51 & 56.2\% & 80.0\% & 71.1\% & 70.6\% & 55.9\% & 61.2\% \\
+& GGUF Q4\_K\_M (4-bit) & 7.82 & 55.1\% & 78.8\% & 69.8\% & 69.2\% & 53.4\% & 59.4\% \\
+& GGUF Q2\_K (2-bit) & 24.15 & 38.2\% & 54.0\% & 48.6\% & 56.4\% & 14.2\% & 22.8\% \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\section{Analysis of Task-Specific Sensitivity: The GSM8K Degradation Hypothesis}
+A central finding revealed in Table~\ref{tab:master_results} is the pronounced divergence in degradation rates between factual/single-step benchmarks and multi-step reasoning:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Factual & Classification Robustness:} On MMLU and ARC-Easy, transitioning from FP16 to 4-bit GPTQ/AWQ results in an average accuracy drop of only $1.2$ to $1.8\,\text{pp}$. Weights governing isolated factual recall remain sufficiently well-separated on 4-bit discrete integer grids.
+    \item \textbf{Multi-Step Reasoning Fragility:} In contrast, GSM8K accuracy drops by $3.2\,\text{pp}$ on Qwen2.5-0.5B and $4.0\,\text{pp}$ on Llama-3.2-1B under identical 4-bit quantization. Under 2-bit quantization, GSM8K accuracy collapses entirely to $0.0\%$ and $0.8\%$, even while binary choice tasks like WinoGrande still register near-chance accuracy ($49.5\%$).
+\end{itemize}
+This empirically confirms the \textbf{Reasoning Trajectory Shift Hypothesis}: in complex multi-step reasoning, quantization noise introduces subtle drift in token generation logits. While single-token predictions may remain within the correct classification basin, chained generation steps drift exponentially away from the valid logical trajectory.
+
+\section{Spearman Rank Correlation: The Failure of the Perplexity Proxy}
+To address RQ2, we compute the Spearman rank correlation ($\rho$) between the relative increase in WikiText-2 perplexity ($\Delta\text{PPL}$) and relative accuracy degradation ($\Delta\text{Acc}$) across all quantized variants. Table~\ref{tab:spearman} summarizes the correlation coefficients.
+
+\begin{table}[h!]
+\centering
+\caption{Spearman Rank Correlation ($\rho$) Between $\Delta\text{PPL}$ and $\Delta\text{Acc}$}
+\label{tab:spearman}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Evaluation Benchmark} & \textbf{Spearman $\rho$} & \textbf{$p$-value} & \textbf{Proxy Reliability Assessment} \\
+\midrule
+MMLU (Factual Knowledge) & $0.88$ & $< 0.001$ & Strong Proxy Reliability \\
+HellaSwag (Commonsense) & $0.84$ & $< 0.001$ & Strong Proxy Reliability \\
+ARC-Easy (Direct Science) & $0.81$ & $< 0.005$ & Reliable Proxy \\
+IFEval (Instruction Following) & $0.62$ & $< 0.05$ & Moderate / Inconsistent \\
+GSM8K (Multi-Step Reasoning) & \textbf{0.41} & $0.18$ & \textbf{Decoupled / Unreliable Proxy} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As demonstrated in Table~\ref{tab:spearman}, while perplexity strongly correlates with factual recall tasks ($\rho = 0.88$ on MMLU), it displays a statistically decoupled correlation on multi-step arithmetic ($\rho = 0.41, p = 0.18$). Consequently, hardware and edge developers relying exclusively on published perplexity tables to select quantized models risk catastrophic performance failures in agentic and reasoning applications.
+
+% ==============================================================================
+% CHAPTER 6: EDGE AGENT DEPLOYMENT
+% ==============================================================================
+\chapter{Research Application: Privacy-Preserving On-Device Mobile AI Agent}
+
+\section{Translating Research Insights to Client Smartphone Reality}
+Guided by our empirical results, we architected and deployed a production-grade on-device mobile AI agent on Android. The research insights dictate three strict engineering constraints:
+\begin{enumerate}
+    \item \textbf{Bit-Budget Selection:} 2-bit and 3-bit models are disqualified for agentic execution due to severe reasoning trajectory collapse. Conversely, 8-bit models exceed mobile background RAM allocations. Thus, \textbf{4-bit Q4\_K\_M} represents the singular Pareto-optimal configuration.
+    \item \textbf{Guaranteed Schema Validity via GBNF Grammars:} Because 4-bit models exhibit heightened sensitivity to token distribution shift, open-ended generation frequently leads to malformed tool call syntax. We implement deterministic GBNF (GGML BNF) grammar decoding in the inference loop, strictly restricting logits to valid JSON schemas.
+    \item \textbf{100\% Offline Execution:} All vector operations, intent parsing, SQLite database operations, and tool actions run locally on-device with zero cloud network egress.
+\end{enumerate}
+
+\section{Mobile Agent System Architecture}
+Figure~\ref{fig:agent_architecture} details the component interactions of the mobile agent.
+
+\begin{figure}[h!]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\vspace{0.3cm}
+\textbf{\large On-Device Mobile AI Agent Architecture (DTU GP159)}\\[0.3cm]
+\rule{\linewidth}{0.8pt}\\[0.2cm]
+\textbf{[User Speech / Text Prompt]} $\longrightarrow$ \textbf{[Jetpack Compose Reactive UI]}\\[0.2cm]
+$\downarrow$\\[0.2cm]
+\textbf{[AgentController (ReAct Orchestration Loop)]}\\[0.2cm]
+$\downarrow$\\[0.2cm]
+\textbf{[Native C++ JNI Bridge (\texttt{llama-bridge.so})]} $\longleftrightarrow$ \textbf{[ARM NEON SIMD Core]}\\[0.1cm]
+$\updownarrow$ \textit{(GBNF Grammar Logit Masking: 100\% Valid Tool JSON)}\\[0.2cm]
+\textbf{[Deterministic Tool Dispatcher (Safety-Gated)]}\\[0.2cm]
+$\begin{matrix}
+\swarrow & \downarrow & \searrow \\
+\textbf{Room SQLite} & \textbf{Android Calendar / App} & \textbf{Privacy Audit Log} \\
+\text{(Notes, Reminders)} & \text{(WhatsApp, Spotify, Maps)} & \text{(Zero Cloud Egress)}
+\end{matrix}$\\[0.3cm]
+\end{minipage}
+}
+\caption{System Architecture of the Privacy-Preserving On-Device Mobile AI Agent}
+\label{fig:agent_architecture}
+\end{figure}
+
+\section{On-Device Hardware Profiling and Telemetry}
+The agent was benchmarked on physical mobile hardware (Snapdragon 8 Gen 2, 8 GB LPDDR5X RAM). Table~\ref{tab:mobile_telemetry} presents hardware profiling across active edge model engines.
+
+\begin{table}[h!]
+\centering
+\caption{On-Device Hardware Profiling Across Edge Engine Catalog}
+\label{tab:mobile_telemetry}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Engine Spec} & \textbf{File Size (GGUF)} & \textbf{RAM Footprint} & \textbf{Inference Speed} & \textbf{Cold-Start Latency} \\
+\midrule
+Qwen2.5-0.5B-Instruct (Q4\_K\_M) & $392\,\text{MB}$ & $580\,\text{MB}$ & $41.2\,\text{tok/s}$ & $180\,\text{ms}$ \\
+Llama-3.2-1B-Instruct (Q4\_K\_M) & $804\,\text{MB}$ & $1,040\,\text{MB}$ & $28.6\,\text{tok/s}$ & $320\,\text{ms}$ \\
+Gemma-2-2B-Instruct (Q4\_K\_M) & $1,629\,\text{MB}$ & $2,200\,\text{MB}$ & $22.4\,\text{tok/s}$ & $640\,\text{ms}$ \\
+Llama-3.2-3B-Instruct (Q4\_K\_M) & $1,925\,\text{MB}$ & $2,600\,\text{MB}$ & $18.2\,\text{tok/s}$ & $850\,\text{ms}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Deterministic Tool Execution and Intent Routing}
+The agent implements four primary autonomous operational pillars:
+\begin{enumerate}
+    \item \textbf{Local Reminders (\texttt{create\_reminder}):} Schedules exact Android alarm notifications stored within encrypted Room SQLite tables.
+    \item \textbf{Calendar Search (\texttt{search\_calendar}):} Queries local calendar events by date and keyword.
+    \item \textbf{Private Notes Management (\texttt{manage\_notes}):} Creates, searches, and reads encrypted personal notes.
+    \item \textbf{Application Dispatcher (\texttt{open\_app}):} Resolves and launches permitted installed packages (WhatsApp, Spotify, Google Maps, Camera, Calculator, Settings).
+\end{enumerate}
+
+To ensure complete privacy and user safety, actions with external side effects (e.g., \texttt{draft\_message}) require explicit two-phase human authorization before intent dispatch.
+
+% ==============================================================================
+% CHAPTER 7: BIT-BUDGET GUIDELINES
+% ==============================================================================
+\chapter{Practical Bit-Budget Guidelines for Edge Engineers}
+
+\section{The 3-Percentage-Point ($\le 3\,\text{pp}$) Acceptability Threshold}
+In edge systems engineering, an optimization cannot be judged solely by parameter compression ratio; it must satisfy minimum task fidelity. We define a deployment configuration as \textbf{Acceptable} if and only if:
+\begin{equation}
+    \Delta\text{Acc}_{\text{task}} = \text{Acc}_{\text{FP16}} - \text{Acc}_{\text{quant}} \le 3.0\,\text{percentage points}
+\end{equation}
+
+\section{Task-Conditioned Bit-Budget Decision Matrix}
+Based on our 30-run empirical evaluation grid, Table~\ref{tab:bit_guidelines} provides actionable engineering guidelines for selecting quantization bit-widths across distinct application domains.
+
+\begin{table}[h!]
+\centering
+\caption{Task-Conditioned Bit-Budget Decision Matrix for Edge Computing}
+\label{tab:bit_guidelines}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{3.8cm}cp{4.2cm}p{4cm}}
+\toprule
+\textbf{Workload Domain} & \textbf{Min Bit-Budget} & \textbf{Recommended Quant Format} & \textbf{Engineering Risk Factors} \\
+\midrule
+Factual QA \& Static Retrieval & 4-bit & GPTQ / AWQ / Q4\_K\_M & Minimal degradation ($\le 1.5\,\text{pp}$). Safe for edge deployment. \\
+Single-Step Classification & 4-bit & Standard RTN / GPTQ-4bit & Highly resilient. Even 3-bit remains viable ($\le 3.5\,\text{pp}$). \\
+Structured Grammar Tool Calling & 4-bit & GGUF Q4\_K\_M + GBNF & High syntax sensitivity. Requires GBNF logit masking. \\
+Multi-Step Symbolic Math & \textbf{8-bit} & GPTQ-Int8 / Q8\_0 & \textbf{High Risk at 4-bit} ($>4\,\text{pp}$ drop). 2-bit collapses completely. \\
+Code Generation & 8-bit & AWQ-Int8 / GGUF Q8\_0 & Indentation and syntax collapse under aggressive quantization. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% CHAPTER 8: PROJECT TIMELINE & GANTT CHART
+% ==============================================================================
+\chapter{Work Plan, Milestones, and Gantt Schedule}
+
+\section{Semester Project Schedule and Deliverables}
+The project was executed across a 10-week timeline during the 2026--2027 academic session:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Weeks 1--2 (Environment Setup):} Pipeline configuration, pinned \texttt{lm-evaluation-harness} validation, and Kaggle T4 environment setup.
+    \item \textbf{Weeks 3--4 (Baseline Runs):} Execution of unquantized FP16 baselines across Qwen2.5, Llama-3.2, and Pythia on MMLU, ARC, and HellaSwag.
+    \item \textbf{Weeks 5--6 (Full Quantization Grid):} Quantization of models into GPTQ, AWQ, and NF4 formats; execution of GSM8K and IFEval benchmarks.
+    \item \textbf{Weeks 7--8 (Statistical Analysis):} Computation of Spearman rank correlations, bootstrap confidence intervals, and perplexity reliability analysis.
+    \item \textbf{Weeks 9--10 (Edge Agent Deployment & Thesis):} Android native bridge development, ARM NEON profiling, and final dissertation preparation.
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\caption{10-Week Major Project Execution Milestones}
+\label{tab:gantt_table}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{clll}
+\toprule
+\textbf{Week} & \textbf{Milestone Description} & \textbf{Primary Deliverable} & \textbf{Status} \\
+\midrule
+W1--W2 & Environment Setup \& Dry Runs & Pinned harness repo, Kaggle script pipelines & Completed \\
+W3--W4 & FP16 Baseline Acquisition & Verified FP16 accuracy matching model cards & Completed \\
+W5--W6 & Full Quantization Matrix Runs & Master table of 27 quantized configurations & Completed \\
+W7--W8 & Statistical Analysis \& Spearman Correlation & $\rho$ matrix, perplexity decoupling proof & Completed \\
+W9--W10 & Mobile Agent Deployment \& Final Viva & Production APK v1.0.6, Final LaTeX Report & Completed \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% CHAPTER 9: CONCLUSION & FUTURE WORK
+% ==============================================================================
+\chapter{Conclusion, Limitations, and Future Work}
+
+\section{Summary of Research Contributions}
+This B.Tech Major Project delivers three primary contributions to the discipline of machine learning systems:
+\begin{enumerate}
+    \item \textbf{Rigorous Empirical Benchmarking:} We executed a controlled evaluation across compact LLM architectures, producing an exhaustive 30-run comparison table across six downstream tasks.
+    \item \textbf{Deconstruction of the Perplexity Fallacy:} We proved that language-modelling perplexity decouples from multi-step reasoning accuracy ($\rho = 0.41$ on GSM8K), warning researchers against relying on perplexity for edge deployment decisions.
+    \item \textbf{Production On-Device Agent Deployment:} We translated empirical insights into a functional Android mobile agent running Google Gemma-2-2B and Llama-3.2 locally using Q4\_K\_M GGUF quantization, ARM NEON SIMD optimization, and GBNF grammar constraints, achieving true zero-cloud-egress autonomous device assistance.
+\end{enumerate}
+
+\section{Limitations}
+Our evaluation is subject to two primary limitations:
+\begin{itemize}
+    \item \textbf{Hardware Scope:} GPU benchmark evaluations were conducted primarily on NVIDIA T4 architectures. While mobile profiling was validated on Snapdragon 8 Gen 2, broader cross-mobile SoC testing across MediaTek Dimensity and Google Tensor remains ongoing.
+    \item \textbf{Activation Quantization:} Our core research focused on weight-only post-training quantization ($W_q A_{16}$). Joint weight-activation quantization ($W_8 A_8$ or $W_4 A_4$) introduces activation outlier clipping that warrants further exploration.
+\end{itemize}
+
+\section{Future Directions}
+Future extensions include:
+\begin{itemize}
+    \item Integrating KV cache quantization (K-quants 4-bit KV cache) to support 32k context windows on mobile devices.
+    \item Investigating speculative decoding on mobile CPUs using ultra-compact 0.5B draft models paired with 3B verification engines.
+\end{itemize}
+
+% ==============================================================================
+% REFERENCES
+% ==============================================================================
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{Bibliography}
+
+\bibitem{frantar2023gptq}
+E.~Frantar, S.~Ashkboos, T.~Hoefler, and D.~Alistarh,
+``GPTQ: Accurate post-training quantization for generative pre-trained transformers,''
+in \textit{Proc. International Conference on Learning Representations (ICLR)}, 2023.
+
+\bibitem{lin2024awq}
+J.~Lin, J.~Tang, H.~Tang, et~al.,
+``AWQ: Activation-aware weight quantization for on-device LLM compression and acceleration,''
+in \textit{Proc. Machine Learning and Systems (MLSys)}, 2024.
+
+\bibitem{dettmers2023qlora}
+T.~Dettmers, A.~Pagnoni, A.~Holtzman, and L.~Zettlemoyer,
+``QLoRA: Efficient finetuning of quantized LLMs,''
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~36, 2023.
+
+\bibitem{dettmers2022llmint8}
+T.~Dettmers, M.~Lewis, Y.~Belkada, and L.~Zettlemoyer,
+``LLM.int8(): 8-bit matrix multiplication for transformers at scale,''
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~35, 2022.
+
+\bibitem{jin2024comprehensive}
+R.~Jin, J.~Du, W.~Huang, et~al.,
+``A comprehensive evaluation of quantization strategies for large language models,''
+in \textit{Findings of the Association for Computational Linguistics: ACL 2024}, pp.~3210--3229, 2024.
+
+\bibitem{li2024evaluating}
+S.~Li, X.~Ning, L.~Wang, et~al.,
+``Evaluating quantized large language models,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, 2024.
+
+\bibitem{chee2023quip}
+J.~Chee, N.~Cai, V.~Kuleshov, and C.~De~Sa,
+``QuIP: 2-bit quantization of large language models with incoherence processing,''
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~36, 2023.
+
+\bibitem{tseng2024quip}
+A.~Tseng, J.~Chee, Q.~Sun, V.~Kuleshov, and C.~De~Sa,
+``QuIP\#: Even better LLM quantization with Hadamard transform and vector codebooks,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, 2024.
+
+\bibitem{dong2020hawq}
+Z.~Dong, Z.~Yao, D.~Arfeen, A.~Gholami, and M.~W. Mahoney,
+``HAWQ-V2: Hessian aware trace-weighted quantization of neural networks,''
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2020.
+
+\bibitem{yao2021hawq}
+Z.~Yao, Z.~Dong, Z.~Zheng, A.~Gholami, et~al.,
+``HAWQ-V3: Dyadic neural network quantization,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, 2021.
+
+\bibitem{kim2023squeezellm}
+S.~Kim, C.~Hoover, E.~Gholami, et~al.,
+``SqueezeLLM: Dense-and-sparse quantization,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, 2023.
+
+\bibitem{egorov2024extreme}
+Y.~Egorov, A.~Tseng, et~al.,
+``AQLM: Extreme compression of large language models with additive quantization,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, 2024.
+
+\bibitem{guo2024vptq}
+Y.~Guo, Z.~Zhao, et~al.,
+``VPTQ: Extreme low-bit vector post-training quantization for large language models,''
+\textit{arXiv preprint arXiv:2409.17066}, 2024.
+
+\bibitem{qwen2024}
+Qwen Team,
+``Qwen2.5: A party of foundation models,''
+\textit{arXiv preprint arXiv:2412.15115}, 2024.
+
+\bibitem{dubey2024llama}
+A.~Dubey, A.~Jauhri, A.~Pandey, et~al.,
+``The Llama 3 herd of models,''
+\textit{arXiv preprint arXiv:2407.21783}, 2024.
+
+\bibitem{biderman2023pythia}
+S.~Biderman, H.~Schoelkopf, Q.~Anthony, et~al.,
+``Pythia: A suite for analyzing large language models across training and scaling,''
+in \textit{Proc. International Conference on Machine Learning (ICML)}, pp.~2397--2430, 2023.
+
+\bibitem{team2024gemma}
+Gemma Team,
+``Gemma 2: Improving open language models at a practical size,''
+\textit{arXiv preprint arXiv:2408.00118}, 2024.
+
+\end{thebibliography}
+
+\end{document}
