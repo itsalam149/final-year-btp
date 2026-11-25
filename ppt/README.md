@@ -1,10 +1,11 @@
 # DTU CSE BTP GP159 — Presentation Slide Deck
 
 Interactive, web-native presentation for **Major Project (BTP GP159)**:
-> **"Task-Conditioned Evaluation of Quantized Small Language Models"**  
-> **Delhi Technological University (DTU)** | CSE Department  
-> **Guide:** Ms. Gull Kaur, Assistant Professor  
-> **Team:** Ekansh Agarwal (23/CS/149), Faqre Alam (23/CS/150), Guneet Toppo (23/CS/160)
+> **"Privacy-First Offline AI Mobile Agent Using LLM Quantization"**  
+> *(JARVIS-Like On-Device Intelligent Mobile Assistant)*  
+> **Delhi Technological University (DTU)** | Department of Computer Science & Engineering  
+> **Supervisor:** Ms. Gull Kaur, Assistant Professor  
+> **Team:** Faqre Alam (23/CS/150), Ekansh Agarwal (23/CS/149), Guneet Toppo (23/CS/160)
 
 ---
 
@@ -34,16 +35,16 @@ python3 -m http.server 8000
 
 ## 📋 The 13-Slide Intuitive Storyline
 
-1. **Title Slide**: Project details, DTU CSE GP159, Guide Ms. Gull Kaur, Team members (Ekansh, Faqre, Guneet).
-2. **Complete Project Architecture at a Glance**: The full end-to-end diagram covering all 5 stages (SLMs $\rightarrow$ PTQ Quantizer $\rightarrow$ Capped Grid $\rightarrow$ 5-Tier Evaluation $\rightarrow$ Decision Rules).
-3. **What is Quantization? (In Plain Words)**: Video compression analogy (100GB to 2GB); 16-bit float $\rightarrow$ 8-bit $\rightarrow$ 4-bit bins.
-4. **Why is it Important?**: 75% RAM reduction, 2x–3x speedup, privacy, battery life, zero cloud costs.
-5. **The Problem & Why We Are Doing This**: The "Perplexity Illusion" trap — why small models (<2B) break on downstream reasoning despite fluent text.
-6. **Our Thinking**: "Not all tasks suffer equally" — single-step recall vs multi-step chain-of-thought compounding errors.
-7. **Our Approach**: The 5-Tier Evaluation Ladder (Fluency $\rightarrow$ Facts $\rightarrow$ Logic $\rightarrow$ Broad Knowledge $\rightarrow$ Multi-step Math & Rules).
-8. **Parameters & Formulas**: The quantization mapping formula ($q = \text{round}(W/S) + Z$), error explanation, and the 4 methods evaluated (INT8, NF4, GPTQ, AWQ).
-9. **The Process We Followed**: Step-by-step pipeline from Hugging Face to Capped Batching, Kaggle T4 cloud grid, and live result saving.
-10. **Evaluation Results**: Clear comparison table across Tiers 1–4 vs Tier 5 — proving 8-bit safety and the 4-bit reasoning collapse.
-11. **The Confidence Crisis & Statistical Validation**: Expected Calibration Error (ECE) spike ("confidently wrong" model) and 10,000-iteration Bootstrap CIs.
-12. **The Engineering Rulebook**: Actionable decision table for developers deploying SLMs on consumer hardware.
-13. **Conclusion & Key Takeaways**: Summary of contributions and defense Q&A readiness.
+1. **Title Slide**: Project details, DTU CSE GP159, Guide Ms. Gull Kaur, Team members (Faqre, Ekansh, Guneet).
+2. **Vision & Philosophy**: "Your personal AI assistant should understand, reason, and perform useful actions directly on your smartphone without leaking a single byte of private data."
+3. **The Problem with Cloud Assistants**: Privacy leakage, zero offline availability, latency, recurring subscription costs, and the generation vs. execution gap.
+4. **Hardware Boundaries**: Mobile RAM ceiling (&le; 3.5 GB for apps), KV-cache explosion, and thermal/battery boundaries on ARM silicon.
+5. **Core Research Discovery**: The "4-Bit Syntax Collapse" — why 4-bit quantized SLMs break on JSON schemas and tool calling despite fluent English.
+6. **System Architecture**: The complete 9-module on-device pipeline from offline speech (Whisper) to ReAct planning, llama.cpp GGUF, tool sandbox, and native TTS.
+7. **Quantization & GGUF Pipeline**: Precision hierarchy comparison across FP16, Q8_0, Q4_K_M, and Q4_0 on ARM NEON.
+8. **Grammar-Constrained Decoding (BNF Grammars)**: The finite-state logit masking engine that mathematically eliminates 4-bit syntax errors, guaranteeing 100% valid JSON.
+9. **Mobile OS Integration (The 6 Core Tools)**: Permission-controlled execution for Reminders (`AlarmManager`), Calendar (`CalendarProvider`), Notes (`Room` DB), Document Search, Local RAG, and Message Drafting.
+10. **Zero-Trust Privacy Architecture**: Manifest omitting internet permissions, human-in-the-loop confirmation gates, prompt injection defense, and SQLite audit logging.
+11. **Agent-Aware Quantization Benchmark (AAQB)**: Evaluating agents on Syntax Adherence, Tool Accuracy, Task Success Rate, TTFT, and battery consumption.
+12. **Live Verification & Operational Sandbox**: Verified 100% offline execution in Airplane mode, local SQLite Room mirror, and passing automated test suite (`tests_agent/test_agent_system.py`).
+13. **Workload Division & Engineering Roadmap**: Technical ownership for Faqre, Ekansh, and Guneet, leading to final Android APK deployment and university defense.
