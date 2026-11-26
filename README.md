@@ -12,7 +12,7 @@
 
 ---
 
-## 🏛️ Project Metadata & Academic Affiliation
+## Project Metadata & Academic Affiliation
 
 - **Institution:** Delhi Technological University (DTU) *(Formerly Delhi College of Engineering)*
 - **Department:** Department of Computer Science & Engineering
@@ -20,7 +20,7 @@
 - **Academic Session:** 2026–2027
 - **Project Supervisor:** **Ms. Gull Kaur**, Assistant Professor, Department of CSE, DTU
 
-### 👥 Authors & Core Team Members
+### Authors & Core Team Members
 
 | Name | Roll Number | Academic Role & Technical Ownership |
 |---|:---:|---|
@@ -31,7 +31,7 @@
 
 ---
 
-## 📌 Executive Abstract
+## Executive Abstract
 
 Commercial smartphone assistants (Google Gemini, Apple Intelligence, Siri) depend fundamentally on hyperscale cloud infrastructure, exposing personal communications, calendars, and sensitive local files to remote surveillance, latency spikes (1.5–4.5s), and network outages. While Small Language Models (SLMs $\le 2\text{B}$ parameters) can be deployed directly on edge devices using 4-bit Post-Training Quantization (PTQ), they encounter two catastrophic failure modes on mobile hardware:
 1. **Structural Syntax Collapse:** Unconstrained 4-bit edge models suffer a 28%–42% syntax failure rate, producing truncated JSON strings and invalid function schemas.
@@ -46,7 +46,7 @@ Across an empirical benchmark of **5,000 distinct user queries** (1,000 per func
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,7 @@ flowchart TD
 
 ---
 
-## 💡 Key Technological Innovations
+## Key Technological Innovations
 
 ### 1. Program-Aided Language (PAL) Ledger & Arithmetic Engine
 Edge SLMs (such as Llama-3.2-1B or Qwen2.5-0.5B at 4 bits) frequently miscalculate arithmetic in word problems (e.g. multi-party expense sharing, bill splitting, currency totaling). Instead of relying on noisy autoregressive generation, our **PAL Engine**:
@@ -121,7 +121,7 @@ Mobile agents operating with OS privileges introduce security risks (e.g., unint
 
 ---
 
-## 📊 Comprehensive 5,000-Task Empirical Benchmark
+## Comprehensive 5,000-Task Empirical Benchmark
 
 To evaluate real-world generalization, accuracy, and boundary robustness, we executed an exhaustive **5,000-question empirical evaluation** (1,000 distinct prompts per category, with 0% query repetition):
 
@@ -141,7 +141,7 @@ To evaluate real-world generalization, accuracy, and boundary robustness, we exe
 
 ---
 
-## 🛠️ 3-Tier Mobile Tool Matrix
+## 3-Tier Mobile Tool Matrix
 
 | Tool Identifier | Tier Level | Primary Function | Mobile OS API Subsystem | Security Gate Level |
 |---|:---:|---|---|:---:|
@@ -156,7 +156,7 @@ To evaluate real-world generalization, accuracy, and boundary robustness, we exe
 
 ---
 
-## 📁 Repository Directory Structure
+## Repository Directory Structure
 
 ```
 final-year-btp/
@@ -233,7 +233,7 @@ final-year-btp/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### 1. Direct Android APK Installation
 The production-ready release APK is available directly in the root directory:
@@ -300,7 +300,7 @@ cd mobile_app
 
 ---
 
-## 🔒 Security & Privacy Guarantees
+## Security & Privacy Guarantees
 
 1. **Zero Internet Permission:** `AndroidManifest.xml` explicitly omits `android.permission.INTERNET`. The app is cryptographically incapable of transmitting sockets over WAN or cellular networks.
 2. **Local Scoped Storage:** All notes, reminders, and audit records reside in an encrypted SQLite database stored in the application's private sandbox directory (`/data/data/com.dtu.mobileagent/databases/`).
@@ -308,7 +308,7 @@ cd mobile_app
 
 ---
 
-## 📖 Academic Reports & Deliverables
+## Academic Reports & Deliverables
 
 - **Major Project Thesis (PDF):** [`docs/task_conditioned_evaluation_quantized_llm.pdf`](file:///Users/faqrealam149/Desktop/final-year-btp/docs/task_conditioned_evaluation_quantized_llm.pdf)
 - **Phase-1 Interim Report (PDF):** [`docs/dtu_btp_phase1_report.pdf`](file:///Users/faqrealam149/Desktop/final-year-btp/docs/dtu_btp_phase1_report.pdf)
@@ -318,6 +318,6 @@ cd mobile_app
 
 ---
 
-## 📜 License
+## License
 
 This project is released under the **MIT License**. Developed at the **Department of Computer Science & Engineering, Delhi Technological University (DTU)** for academic and research purposes.

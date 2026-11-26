@@ -9,7 +9,7 @@ Interactive, web-native presentation for **Major Project (BTP GP159)**:
 
 ---
 
-## 🚀 How to Open the Presentation
+## How to Open the Presentation
 
 Simply open [`ppt/index.html`](file:///Users/faqrealam149/Desktop/final-year-btp/ppt/index.html) in your browser:
 
@@ -24,7 +24,7 @@ python3 -m http.server 8000
 
 ---
 
-## ⌨️ Presentation Controls
+## Presentation Controls
 
 - **`Right Arrow` / `Space` / `Enter`**: Next Slide
 - **`Left Arrow` / `Backspace`**: Previous Slide
@@ -33,7 +33,7 @@ python3 -m http.server 8000
 
 ---
 
-## 📋 The 13-Slide Intuitive Storyline
+## The 13-Slide Intuitive Storyline
 
 1. **Title Slide**: Project details, DTU CSE GP159, Guide Ms. Gull Kaur, Team members (Faqre, Ekansh, Guneet).
 2. **Vision & Philosophy**: "Your personal AI assistant should understand, reason, and perform useful actions directly on your smartphone without leaking a single byte of private data."

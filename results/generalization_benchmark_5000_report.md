@@ -130,26 +130,26 @@ We tested **1,000 strictly out-of-scope and adversarial queries** divided across
 ```
                             [ User Voice / Text Input ]
                                          │
-                                         ▼
+                                         |
                    [ Intent Classification & Entity Extraction ]
                                          │
            ┌─────────────────────────────┼─────────────────────────────┐
            │                             │                             │
     (Compound Hisaab)            (Device Tool Tasks)           (Knowledge / Small Talk)
            │                             │                             │
-           ▼                             ▼                             ▼
+           |                             |                             |
    [Semantic Chunking]           [GBNF-Constrained SLM]       [Local Knowledge Engine]
 • Splits by clauses, "aur"     • Synthesizes JSON schema     • Factual answers
 • Extracts (Entity, Amount)    • Enforces exact parameters   • Refuses out-of-scope tasks
            │                             │                             │
-           ▼                             ▼                             ▼
+           |                             |                             |
  [Deterministic PAL Engine]       [Security Gate & Intents]    [Pure Text Dialogue]
 • Exact Σ arithmetic            • Safe: Autonomous dispatch    • Zero tool dispatch
 • Formats itemized ledger       • Sensitive: Modal dialog      • Speaks via TTS
            │                             │                             │
            └─────────────────────────────┼─────────────────────────────┘
                                          │
-                                         ▼
+                                         |
                      [ Encrypted SQLite Local Audit Log ]
 ```
 

@@ -148,7 +148,7 @@ fun ChatScreen(
                                                     fontSize = 13.sp
                                                 )
                                                 Text(
-                                                    text = if (isDownloaded) "✓ Downloaded (${spec.sizeMb} MB)" else "⬇ Download Required (${spec.sizeMb} MB)",
+                                                    text = if (isDownloaded) "[Downloaded] (${spec.sizeMb} MB)" else "[Download Required] (${spec.sizeMb} MB)",
                                                     fontSize = 10.sp,
                                                     color = if (isDownloaded) EmeraldOffline else TextMuted
                                                 )
@@ -491,10 +491,10 @@ fun CleanWelcomeCard(
         data class WelcomePrompt(val icon: String, val text: String)
 
         val prompts = listOf(
-            WelcomePrompt("⏰", "Remind me to study at 7 PM"),
-            WelcomePrompt("🗓️", "What's my schedule for today?"),
-            WelcomePrompt("📝", "Take a note: BTP review on Monday"),
-            WelcomePrompt("📱", "Open WhatsApp")
+            WelcomePrompt("ALARM", "Remind me to study at 7 PM"),
+            WelcomePrompt("CALENDAR", "What's my schedule for today?"),
+            WelcomePrompt("NOTE", "Take a note: BTP review on Monday"),
+            WelcomePrompt("APP", "Open WhatsApp")
         )
 
         prompts.forEach { item ->
@@ -553,7 +553,7 @@ fun CleanMessageBubble(message: ChatMessageEntity) {
             Spacer(modifier = Modifier.height(3.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "✓ Executed: ${message.toolName}",
+                    text = "[Executed]: ${message.toolName}",
                     fontSize = 10.sp,
                     color = EmeraldGlow
                 )

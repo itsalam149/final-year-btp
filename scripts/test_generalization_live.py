@@ -102,20 +102,20 @@ def run_tests():
             if "expected_total" in test:
                 title = params.get("title", "")
                 assert f"₹{test['expected_total']}" in title or str(test['expected_total']) in title, f"Total mismatch! {title}"
-                print(f"✅ Verified Total Hisaab: ₹{test['expected_total']} across {test['expected_count']} entries.")
+                print(f"[PASS] Verified Total Hisaab: ₹{test['expected_total']} across {test['expected_count']} entries.")
             if "expected_share" in test:
                 body = params.get("message_body", "")
                 assert f"₹{test['expected_share']}" in body, f"Split share mismatch! {body}"
-                print(f"✅ Verified Split Share: ₹{test['expected_share']} to {test['expected_recipient']}.")
+                print(f"[PASS] Verified Split Share: ₹{test['expected_share']} to {test['expected_recipient']}.")
             if "expected_app" in test:
                 app = params.get("app_name", "")
                 assert app == test["expected_app"], f"App mismatch! {app}"
                 q_param = params.get("query", "")
                 assert test["expected_query"].lower() in q_param.lower(), f"Query mismatch! {q_param}"
-                print(f"✅ Verified App Launch: '{app}' with search/playback query '{q_param}'.")
+                print(f"[PASS] Verified App Launch: '{app}' with search/playback query '{q_param}'.")
             if "expected_tool" in test:
                 assert tool_name == test["expected_tool"]
-                print(f"✅ Verified Tool Execution: {tool_name} with parameters: {params}")
+                print(f"[PASS] Verified Tool Execution: {tool_name} with parameters: {params}")
         else:
             print(f"Direct Response: {resp['display_text']}")
 

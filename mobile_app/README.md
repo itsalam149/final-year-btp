@@ -6,7 +6,7 @@
 
 ---
 
-## 📱 Overview
+## Overview
 
 The `mobile_app` module is the native Android implementation of our privacy-first on-device AI assistant. It couples **C++ JNI inference (`llama.cpp`)** with **GBNF grammar-constrained decoding**, an **offline Room SQLite data layer**, and a **Jetpack Compose UI** that guarantees zero cloud egress.
 
@@ -38,7 +38,7 @@ The `mobile_app` module is the native Android implementation of our privacy-firs
 
 ---
 
-## 🔒 Zero-Internet Guarantee
+## Zero-Internet Guarantee
 
 Unlike conventional cloud assistants (Siri, Google Assistant, ChatGPT App), this application enforces offline privacy at the operating system kernel and sandbox level:
 
@@ -60,7 +60,7 @@ Unlike conventional cloud assistants (Siri, Google Assistant, ChatGPT App), this
 
 ---
 
-## 📱 3-Tier Mobile App Interaction Architecture
+## 3-Tier Mobile App Interaction Architecture
 
 Android sandboxes each app in its own Linux UID. To let the on-device agent control apps across the entire phone, we implemented 3 distinct interaction tiers:
 
@@ -83,7 +83,7 @@ Android sandboxes each app in its own Linux UID. To let the on-device agent cont
 
 ---
 
-## 📂 Architecture & Directory Structure
+## Architecture & Directory Structure
 
 ```
 mobile_app/
@@ -137,7 +137,7 @@ mobile_app/
 
 ---
 
-## 🛠️ Build and Setup Instructions
+## Build and Setup Instructions
 
 ### Prerequisites
 - **Android Studio:** Hedgehog (2023.1.1) or newer (Iguana / Jellyfish / Koala recommended).
@@ -169,7 +169,7 @@ The native engine automatically detects the model file, allocates the 804 MB KV 
 
 ---
 
-## 📊 Benchmark Alignment
+## Benchmark Alignment
 
 The Android engine implements the exact parameters proven in our **AAQB (Autonomous Agent Quantization Benchmark)**:
 

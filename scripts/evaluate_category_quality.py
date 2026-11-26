@@ -404,10 +404,10 @@ def run_category_evaluation(
         bads = case_studies[cat_name]["bad"]
         if goods:
             p, a = goods[0]
-            md += f"**✅ Strong Example (Followed & Correct):**\n- **Prompt:** `{p}`\n- **Model Output:** `{a}`\n\n"
+            md += f"**[PASSED] Strong Example (Followed & Correct):**\n- **Prompt:** `{p}`\n- **Model Output:** `{a}`\n\n"
         if bads:
             p, a, r = bads[0]
-            md += f"**❌ Failure Mode (Violated / Inaccurate):**\n- **Prompt:** `{p}`\n- **Model Output:** `{a}`\n- **Why it Failed:** *{r}*\n\n"
+            md += f"**[FAILED] Failure Mode (Violated / Inaccurate):**\n- **Prompt:** `{p}`\n- **Model Output:** `{a}`\n- **Why it Failed:** *{r}*\n\n"
         md += "---\n\n"
 
     md += f"""

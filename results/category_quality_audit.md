@@ -65,7 +65,7 @@
 
 ### Case Study: AgentTools
 
-**✅ Strong Example (Followed & Correct):**
+**[PASSED] Strong Example (Followed & Correct):**
 - **Prompt:** `Search my notes for 'prepare viva presentation'. Return JSON with search query.`
 - **Model Output:** ````json
 {
@@ -73,7 +73,7 @@
 }
 ````
 
-**❌ Failure Mode (Violated / Inaccurate):**
+**[FAILED] Failure Mode (Violated / Inaccurate):**
 - **Prompt:** `Check my schedule for November 28 regarding meet guide Ms. Gull Kaur. Return JSON with date and query.`
 - **Model Output:** ````json
 [
@@ -89,11 +89,11 @@
 
 ### Case Study: Coding
 
-**✅ Strong Example (Followed & Correct):**
+**[PASSED] Strong Example (Followed & Correct):**
 - **Prompt:** `Explain the core mechanism of quicksort focusing on divide-and-conquer partition step. Keep it to 2 concise sentences.`
 - **Model Output:** `Quicksort uses the divide-and-conquer approach to partition elements into two sub-arrays based on a pivot, then recursively sorts the sub-arrays.`
 
-**❌ Failure Mode (Violated / Inaccurate):**
+**[FAILED] Failure Mode (Violated / Inaccurate):**
 - **Prompt:** `Explain the core mechanism of binary search focusing on logarithmic search on sorted arrays. Keep it to 2 concise sentences. (Focus on consideration #4)`
 - **Model Output:** `Binary search operates by repeatedly dividing the search interval in half. On each step, it compares the target value to the middle element of the interval. If the target is less than the middle element, the search continues in the lower half; otherwise, it continues in the upper half. This process continues until the target is found`
 - **Why it Failed:** **
@@ -102,7 +102,7 @@
 
 ### Case Study: InstructionFollowing
 
-**❌ Failure Mode (Violated / Inaccurate):**
+**[FAILED] Failure Mode (Violated / Inaccurate):**
 - **Prompt:** `Name a fruit without using the letter 'a'. Item index 1. Output only the single fruit name.`
 - **Model Output:** `Strawberry`
 - **Why it Failed:** *Violated negative constraint: 'strawberry' contains the letter 'a'*
@@ -111,11 +111,11 @@
 
 ### Case Study: Math
 
-**✅ Strong Example (Followed & Correct):**
+**[PASSED] Strong Example (Followed & Correct):**
 - **Prompt:** `What is 107 + 211? Answer with only the number.`
 - **Model Output:** `318`
 
-**❌ Failure Mode (Violated / Inaccurate):**
+**[FAILED] Failure Mode (Violated / Inaccurate):**
 - **Prompt:** `What is 114 + 222? Answer with only the number.`
 - **Model Output:** `136`
 - **Why it Failed:** *Incorrect calculation (Expected 336, got ['136'])*
@@ -124,7 +124,7 @@
 
 ### Case Study: ScienceKnowledge
 
-**✅ Strong Example (Followed & Correct):**
+**[PASSED] Strong Example (Followed & Correct):**
 - **Prompt:** `What is the capital city of France? Answer in exactly one word.`
 - **Model Output:** `Paris`
 
