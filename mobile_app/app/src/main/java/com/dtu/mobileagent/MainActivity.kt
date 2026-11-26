@@ -35,10 +35,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var pendingAudioAction: (() -> Unit)? = null
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        // Permissions granted or handled via local fallback
+    ) { grants ->
+        if (grants[Manifest.permission.RECORD_AUDIO] == true) {
+            pendingAudioAction?.invoke()
+            pendingAudioAction = null
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +79,15 @@ class MainActivity : ComponentActivity() {
                     controller = agentController,
                     voiceManager = voiceManager,
                     galleryManager = galleryManager,
-                    onImportLocalModel = { filePickerLauncher.launch("*/*") }
+                    onImportLocalModel = { filePickerLauncher.launch("*/*") },
+                    onRequestRecordAudio = { onGranted ->
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                            onGranted()
+                        } else {
+                            pendingAudioAction = onGranted
+                            permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+                        }
+                    }
                 )
             }
         }

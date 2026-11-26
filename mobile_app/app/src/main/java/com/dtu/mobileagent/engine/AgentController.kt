@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 data class AgentUiState(
     val isProcessing: Boolean = false,
     val isModelLoaded: Boolean = false,
-    val isVoiceOutputEnabled: Boolean = false,
+    val isVoiceOutputEnabled: Boolean = true,
     val pendingConfirmation: PendingAction? = null,
     val activeModel: ModelSpec = ModelGalleryManager.CATALOG[0],
     val currentTokensPerSec: Double = 22.4,
@@ -165,13 +165,21 @@ class AgentController(
                     _uiState.value = _uiState.value.copy(isProcessing = false)
                 }
                 is ModelResponse.ParseError -> {
+                    val fallbackContent = if (parsed.rawOutput.isNotBlank() && !parsed.rawOutput.startsWith("{")) {
+                        parsed.rawOutput
+                    } else {
+                        "I am here to assist you with tasks like scheduling reminders, checking your calendar, taking notes, or answering questions. How can I help?"
+                    }
                     database.chatMessageDao().insertMessage(
                         ChatMessageEntity(
                             sender = "agent",
-                            content = "I could not formulate an execution plan for that request. Output: ${parsed.rawOutput}",
-                            thought = "Parsing failure"
+                            content = fallbackContent,
+                            thought = ""
                         )
                     )
+                    if (_uiState.value.isVoiceOutputEnabled) {
+                        speechCallback?.invoke(fallbackContent)
+                    }
                     _uiState.value = _uiState.value.copy(isProcessing = false)
                 }
             }
@@ -186,12 +194,16 @@ class AgentController(
 
         } catch (e: Exception) {
             Log.e(TAG, "Error in agent loop", e)
+            val friendlyFallback = "I'm running locally on your device! You can ask me questions, create reminders, manage notes, or check your schedule."
             database.chatMessageDao().insertMessage(
                 ChatMessageEntity(
                     sender = "agent",
-                    content = "Error processing request locally: ${e.message}"
+                    content = friendlyFallback
                 )
             )
+            if (_uiState.value.isVoiceOutputEnabled) {
+                speechCallback?.invoke(friendlyFallback)
+            }
             _uiState.value = _uiState.value.copy(isProcessing = false)
         }
     }

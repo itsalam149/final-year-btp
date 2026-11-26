@@ -80,13 +80,19 @@
 
     </application>
 
-    <!-- Query installed apps for Level 2 & 3 App Automation -->
+    <!-- Query installed apps for Level 2 & 3 App Automation, Speech Recognition & TTS -->
     <queries>
         <package android:name="com.whatsapp" />
         <package android:name="com.google.android.apps.maps" />
         <package android:name="com.spotify.music" />
         <package android:name="com.google.android.youtube" />
         <package android:name="com.google.android.gm" />
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
         </intent>

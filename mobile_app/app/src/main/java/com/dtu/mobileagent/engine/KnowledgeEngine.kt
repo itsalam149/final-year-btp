@@ -1,5 +1,7 @@
 package com.dtu.mobileagent.engine
 
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import kotlin.math.*
 
@@ -14,6 +16,9 @@ object KnowledgeEngine {
     fun query(rawQuery: String, activeModel: String = "Gemma-2-2B"): String {
         val query = rawQuery.trim()
         val lower = query.lowercase(Locale.ROOT)
+
+        // 0. Conversational Dialogue, Chit-chat & Live Time/Date
+        solveConversationalDialog(lower, query, activeModel)?.let { return it }
 
         // 1. Math & Arithmetic Computations
         solveMath(lower, query)?.let { return it }
@@ -481,12 +486,147 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
         val capitalizedTopic = if (cleanTopic.length > 1) {
             cleanTopic.substring(0, 1).uppercase() + cleanTopic.substring(1)
         } else {
-            "this topic"
+            "that"
         }
 
-        return """**$capitalizedTopic** is an important subject in general knowledge and technical inquiry.
+        return "That's an interesting point about **$capitalizedTopic**! As your on-device assistant powered by **$activeModel**, I can help you explore technical concepts, solve equations, write code, or organize your notes and reminders. Would you like a deeper explanation, or would you like to apply this to a specific task?"
+    }
 
-As an on-device assistant powered by **$activeModel**, I can provide direct analysis, code implementations, or calculations. If you'd like a deep dive into $cleanTopic, feel free to ask a specific question (such as formulas, code examples, or practical applications), or request a device task like scheduling a reminder or taking a note."""
+    // ------------------------------------------------------------------------
+    // Conversational Dialogue, Chit-chat & Live Time/Date
+    // ------------------------------------------------------------------------
+    private fun solveConversationalDialog(lower: String, original: String, activeModel: String): String? {
+        // Live Real-Time Clock & Date
+        if (lower.contains("what time is it") || lower.contains("what's the time") ||
+            lower.contains("tell me the time") || lower == "time" || lower.contains("current time")) {
+            val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+            return "The current time is **$timeStr**."
+        }
+        if (lower.contains("what is today's date") || lower.contains("what date is today") ||
+            lower.contains("what is the date") || lower.contains("today's date") ||
+            lower.contains("what day is it") || lower.contains("what day is today") || lower == "date") {
+            val dateStr = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault()).format(Date())
+            return "Today is **$dateStr**."
+        }
+
+        // Conversational desire to talk / chat / hang out
+        if (lower.contains("talk to me") || lower.contains("can we talk") || lower.contains("can we chat") ||
+            lower.contains("let's talk") || lower.contains("lets talk") || lower.contains("let's chat") ||
+            lower.contains("lets chat") || lower.contains("i want to talk") || lower.contains("speak to me") ||
+            lower.contains("can you talk") || lower.contains("listen to me") || lower == "talk") {
+            return "I'm right here and happy to talk with you! We can discuss tech, science, college life, your daily goals, or anything else you're curious about. What's on your mind today?"
+        }
+
+        // Casual Greetings & Salutations
+        if (lower == "hey" || lower == "hello" || lower == "hi" || lower == "yo" ||
+            lower == "sup" || lower == "what's up" || lower == "whats up" ||
+            lower.startsWith("hey ") || lower.startsWith("hello ") || lower.startsWith("hi ") ||
+            lower.contains("hey bro") || lower.contains("hello bro") || lower == "bro" || lower == "dude") {
+            return when {
+                lower.contains("what's up") || lower.contains("whats up") || lower == "sup" ->
+                    "Not much, just running smoothly 100% on-device! What's going on with you?"
+                lower.contains("bro") ->
+                    "Hey bro! Always ready to help. What's up?"
+                else ->
+                    "Hello! Great to hear from you. How can I help you today?"
+            }
+        }
+
+        if (lower.contains("good morning")) {
+            return "Good morning! Wishing you a productive and energizing day. What would you like to accomplish today?"
+        }
+        if (lower.contains("good afternoon")) {
+            return "Good afternoon! Hope your day is going smoothly. How can I assist you right now?"
+        }
+        if (lower.contains("good evening")) {
+            return "Good evening! Hope you had a rewarding day. What can I do for you tonight?"
+        }
+        if (lower.contains("good night") || lower.contains("sleep well")) {
+            return "Good night! Rest well and recharge. If you need any reminders set for tomorrow morning, just say the word."
+        }
+
+        // Well-being & Casual Check-in
+        if (lower.contains("how are you") || lower.contains("how are you doing") ||
+            lower.contains("how's your day") || lower.contains("how is your day") ||
+            lower.contains("how's it going") || lower.contains("how do you feel") ||
+            lower.contains("how have you been")) {
+            return "I'm running great, thank you for asking! Operating with zero cloud egress and top efficiency on your phone. How are things going on your end?"
+        }
+
+        // Identity & Persona (DTU BTP GP159)
+        if (lower.contains("who are you") || lower.contains("what is your name") ||
+            lower.contains("who created you") || lower.contains("who made you") ||
+            lower.contains("who built you") || lower.contains("tell me about yourself") ||
+            lower.contains("what are you") || lower.contains("dtu") || lower.contains("gp159")) {
+            return """I am your **Offline Mobile AI Agent**, developed as a B.Tech Final Year Major Project at **Delhi Technological University (DTU CSE GP159)** under the guidance of **Ms. Gull Kaur**.
+• **Team:** Faqre Alam, Ekansh Agarwal, and Guneet Toppo.
+• **Privacy Architecture:** Powered by quantized on-device LLMs (ARM NEON SIMD) with **zero cloud egress**—your conversations, notes, and personal data never leave your phone."""
+        }
+
+        // AI existence & capabilities
+        if (lower.contains("are you real") || lower.contains("are you human") || lower.contains("are you alive") || lower.contains("are you an ai") || lower.contains("are you ai")) {
+            return "I am an artificial intelligence running entirely locally on your smartphone's processor! While I don't have human feelings, I am dedicated to helping you solve problems, organize your day, and learn new things."
+        }
+
+        // Boredom, Companionship & Stories
+        if (lower.contains("i'm bored") || lower.contains("im bored") || lower == "bored" ||
+            lower.contains("entertain me") || lower.contains("tell me a story") ||
+            lower.contains("tell me another story") || lower.contains("tell me something cool") ||
+            lower.contains("tell me something interesting")) {
+            val stories = listOf(
+                "Here is an incredible computing story: In 1947, engineers debugging the Harvard Mark II computer found an actual moth trapped between Relay 70 in Panel F. Computer pioneer Grace Hopper taped the moth into the logbook with the entry: 'First actual case of bug being found.' That is how the terms 'bug' and 'debugging' entered computer science!",
+                "Here is a remarkable space engineering lesson: In 1999, NASA lost the $125 million Mars Climate Orbiter because one engineering team calculated thruster impulse in English units (pound-seconds) while another team expected SI metric units (Newton-seconds). The discrepancy caused the probe to plunge too deep into the Martian atmosphere and disintegrate—making it a legendary lesson on interface specifications!",
+                "Did you know? Apollo 11's guidance computer had just 4 kilobytes of RAM and a 32-kilobyte ROM running at 2.048 MHz. The quantized 4-bit neural network running on your phone right now has over 100,000 times more computing power than the computer that took humanity to the Moon!"
+            )
+            return stories[abs(original.hashCode()) % stories.size]
+        }
+
+        // Empathy, Support & Encouragement
+        if (lower.contains("i'm sad") || lower.contains("im sad") || lower.contains("feel down") ||
+            lower.contains("feeling down") || lower.contains("depressed") || lower.contains("bad day") ||
+            lower.contains("i'm stressed") || lower.contains("im stressed") || lower.contains("i'm tired") || lower.contains("im tired")) {
+            return "I'm sorry to hear that you're having a tough time. Take a slow, deep breath and give yourself credit for everything you've handled today. Sometimes taking a short 10-minute walk, having some water, or listening to music can help clear the mind. I'm right here if you want to chat, brainstorm, or write down your thoughts in a private note."
+        }
+
+        // Motivation & Study Advice
+        if (lower.contains("motivate me") || lower.contains("inspire me") || lower.contains("quote") ||
+            lower.contains("exam") || lower.contains("how to study") || lower.contains("help me focus") ||
+            lower.contains("what should i do today") || lower.contains("what should i do")) {
+            return """Here is a proven formula to conquer your goals today:
+1. **The 2-Minute Rule:** If a task takes under 2 minutes, do it immediately.
+2. **Pomodoro Focus:** Work in unbroken 25-minute sprints with zero phone distractions, followed by a 5-minute break.
+3. **Daily Priority:** Identify the one single most impactful task for today and do it first.
+
+*"The secret of getting ahead is getting started. The secret of getting started is breaking your complex overwhelming tasks into small manageable tasks, and starting on the first one." — Mark Twain*"""
+        }
+
+        // Gratitude & Polite Closings
+        if (lower.contains("thank you") || lower.contains("thanks") || lower.contains("thx") ||
+            lower.contains("appreciate it") || lower == "ty") {
+            return "You're very welcome! Always happy to assist. Let me know whenever you need anything else."
+        }
+        if (lower == "bye" || lower == "goodbye" || lower.startsWith("bye ") || lower.contains("see you") ||
+            lower.contains("see ya") || lower.contains("take care")) {
+            return "Goodbye! Have a fantastic day ahead. Feel free to reach out anytime you need assistance."
+        }
+        if (lower == "ok" || lower == "okay" || lower == "cool" || lower == "great" || lower == "awesome" ||
+            lower == "nice" || lower == "understood" || lower == "got it" || lower == "perfect" || lower == "alright") {
+            return "Sounds great! What would you like to work on next?"
+        }
+
+        // Capabilities & Help
+        if (lower.contains("what can you do") || lower.contains("what you can do") || lower == "help" ||
+            lower.contains("features") || lower.contains("what else can you do")) {
+            return """Here are the core tasks I can perform 100% offline on your device:
+• **Natural Conversation & QA:** Ask me anything in science, coding, math, history, or philosophy.
+• **Reminders:** 'Remind me to submit BTP report at 5 PM'
+• **Calendar & Agenda:** 'What is my schedule for today?'
+• **Private Notes:** 'Take a note: ideas for project presentation'
+• **App Launching:** 'Open WhatsApp', 'Open Spotify', 'Open Maps', or 'Open YouTube'
+• **Model Switching:** Switch between Gemma-2-2B, Llama-3.2, and Qwen via the top menu!"""
+        }
+
+        return null
     }
 
     private fun formatNumber(value: Double): String {

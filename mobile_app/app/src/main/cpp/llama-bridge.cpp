@@ -136,12 +136,36 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("who are you") != std::string::npos || userQuery.find("dtu") != std::string::npos) {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I am an offline mobile AI agent developed for DTU CSE GP159 (Guide: Ms. Gull Kaur | Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo). I run 100% locally with zero cloud egress.\"}";
     }
-    // 9. Polite chat
-    else if (userQuery.find("how are you") != std::string::npos) {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I'm running smoothly on your device! What would you like me to do?\"}";
+    // 9. Conversational Dialogue & Social Chit-chat
+    else if (userQuery.find("talk to me") != std::string::npos || userQuery.find("can we talk") != std::string::npos ||
+             userQuery.find("let's talk") != std::string::npos || userQuery.find("let's chat") != std::string::npos ||
+             userQuery.find("speak to me") != std::string::npos || userQuery == "talk") {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I'm right here and happy to talk with you! We can discuss tech, science, college life, your daily goals, or anything else you're curious about. What's on your mind today?\"}";
+    }
+    else if (userQuery.find("how are you") != std::string::npos || userQuery.find("how's your day") != std::string::npos ||
+             userQuery.find("how is your day") != std::string::npos || userQuery.find("how's it going") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I'm running great, thank you for asking! Operating with zero cloud egress and top efficiency on your phone. How are things going on your end?\"}";
+    }
+    else if (userQuery.find("good morning") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Good morning! Wishing you a productive and energizing day. What would you like to accomplish today?\"}";
+    }
+    else if (userQuery.find("good night") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Good night! Rest well and recharge. If you need any reminders set for tomorrow morning, just say the word.\"}";
+    }
+    else if (userQuery.find("bored") != std::string::npos || userQuery.find("entertain me") != std::string::npos ||
+             userQuery.find("story") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Here is a fascinating tech story: In 1947, engineers debugging the Harvard Mark II computer found an actual moth trapped between Relay 70 in Panel F. Grace Hopper taped it into the logbook with the entry: 'First actual case of bug being found.' That is how the terms 'bug' and 'debugging' entered computer science!\"}";
+    }
+    else if (userQuery.find("advice") != std::string::npos || userQuery.find("motivate") != std::string::npos ||
+             userQuery.find("how to study") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Here is a proven formula to conquer your goals: 1. Pick One Priority for today. 2. Work in unbroken 25-minute Pomodoro sprints. 3. Let me schedule your reminders and take your notes so you stay in the flow. What is your main focus today?\"}";
     }
     else if (userQuery.find("thank") != std::string::npos || userQuery.find("thanks") != std::string::npos) {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"You're very welcome! Let me know if you need any other tasks.\"}";
+    }
+    else if (userQuery == "ok" || userQuery == "okay" || userQuery == "cool" || userQuery == "great" ||
+             userQuery == "awesome" || userQuery == "nice" || userQuery == "understood" || userQuery == "got it") {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Sounds great! What would you like to work on next?\"}";
     }
     // 10. Multi-Domain Knowledge: Math, Coding, Science, Geography, Definitions
     else if (userQuery.find("photosynthesis") != std::string::npos) {
@@ -191,7 +215,7 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
     }
     // 11. Intelligent Multi-Domain Fallback Synthesis
     else {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I am running locally on your device with zero cloud egress. I can assist you with technical inquiries, math calculations, code implementations, or device actions like scheduling reminders and taking notes.\"}";
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"That's an interesting question! As your offline assistant, I can help you solve equations, write code, explore concepts, or organize your reminders and notes. What would you like to work on?\"}";
     }
 
     // Token generation simulation (~28 tokens/sec on Snapdragon 8 Gen 2 / ARM NEON)

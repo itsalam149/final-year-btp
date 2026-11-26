@@ -246,6 +246,41 @@ class ThousandQuestionsBenchmarkTest {
         assertEquals(1100, totalQuestions)
     }
 
+    @Test
+    fun testConversationalDialogueFeatures() {
+        // Test talk to me
+        val talkReply = KnowledgeEngine.query("can we talk")
+        assertTrue("Must invite conversation: $talkReply", talkReply.contains("happy to talk"))
+
+        // Test real-time clock
+        val timeReply = KnowledgeEngine.query("what time is it")
+        assertTrue("Must include current time: $timeReply", timeReply.contains("current time is"))
+
+        // Test real-time date
+        val dateReply = KnowledgeEngine.query("what is today's date")
+        assertTrue("Must include date: $dateReply", dateReply.contains("Today is"))
+
+        // Test story
+        val storyReply = KnowledgeEngine.query("tell me a story")
+        assertTrue("Must tell a story: $storyReply", storyReply.contains("story") || storyReply.contains("bug") || storyReply.contains("Apollo"))
+
+        // Test boredom
+        val boredReply = KnowledgeEngine.query("i'm bored")
+        assertFalse("Must not be empty", boredReply.isBlank())
+
+        // Test empathy
+        val sadReply = KnowledgeEngine.query("i had a bad day")
+        assertTrue("Must be empathetic: $sadReply", sadReply.contains("sorry") || sadReply.contains("breath"))
+
+        // Test study advice
+        val adviceReply = KnowledgeEngine.query("give me advice on how to study")
+        assertTrue("Must contain study advice: $adviceReply", adviceReply.contains("Pomodoro") || adviceReply.contains("Priority"))
+
+        // Test identity
+        val whoReply = KnowledgeEngine.query("who created you")
+        assertTrue("Must mention DTU: $whoReply", whoReply.contains("DTU") && whoReply.contains("GP159"))
+    }
+
     private fun assertNoParrotEchoing(reply: String) {
         assertFalse("Must not contain parrot echoing template", reply.contains("I understand you are asking about"))
         assertFalse("Must not echo raw prompt metadata", reply.contains("<|user|>"))

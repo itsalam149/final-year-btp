@@ -36,6 +36,7 @@ fun ChatScreen(
     voiceManager: VoiceManager? = null,
     galleryManager: ModelGalleryManager? = null,
     onImportLocalModel: () -> Unit = {},
+    onRequestRecordAudio: ((() -> Unit) -> Unit) = { it() },
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -156,6 +157,15 @@ fun ChatScreen(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
+                    // Voice Output (Speaker) Toggle
+                    IconButton(onClick = { controller.toggleVoiceOutput() }) {
+                        Icon(
+                            imageVector = if (uiState.isVoiceOutputEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                            contentDescription = if (uiState.isVoiceOutputEnabled) "Mute Voice" else "Enable Voice",
+                            tint = if (uiState.isVoiceOutputEnabled) EmeraldGlow else TextSecondary
+                        )
+                    }
+
                     // Model Hub Button
                     IconButton(onClick = { showModelGallery = true }) {
                         Icon(
@@ -225,6 +235,37 @@ fun ChatScreen(
                 }
             }
 
+            // Active Voice Listening Indicator Banner
+            if (isListening) {
+                Surface(
+                    color = CardBackground,
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(EmeraldGlow)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Listening... Speak now",
+                            color = EmeraldGlow,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
             // Input Bar
             Surface(
                 color = SurfaceDark,
@@ -269,7 +310,9 @@ fun ChatScreen(
                             if (isListening) {
                                 voiceManager?.stopListening()
                             } else {
-                                voiceManager?.startListening()
+                                onRequestRecordAudio {
+                                    voiceManager?.startListening()
+                                }
                             }
                         },
                         modifier = Modifier

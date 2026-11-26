@@ -46,14 +46,26 @@ class VoiceManager(
         textToSpeech = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.let { tts ->
-                    val result = tts.setLanguage(Locale.US)
-                    if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
-                        tts.setPitch(1.0f)
-                        tts.setSpeechRate(1.0f)
-                        isTtsReady = true
-                        Log.i(tag, "Offline TextToSpeech engine initialized.")
+                    val candidateLocales = listOf(
+                        Locale.getDefault(),
+                        Locale.US,
+                        Locale.UK,
+                        Locale.ENGLISH
+                    )
+                    for (loc in candidateLocales) {
+                        val result = tts.setLanguage(loc)
+                        if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
+                            Log.i(tag, "Offline TextToSpeech engine configured with locale: $loc")
+                            break
+                        }
                     }
+                    tts.setPitch(1.0f)
+                    tts.setSpeechRate(1.0f)
+                    isTtsReady = true
+                    Log.i(tag, "Offline TextToSpeech engine initialized.")
                 }
+            } else {
+                Log.e(tag, "TextToSpeech initialization failed with status: $status")
             }
         }
 
@@ -99,14 +111,17 @@ class VoiceManager(
             }
 
             override fun onError(error: Int) {
+                // If it's a silent timeout or no match, quietly return to Idle so the UI stays clean
+                if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                    _inputState.value = VoiceInputState.Idle
+                    return
+                }
                 val errorMsg = when (error) {
                     SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                    SpeechRecognizer.ERROR_CLIENT -> "Client recognition error"
-                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Record audio permission required"
-                    SpeechRecognizer.ERROR_NETWORK -> "Network required for cloud recognition (using offline mode)"
-                    SpeechRecognizer.ERROR_NO_MATCH -> "No speech detected"
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Speech input timeout"
-                    else -> "Speech recognition code: $error"
+                    SpeechRecognizer.ERROR_CLIENT -> "Speech recognition not available or active"
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Audio permission required"
+                    SpeechRecognizer.ERROR_NETWORK -> "Offline speech recognition used"
+                    else -> "Speech recognition paused"
                 }
                 _inputState.value = VoiceInputState.Error(errorMsg)
             }
@@ -161,10 +176,26 @@ class VoiceManager(
     }
 
     fun speak(text: String) {
-        if (!isTtsReady || text.isBlank()) return
+        if (text.isBlank()) return
+
+        // Clean out markdown symbols so speech sounds natural and fluid
+        val cleanSpeech = text
+            .replace(Regex("""\*\*([^*]+)\*\*"""), "$1")
+            .replace(Regex("""\*([^*]+)\*"""), "$1")
+            .replace(Regex("""`([^`]+)`"""), "$1")
+            .replace(Regex("""```[\s\S]*?```"""), "code block")
+            .replace(Regex("""[#•\-–—]"""), " ")
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+
+        if (cleanSpeech.isBlank()) return
+
+        if (!isTtsReady) {
+            initializeTts()
+        }
 
         val utteranceId = "msg_${System.currentTimeMillis()}"
-        textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        textToSpeech?.speak(cleanSpeech, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
     }
 
     fun stopSpeaking() {
