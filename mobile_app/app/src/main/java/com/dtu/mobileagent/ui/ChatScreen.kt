@@ -1330,7 +1330,15 @@ fun EdgeMessageBubble(message: ChatMessageEntity) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Executed: ${message.toolName}",
+                        text = when (message.toolName) {
+                            "open_app" -> "Action: App Launched"
+                            "manage_notes" -> "Action: Notes App"
+                            "draft_message" -> "Action: Messaging Intent"
+                            "create_reminder" -> "Action: Reminder Scheduled"
+                            "search_calendar" -> "Action: Calendar Check"
+                            "search_local_docs" -> "Action: Local Document Search"
+                            else -> "Action: ${message.toolName}"
+                        },
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = GoogleGreen

@@ -144,7 +144,15 @@ class ToolExecutor(
                 val id = database.noteDao().insertNote(
                     NoteEntity(title = title, content = content)
                 )
-                val msg = "Created note #$id: '$title'"
+
+                // Dispatch to the phone's actual Notes application
+                dispatchToDeviceNotesApp(title, content)
+
+                val msg = if (content.isNotBlank() && (content.contains("₹") || content.contains("•") || content.contains("\n"))) {
+                    "Recorded in your private ledger and opened your Notes app:\n\n$content"
+                } else {
+                    "Created note '$title' and opened your Notes app."
+                }
                 logAudit("manage_notes", params, "EXECUTED", msg)
                 ExecutionResult("manage_notes", true, msg)
             }
@@ -250,7 +258,7 @@ class ToolExecutor(
                     context.startActivity(intent)
                 }
             }
-            val summary = "Playing '$query' on YouTube"
+            val summary = if (query.isNotBlank()) "Opening YouTube to play '$query'..." else "Opening YouTube..."
             logAudit("open_app", params, "EXECUTED", summary)
             return ExecutionResult("open_app", true, summary)
         }
@@ -267,7 +275,7 @@ class ToolExecutor(
                 val webUri = Uri.parse("https://open.spotify.com/search/" + Uri.encode(query))
                 context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
             }
-            val summary = "Searching and playing '$query' on Spotify"
+            val summary = if (query.isNotBlank()) "Opening Spotify to play '$query'..." else "Opening Spotify..."
             logAudit("open_app", params, "EXECUTED", summary)
             return ExecutionResult("open_app", true, summary)
         }
@@ -285,7 +293,7 @@ class ToolExecutor(
                 intent.setPackage(null)
                 context.startActivity(intent)
             }
-            val summary = "Navigating to '$query' on Google Maps"
+            val summary = "Navigating to '$query' on Google Maps..."
             logAudit("open_app", params, "EXECUTED", summary)
             return ExecutionResult("open_app", true, summary)
         }
@@ -313,13 +321,92 @@ class ToolExecutor(
         return if (launchIntent != null) {
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(launchIntent)
-            val summary = "Successfully launched $appName ($packageName)"
+            val friendlyName = when (lowerApp) {
+                "whatsapp" -> "WhatsApp"
+                "youtube" -> "YouTube"
+                "spotify" -> "Spotify"
+                "maps", "google maps" -> "Google Maps"
+                "camera" -> "Camera"
+                "settings" -> "Settings"
+                "calculator" -> "Calculator"
+                "clock", "alarm" -> "Clock"
+                "calendar" -> "Calendar"
+                "gmail" -> "Gmail"
+                else -> appName.replaceFirstChar { it.uppercase() }
+            }
+            val summary = "Opening $friendlyName..."
             logAudit("open_app", params, "EXECUTED", summary)
             ExecutionResult("open_app", true, summary)
         } else {
-            val err = "Could not find installed application matching '$appName'. Ensure package is installed or provide full package name."
+            val err = "Could not find installed application matching '$appName'."
             logAudit("open_app", params, "FAILED", err)
             ExecutionResult("open_app", false, err)
+        }
+    }
+
+    private fun dispatchToDeviceNotesApp(title: String, content: String) {
+        var dispatched = false
+
+        // 1. Android standard CREATE_NOTE intent
+        try {
+            val createNoteIntent = Intent("android.intent.action.CREATE_NOTE").apply {
+                putExtra(Intent.EXTRA_TITLE, title)
+                putExtra(Intent.EXTRA_TEXT, content)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (createNoteIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(createNoteIntent)
+                dispatched = true
+            }
+        } catch (e: Exception) {
+            dispatched = false
+        }
+
+        // 2. Direct package intents for primary Android notes apps
+        if (!dispatched) {
+            val notePackages = listOf(
+                "com.google.android.keep",           // Google Keep
+                "com.miui.notes",                    // Xiaomi Notes
+                "com.samsung.android.app.notes",     // Samsung Notes
+                "com.coloros.note",                  // Oppo / Realme Notes
+                "com.oneplus.note",                  // OnePlus Notes
+                "com.vivo.notes"                     // Vivo / iQOO Notes
+            )
+
+            for (pkg in notePackages) {
+                try {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        setPackage(pkg)
+                        putExtra(Intent.EXTRA_SUBJECT, title)
+                        putExtra(Intent.EXTRA_TEXT, "$title\n\n$content")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(intent)
+                        dispatched = true
+                        break
+                    }
+                } catch (e: Exception) {
+                    // Try next
+                }
+            }
+        }
+
+        // 3. Fallback to generic ACTION_SEND intent
+        if (!dispatched) {
+            try {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, title)
+                    putExtra(Intent.EXTRA_TEXT, "$title\n\n$content")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(sendIntent)
+                dispatched = true
+            } catch (e: Exception) {
+                // Ignore
+            }
         }
     }
 
