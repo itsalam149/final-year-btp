@@ -22,7 +22,7 @@ android {
 
         // Native C++ ABI Configuration for llama.cpp ARM NEON
         ndk {
-            abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
+            abiFilters.addAll(listOf("arm64-v8a"))
         }
 
         externalNativeBuild {

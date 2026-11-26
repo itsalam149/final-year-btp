@@ -7,6 +7,10 @@
 #include <memory>
 #include <android/log.h>
 
+#include "include/llama.h"
+#include "include/common.h"
+#include "include/sampling.h"
+
 #define TAG "OfflineMobileAgent-JNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
@@ -36,10 +40,14 @@ public:
 
 private:
     bool m_isLoaded = false;
+    bool m_isRealModel = false;
     std::string m_modelPath;
     int m_nThreads = 4;
     int m_nCtx = 2048;
     InferenceMetrics m_lastMetrics;
+
+    llama_model * m_model = nullptr;
+    llama_context * m_ctx = nullptr;
 };
 
 #endif // LLAMA_BRIDGE_H

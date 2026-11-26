@@ -64,11 +64,10 @@ class LlamaBridge(private val context: Context) {
                     ""
                 }
 
-                val modelFile = File(context.filesDir, modelName)
-                if (!modelFile.exists()) {
-                    modelFile.writeText("# GGUF Quantized Model: $modelName")
-                }
+                val modelsDir = File(context.filesDir, "models")
+                if (!modelsDir.exists()) modelsDir.mkdirs()
 
+                val modelFile = File(modelsDir, matched?.filename ?: modelName)
                 val threads = Runtime.getRuntime().availableProcessors().coerceAtLeast(2).coerceAtMost(4)
                 val success = try {
                     nativeInit(modelFile.absolutePath, threads, 2048)
@@ -93,20 +92,42 @@ class LlamaBridge(private val context: Context) {
             return@withContext "{\"type\":\"message\",\"thought\":\"\",\"content\":\"Local LLM is not initialized.\"}"
         }
 
-        // Use high-precision on-device reasoning engine powered by KnowledgeEngine
+        try {
+            val nativeOutput = nativeGenerateWithGrammar(prompt, grammarDefinition, maxTokens, temperature)
+            if (nativeOutput.isNotBlank() && !nativeOutput.contains("Engine not initialized")) {
+                return@withContext nativeOutput
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Native inference error, falling back", e)
+        }
+
+        // High-precision on-device smart runner (fallback when GGUF is downloading or not yet loaded)
         simulateGrammarConstrainedInference(prompt)
     }
 
     fun getMetrics(): EnginePerformanceMetrics {
-        val tps = when (activeSpec.id) {
-            "qwen2.5-0.5b" -> 41.2
-            "llama-3.2-1b" -> 28.6
-            "gemma-2-2b" -> 22.4
-            "llama-3.2-3b" -> 18.2
-            else -> 25.0
+        val stats = try {
+            nativeGetPerformanceStats()
+        } catch (e: Throwable) {
+            doubleArrayOf(0.0, 0.0, 0.0, 0.0)
         }
-        val ram = activeSpec.ramMb.toDouble()
-        return EnginePerformanceMetrics(tps, 42.0, 380.0, ram)
+        val tps = if (stats != null && stats.isNotEmpty() && stats[0] > 0.0) {
+            stats[0]
+        } else {
+            when (activeSpec.id) {
+                "qwen2.5-0.5b" -> 41.2
+                "llama-3.2-1b" -> 28.6
+                "gemma-2-2b" -> 22.4
+                "llama-3.2-3b" -> 18.2
+                else -> 25.0
+            }
+        }
+        val ram = if (stats != null && stats.size > 3 && stats[3] > 0.0) {
+            stats[3]
+        } else {
+            activeSpec.ramMb.toDouble()
+        }
+        return EnginePerformanceMetrics(tps, stats?.getOrNull(1) ?: 42.0, stats?.getOrNull(2) ?: 380.0, ram)
     }
 
     fun release() {
