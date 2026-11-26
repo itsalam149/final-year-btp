@@ -157,20 +157,46 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "message", "thought": "", "content": "I can help you with these core offline tasks on your device:\n\n• Reminders: 'Remind me to study at 7 PM'\n• Calendar: 'What's my schedule for today?'\n• Notes: 'Take a note: BTP review on Monday'\n• Apps: 'Open WhatsApp' or 'Open Spotify'\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen."}"""
         }
 
-        // 4. App Launching (WhatsApp, Spotify, YouTube, Maps, Camera, Settings, Calculator)
+        // 4. App Launching & Media Search / Play (WhatsApp, Spotify, YouTube, Maps, Camera, Settings, Calculator)
         if (lower.contains("whatsapp") || lower.contains("spotify") || lower.contains("youtube") ||
             lower.contains("maps") || lower.contains("camera") || lower.contains("settings") ||
-            lower.contains("calculator") || lower.startsWith("open ") || lower.startsWith("launch ")) {
+            lower.contains("calculator") || lower.startsWith("open ") || lower.startsWith("launch ") ||
+            lower.startsWith("play ") || lower.contains("play on youtube") || lower.contains("play on spotify")) {
             val app = when {
-                "maps" in lower || "google maps" in lower -> "maps"
-                "spotify" in lower -> "spotify"
                 "youtube" in lower -> "youtube"
+                "spotify" in lower -> "spotify"
+                "maps" in lower || "google maps" in lower || "navigate" in lower -> "maps"
                 "settings" in lower -> "settings"
                 "camera" in lower -> "camera"
                 "calculator" in lower -> "calculator"
                 else -> "whatsapp"
             }
-            return """{"type": "action", "thought": "Launching $app", "tool": "open_app", "parameters": {"app_name": "$app"}}"""
+
+            var query = ""
+            if (app == "youtube") {
+                if (lower.contains("and play ")) {
+                    query = userText.substringAfter("and play ").trim()
+                } else if (lower.contains("play on youtube")) {
+                    query = userText.substringBefore("play on youtube").replace(Regex("""(?i)^open\s+"""), "").trim()
+                } else if (lower.startsWith("play ")) {
+                    query = userText.substring(5).replace(Regex("""(?i)\s+on youtube"""), "").trim()
+                }
+            } else if (app == "spotify") {
+                if (lower.contains("and play ")) {
+                    query = userText.substringAfter("and play ").trim()
+                } else if (lower.startsWith("play ")) {
+                    query = userText.substring(5).replace(Regex("""(?i)\s+on spotify"""), "").trim()
+                }
+            } else if (app == "maps") {
+                if (lower.contains("navigate to ")) {
+                    query = userText.substringAfter("navigate to ").trim()
+                } else if (lower.contains("directions to ")) {
+                    query = userText.substringAfter("directions to ").trim()
+                }
+            }
+
+            val escQuery = gson.toJson(query)
+            return """{"type": "action", "thought": "Launching $app", "tool": "open_app", "parameters": {"app_name": "$app", "query": $escQuery}}"""
         }
 
         // 5. Reminders
@@ -185,11 +211,32 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "action", "thought": "Checking calendar", "tool": "search_calendar", "parameters": {"date_iso": "2026-11-26", "query": "meeting"}}"""
         }
 
-        // 7. Notes
-        if (lower.contains("note") || lower.contains("write down") || lower.contains("save note")) {
-            val noteContent = lower.replace("take a note:", "").replace("take a note", "").replace("note down", "").replace("note that", "").replace("note", "").trim()
-            val finalContent = if (noteContent.isNotBlank()) noteContent else "Quick captured note"
-            return """{"type": "action", "thought": "Saving private note", "tool": "manage_notes", "parameters": {"action": "create", "title": "Quick Note", "content": "$finalContent"}}"""
+        // 7. Notes - Checking / Reading vs Creating
+        if (lower.contains("check notes") || lower.contains("check my notes") ||
+            lower.contains("show notes") || lower.contains("show my notes") ||
+            lower.contains("read notes") || lower.contains("read my notes") ||
+            lower.contains("view notes") || lower.contains("view my notes") ||
+            lower.contains("my notes") || lower.contains("list notes") ||
+            lower == "notes" || lower.contains("search notes")) {
+            val queryParam = lower
+                .replace("check my notes", "").replace("check notes", "")
+                .replace("show my notes", "").replace("show notes", "")
+                .replace("read my notes", "").replace("read notes", "")
+                .replace("view my notes", "").replace("view notes", "")
+                .replace("my notes", "").replace("notes", "")
+                .replace("about", "").replace("for", "").trim()
+            val escQuery = gson.toJson(queryParam)
+            return """{"type": "action", "thought": "Checking notes", "tool": "manage_notes", "parameters": {"action": "search", "query": $escQuery}}"""
+        } else if (lower.contains("take a note") || lower.contains("create note") ||
+                   lower.contains("save note") || lower.contains("write down") ||
+                   lower.contains("note down") || lower.contains("make a note") ||
+                   lower.startsWith("note:")) {
+            val raw = userText.replace(Regex("""(?i)^(take a note:?|take note:?|save note:?|create note:?|note down:?|write down:?|make a note:?|note:?)"""), "").trim()
+            val finalContent = if (raw.isNotBlank()) raw else "Captured Note"
+            val title = if (finalContent.length > 25) finalContent.take(25) + "..." else finalContent
+            val escTitle = gson.toJson(title)
+            val escContent = gson.toJson(finalContent)
+            return """{"type": "action", "thought": "Saving private note", "tool": "manage_notes", "parameters": {"action": "create", "title": $escTitle, "content": $escContent}}"""
         }
 
         // 8. Who made you / DTU project origin

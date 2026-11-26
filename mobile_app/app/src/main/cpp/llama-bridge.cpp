@@ -114,21 +114,35 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery == "help") {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I can help you with these core offline tasks on your device:\\n\\n• Reminders: 'Remind me to study at 7 PM'\\n• Calendar: 'What's my schedule for today?'\\n• Notes: 'Take a note: BTP review on Monday'\\n• Apps: 'Open WhatsApp' or 'Open Spotify'\\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen.\"}";
     }
-    // 4. App Launching & Checking messages (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
+    // 4. App Launching & Media Playback (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
     else if (userQuery.find("whatsapp") != std::string::npos ||
              userQuery.find("spotify") != std::string::npos ||
              userQuery.find("youtube") != std::string::npos ||
              userQuery.find("maps") != std::string::npos ||
              userQuery.find("camera") != std::string::npos ||
              userQuery.find("settings") != std::string::npos ||
-             userQuery.rfind("open ", 0) == 0 || userQuery.rfind("launch ", 0) == 0) {
+             userQuery.rfind("open ", 0) == 0 || userQuery.rfind("launch ", 0) == 0 ||
+             userQuery.rfind("play ", 0) == 0) {
         std::string appName = "whatsapp";
-        if (userQuery.find("maps") != std::string::npos) appName = "maps";
-        else if (userQuery.find("spotify") != std::string::npos) appName = "spotify";
-        else if (userQuery.find("youtube") != std::string::npos) appName = "youtube";
-        else if (userQuery.find("settings") != std::string::npos) appName = "settings";
-        else if (userQuery.find("camera") != std::string::npos) appName = "camera";
-        responseJson = "{\"type\": \"action\", \"thought\": \"Launching " + appName + "\", \"tool\": \"open_app\", \"parameters\": {\"app_name\": \"" + appName + "\"}}";
+        std::string q = "";
+        if (userQuery.find("maps") != std::string::npos || userQuery.find("navigate") != std::string::npos) {
+            appName = "maps";
+            size_t toPos = userQuery.find("to ");
+            if (toPos != std::string::npos) q = userQuery.substr(toPos + 3);
+        } else if (userQuery.find("spotify") != std::string::npos) {
+            appName = "spotify";
+            size_t playPos = userQuery.find("play ");
+            if (playPos != std::string::npos) q = userQuery.substr(playPos + 5);
+        } else if (userQuery.find("youtube") != std::string::npos) {
+            appName = "youtube";
+            size_t playPos = userQuery.find("play ");
+            if (playPos != std::string::npos) q = userQuery.substr(playPos + 5);
+        } else if (userQuery.find("settings") != std::string::npos) {
+            appName = "settings";
+        } else if (userQuery.find("camera") != std::string::npos) {
+            appName = "camera";
+        }
+        responseJson = "{\"type\": \"action\", \"thought\": \"Launching " + appName + "\", \"tool\": \"open_app\", \"parameters\": {\"app_name\": \"" + appName + "\", \"query\": \"" + q + "\"}}";
     }
     // 5. Reminders
     else if (userQuery.find("remind") != std::string::npos || userQuery.find("reminder") != std::string::npos) {
@@ -139,9 +153,16 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("schedule") != std::string::npos || userQuery.find("agenda") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"Checking calendar\", \"tool\": \"search_calendar\", \"parameters\": {\"date_iso\": \"2026-11-26\", \"query\": \"meeting\"}}";
     }
-    // 7. Notes
-    else if (userQuery.find("note") != std::string::npos || userQuery.find("write down") != std::string::npos) {
-        responseJson = "{\"type\": \"action\", \"thought\": \"Saving private note\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Quick Note\", \"content\": \"Captured note from assistant\"}}";
+    // 7. Notes - Checking vs Creating
+    else if (userQuery.find("check notes") != std::string::npos || userQuery.find("check my notes") != std::string::npos ||
+             userQuery.find("show notes") != std::string::npos || userQuery.find("show my notes") != std::string::npos ||
+             userQuery.find("read notes") != std::string::npos || userQuery.find("read my notes") != std::string::npos ||
+             userQuery.find("my notes") != std::string::npos || userQuery == "notes") {
+        responseJson = "{\"type\": \"action\", \"thought\": \"Checking notes\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"search\", \"query\": \"\"}}";
+    }
+    else if (userQuery.find("note") != std::string::npos || userQuery.find("write down") != std::string::npos ||
+             userQuery.find("save note") != std::string::npos) {
+        responseJson = "{\"type\": \"action\", \"thought\": \"Saving private note\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Captured Note\", \"content\": \"" + userQuery + "\"}}";
     }
     // 8. Who made you / DTU project origin
     else if (userQuery.find("who made you") != std::string::npos || userQuery.find("who created you") != std::string::npos ||

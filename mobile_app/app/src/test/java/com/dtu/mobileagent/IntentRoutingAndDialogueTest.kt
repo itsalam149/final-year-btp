@@ -37,14 +37,17 @@ class IntentRoutingAndDialogueTest {
             return """{"type": "message", "thought": "", "content": "I can help you with these core offline tasks on your device:\n\n• Reminders: 'Remind me to study at 7 PM'\n• Calendar: 'What's my schedule for today?'\n• Notes: 'Take a note: BTP review on Monday'\n• Apps: 'Open WhatsApp' or 'Open Spotify'\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen."}"""
         }
 
-        if (lower.contains("whatsapp") || lower.contains("spotify") || lower.contains("maps") ||
-            lower.startsWith("open ") || lower.startsWith("launch ")) {
+        if (lower.contains("whatsapp") || lower.contains("spotify") || lower.contains("youtube") ||
+            lower.contains("maps") || lower.startsWith("open ") || lower.startsWith("launch ") ||
+            lower.startsWith("play ")) {
             val app = when {
-                "maps" in lower -> "maps"
+                "youtube" in lower -> "youtube"
                 "spotify" in lower -> "spotify"
+                "maps" in lower -> "maps"
                 else -> "whatsapp"
             }
-            return """{"type": "action", "thought": "Launching $app", "tool": "open_app", "parameters": {"app_name": "$app"}}"""
+            val query = if (lower.contains("and play ")) userText.substringAfter("and play ").trim() else ""
+            return """{"type": "action", "thought": "Launching $app", "tool": "open_app", "parameters": {"app_name": "$app", "query": "$query"}}"""
         }
 
         if (lower.contains("remind") || lower.contains("reminder")) {
@@ -57,7 +60,11 @@ class IntentRoutingAndDialogueTest {
             return """{"type": "action", "thought": "Checking calendar", "tool": "search_calendar", "parameters": {"date_iso": "2026-11-26", "query": "meeting"}}"""
         }
 
-        if (lower.contains("note")) {
+        if (lower.contains("check notes") || lower.contains("check my notes") || lower.contains("show notes") || lower.contains("my notes")) {
+            return """{"type": "action", "thought": "Checking notes", "tool": "manage_notes", "parameters": {"action": "search", "query": ""}}"""
+        }
+
+        if (lower.contains("take a note") || lower.contains("note") || lower.contains("save note")) {
             return """{"type": "action", "thought": "Saving private note", "tool": "manage_notes", "parameters": {"action": "create", "title": "Quick Note", "content": "BTP Review"}}"""
         }
 
@@ -141,5 +148,29 @@ class IntentRoutingAndDialogueTest {
         assertEquals("manage_notes", json.get("tool").asString)
         val params = json.getAsJsonObject("parameters")
         assertEquals("create", params.get("action").asString)
+    }
+
+    @Test
+    fun testCheckNotesSearchesRatherThanCreates() {
+        val raw = simulateInference("<|user|>check my notes<|assistant|>")
+        val json = JsonParser.parseString(raw).asJsonObject
+
+        assertEquals("action", json.get("type").asString)
+        assertEquals("manage_notes", json.get("tool").asString)
+        val params = json.getAsJsonObject("parameters")
+        assertEquals("search", params.get("action").asString)
+        assertNotEquals("create", params.get("action").asString)
+    }
+
+    @Test
+    fun testYouTubePlaybackExtractsSongQuery() {
+        val raw = simulateInference("<|user|>open youtube and play hello guys<|assistant|>")
+        val json = JsonParser.parseString(raw).asJsonObject
+
+        assertEquals("action", json.get("type").asString)
+        assertEquals("open_app", json.get("tool").asString)
+        val params = json.getAsJsonObject("parameters")
+        assertEquals("youtube", params.get("app_name").asString)
+        assertEquals("hello guys", params.get("query").asString)
     }
 }

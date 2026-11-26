@@ -162,10 +162,13 @@ class ToolExecutor(
                 ExecutionResult("manage_notes", true, msg)
             }
             "search" -> {
-                val query = if (params.has("query")) params.get("query").asString else ""
-                val notes = database.noteDao().searchNotes(query)
-                val msg = if (notes.isEmpty()) "No notes found matching '$query'."
-                else "Found ${notes.size} note(s):\n" + notes.joinToString("\n") { "• ${it.title}: ${it.content}" }
+                val query = if (params.has("query")) params.get("query").asString.trim() else ""
+                val notes = if (query.isNotBlank()) database.noteDao().searchNotes(query) else database.noteDao().searchNotes("")
+                val msg = if (notes.isEmpty()) {
+                    "You don't have any saved notes yet. You can say 'Take a note: study AI' to create one."
+                } else {
+                    "Found ${notes.size} note(s):\n" + notes.joinToString("\n") { "• ${it.title}: ${it.content}" }
+                }
                 logAudit("manage_notes", params, "EXECUTED", "Found ${notes.size} matches")
                 ExecutionResult("manage_notes", true, msg)
             }
@@ -214,7 +217,63 @@ class ToolExecutor(
 
     private suspend fun executeOpenApp(params: JsonObject): ExecutionResult {
         val appName = params.get("app_name").asString.trim()
-        val packageName = when (appName.lowercase()) {
+        val query = if (params.has("query")) params.get("query").asString.trim() else ""
+        val lowerApp = appName.lowercase()
+
+        // 1. YouTube with direct search/play intent
+        if (lowerApp == "youtube" && query.isNotBlank()) {
+            val uri = Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                setPackage("com.google.android.youtube")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            try {
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                intent.setPackage(null)
+                context.startActivity(intent)
+            }
+            val summary = "Playing '$query' on YouTube"
+            logAudit("open_app", params, "EXECUTED", summary)
+            return ExecutionResult("open_app", true, summary)
+        }
+
+        // 2. Spotify with search/playback intent
+        if (lowerApp == "spotify" && query.isNotBlank()) {
+            val uri = Uri.parse("spotify:search:" + Uri.encode(query))
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            try {
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                val webUri = Uri.parse("https://open.spotify.com/search/" + Uri.encode(query))
+                context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+            }
+            val summary = "Searching and playing '$query' on Spotify"
+            logAudit("open_app", params, "EXECUTED", summary)
+            return ExecutionResult("open_app", true, summary)
+        }
+
+        // 3. Google Maps with navigation/search intent
+        if ((lowerApp == "maps" || lowerApp == "google maps") && query.isNotBlank()) {
+            val uri = Uri.parse("geo:0,0?q=" + Uri.encode(query))
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                setPackage("com.google.android.apps.maps")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            try {
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                intent.setPackage(null)
+                context.startActivity(intent)
+            }
+            val summary = "Navigating to '$query' on Google Maps"
+            logAudit("open_app", params, "EXECUTED", summary)
+            return ExecutionResult("open_app", true, summary)
+        }
+
+        val packageName = when (lowerApp) {
             "whatsapp" -> "com.whatsapp"
             "maps", "google maps" -> "com.google.android.apps.maps"
             "spotify" -> "com.spotify.music"
