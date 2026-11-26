@@ -119,57 +119,71 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              (userQuery.find("whatsapp") != std::string::npos && userQuery != "open whatsapp" && userQuery != "launch whatsapp" && userQuery != "whatsapp") ||
              userQuery.find("text ") != std::string::npos ||
              userQuery.find("sms ") != std::string::npos) {
-        std::string platform = (userQuery.find("sms") != std::string::npos || userQuery.find("text ") != std::string::npos) ? "sms" : "whatsapp";
-        std::string recipient = "Contact";
-        std::string body = "Hello";
-
-        size_t toPos = userQuery.find("to ");
-        size_t msgPos = userQuery.find("message ");
-        size_t waPos = userQuery.find("whatsapp ");
-
-        if (toPos != std::string::npos) {
-            std::string rem = userQuery.substr(toPos + 3);
-            size_t spacePos = rem.find(' ');
-            if (spacePos != std::string::npos) {
-                recipient = rem.substr(0, spacePos);
-                body = rem.substr(spacePos + 1);
-            } else {
-                recipient = rem;
-            }
-        } else if (msgPos != std::string::npos) {
-            std::string rem = userQuery.substr(msgPos + 8);
-            size_t spacePos = rem.find(' ');
-            if (spacePos != std::string::npos) {
-                recipient = rem.substr(0, spacePos);
-                body = rem.substr(spacePos + 1);
-            } else {
-                recipient = rem;
-            }
-        } else if (waPos != std::string::npos) {
-            std::string rem = userQuery.substr(waPos + 9);
-            size_t spacePos = rem.find(' ');
-            if (spacePos != std::string::npos) {
-                recipient = rem.substr(0, spacePos);
-                body = rem.substr(spacePos + 1);
-            } else {
-                recipient = rem;
-            }
-        }
-
-        // Clean body
-        size_t onWa = body.find("on whatsapp ");
-        if (onWa != std::string::npos) {
-            body = body.substr(onWa + 12);
+        
+        // Conversational follow-up about messaging capability
+        if (userQuery == "you will message" || userQuery == "you will message?" ||
+            userQuery == "will you message" || userQuery == "will you message?" ||
+            userQuery == "can you message" || userQuery == "can you message?") {
+            responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Yes! I can draft and send WhatsApp messages or SMS for you. For example, just say:\\n\\n• 'Message Ekansh on WhatsApp: hello'\\n• 'Send WhatsApp to Mom: I reached safely'\\n• 'Send SMS to Rahul: meet me at 5 PM'\"}";
         } else {
-            size_t onWa2 = body.find("on whatsapp");
-            if (onWa2 != std::string::npos) body = body.substr(0, onWa2);
-        }
-        if (body.rfind("saying ", 0) == 0) body = body.substr(7);
-        if (body.rfind("that ", 0) == 0) body = body.substr(5);
-        if (body.rfind(": ", 0) == 0) body = body.substr(2);
-        if (body.empty()) body = "Hello";
+            std::string platform = (userQuery.find("sms") != std::string::npos || userQuery.find("text ") != std::string::npos) ? "sms" : "whatsapp";
+            std::string recipient = "Contact";
+            std::string body = "Hello";
 
-        responseJson = "{\"type\": \"action\", \"thought\": \"Drafting " + platform + " message to " + recipient + "\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"" + recipient + "\", \"message_body\": \"" + body + "\", \"platform\": \"" + platform + "\"}}";
+            std::string q = userQuery;
+            if (q.rfind("open whatsapp and ", 0) == 0) q = q.substr(18);
+            if (q.rfind("launch whatsapp and ", 0) == 0) q = q.substr(20);
+
+            size_t toPos = q.find("to ");
+            size_t msgPos = q.find("message ");
+            size_t waPos = q.find("whatsapp ");
+
+            if (toPos != std::string::npos) {
+                std::string rem = q.substr(toPos + 3);
+                size_t spacePos = rem.find(' ');
+                if (spacePos != std::string::npos) {
+                    recipient = rem.substr(0, spacePos);
+                    body = rem.substr(spacePos + 1);
+                } else {
+                    recipient = rem;
+                }
+            } else if (msgPos != std::string::npos) {
+                std::string rem = q.substr(msgPos + 8);
+                if (rem.rfind("to ", 0) == 0) rem = rem.substr(3);
+                size_t spacePos = rem.find(' ');
+                if (spacePos != std::string::npos) {
+                    recipient = rem.substr(0, spacePos);
+                    body = rem.substr(spacePos + 1);
+                } else {
+                    recipient = rem;
+                }
+            } else if (waPos != std::string::npos) {
+                std::string rem = q.substr(waPos + 9);
+                if (rem.rfind("to ", 0) == 0) rem = rem.substr(3);
+                size_t spacePos = rem.find(' ');
+                if (spacePos != std::string::npos) {
+                    recipient = rem.substr(0, spacePos);
+                    body = rem.substr(spacePos + 1);
+                } else {
+                    recipient = rem;
+                }
+            }
+
+            // Clean body
+            size_t onWa = body.find("on whatsapp ");
+            if (onWa != std::string::npos) {
+                body = body.substr(onWa + 12);
+            } else {
+                size_t onWa2 = body.find("on whatsapp");
+                if (onWa2 != std::string::npos) body = body.substr(0, onWa2);
+            }
+            if (body.rfind("saying ", 0) == 0) body = body.substr(7);
+            if (body.rfind("that ", 0) == 0) body = body.substr(5);
+            if (body.rfind(": ", 0) == 0) body = body.substr(2);
+            if (body.empty()) body = "Hello";
+
+            responseJson = "{\"type\": \"action\", \"thought\": \"Drafting " + platform + " message to " + recipient + "\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"" + recipient + "\", \"message_body\": \"" + body + "\", \"platform\": \"" + platform + "\"}}";
+        }
     }
     // 5. App Launching & Media Playback (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
     else if (userQuery.find("whatsapp") != std::string::npos ||
@@ -192,19 +206,23 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
             if (playPos != std::string::npos) q = userQuery.substr(playPos + 5);
         } else if (userQuery.find("youtube") != std::string::npos || userQuery.rfind("play ", 0) == 0) {
             appName = "youtube";
-            size_t playPos = userQuery.find("play ");
-            if (playPos != std::string::npos) {
-                q = userQuery.substr(playPos + 5);
-                size_t onYt = q.find(" on youtube");
-                if (onYt != std::string::npos) q = q.substr(0, onYt);
-            } else {
-                size_t searchPos = userQuery.find("search ");
-                if (searchPos != std::string::npos) {
-                    q = userQuery.substr(searchPos + 7);
-                    size_t onYt = q.find(" on youtube");
-                    if (onYt != std::string::npos) q = q.substr(0, onYt);
-                }
-            }
+            std::string clean = userQuery;
+            if (clean.rfind("open youtube and ", 0) == 0) clean = clean.substr(17);
+            else if (clean.rfind("open youtube ", 0) == 0) clean = clean.substr(13);
+            else if (clean.rfind("launch youtube and ", 0) == 0) clean = clean.substr(19);
+            else if (clean.rfind("launch youtube ", 0) == 0) clean = clean.substr(15);
+            else if (clean.rfind("youtube ", 0) == 0) clean = clean.substr(8);
+
+            // Strip action verbs or common typos ("play", "plan", "paly", "search")
+            if (clean.rfind("play ", 0) == 0) clean = clean.substr(5);
+            else if (clean.rfind("plan ", 0) == 0) clean = clean.substr(5);
+            else if (clean.rfind("paly ", 0) == 0) clean = clean.substr(5);
+            else if (clean.rfind("search ", 0) == 0) clean = clean.substr(7);
+
+            size_t onYt = clean.find(" on youtube");
+            if (onYt != std::string::npos) clean = clean.substr(0, onYt);
+
+            q = clean;
         } else if (userQuery.find("settings") != std::string::npos) {
             appName = "settings";
         } else if (userQuery.find("camera") != std::string::npos) {

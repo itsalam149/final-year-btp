@@ -628,7 +628,13 @@ When Lift > Weight and Thrust > Drag, the airplane climbs and accelerates."""
                 "**$capitalizedTopic** refers to a key concept in this domain. When analyzing it from an engineering perspective, it is best understood by looking at its core principles, input parameters, and operational tradeoffs. Would you like a technical deep-dive or a concise summary?"
             }
             else -> {
-                "I am running locally on your device to help you explore concepts, compute formulas, write code, or organize your schedule and notes. Would you like to work through a specific problem or example related to **$capitalizedTopic**?"
+                if (lowerQuery.contains("message") || lowerQuery.contains("whatsapp") || lowerQuery.contains("send")) {
+                    "Yes, I can message contacts on WhatsApp or SMS for you! Just say: 'Message [Name] on WhatsApp: [Your message]' and I will open the chat with your message ready to send."
+                } else if (lowerQuery.contains("youtube") || lowerQuery.contains("play") || lowerQuery.contains("song")) {
+                    "I can play music or videos for you on YouTube or Spotify! Try saying: 'Play Believer on YouTube' or 'Play Arijit Singh on Spotify'."
+                } else {
+                    "I'm here to help you on your device! You can ask me to message contacts on WhatsApp, play songs on YouTube, create reminders, manage encrypted notes, or answer questions. What would you like to do?"
+                }
             }
         }
     }

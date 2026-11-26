@@ -178,22 +178,23 @@ class LlamaBridge(private val context: Context) {
 
             var query = ""
             if (app == "youtube") {
-                query = when {
-                    lower.contains("and play ") -> userText.substringAfter("and play ").trim()
-                    lower.contains("play on youtube") -> userText.substringBefore("play on youtube").replace(Regex("""(?i)^open\s+"""), "").trim()
-                    lower.contains("on youtube") && lower.contains("play ") -> userText.substringAfter("play ").substringBefore("on youtube").trim()
-                    lower.startsWith("play ") -> userText.substring(5).replace(Regex("""(?i)\s+on youtube"""), "").trim()
-                    lower.contains("youtube play ") -> userText.substringAfter("youtube play ").trim()
-                    lower.contains("search ") && lower.contains("on youtube") -> userText.substringAfter("search ").substringBefore(" on youtube").trim()
-                    lower.contains("play ") -> userText.substringAfter("play ").trim()
-                    else -> ""
-                }
+                var clean = userText
+                    .replace(Regex("""(?i)^open\s+youtube\s+(?:and\s+)?"""), "")
+                    .replace(Regex("""(?i)^launch\s+youtube\s+(?:and\s+)?"""), "")
+                    .replace(Regex("""(?i)^youtube\s+(?:and\s+)?"""), "")
+                    .replace(Regex("""(?i)\s+on\s+youtube$"""), "")
+                    .trim()
+
+                clean = clean.replace(Regex("""(?i)^(?:play|plan|paly|plau|search|listen to|watch|find|song|video)\s+"""), "").trim()
+                query = clean
             } else if (app == "spotify") {
-                if (lower.contains("and play ")) {
-                    query = userText.substringAfter("and play ").trim()
-                } else if (lower.startsWith("play ")) {
-                    query = userText.substring(5).replace(Regex("""(?i)\s+on spotify"""), "").trim()
-                }
+                var clean = userText
+                    .replace(Regex("""(?i)^open\s+spotify\s+(?:and\s+)?"""), "")
+                    .replace(Regex("""(?i)^launch\s+spotify\s+(?:and\s+)?"""), "")
+                    .replace(Regex("""(?i)\s+on\s+spotify$"""), "")
+                    .trim()
+                clean = clean.replace(Regex("""(?i)^(?:play|paly|search|listen to|song)\s+"""), "").trim()
+                query = clean
             } else if (app == "maps") {
                 if (lower.contains("navigate to ")) {
                     query = userText.substringAfter("navigate to ").trim()
@@ -352,13 +353,30 @@ class LlamaBridge(private val context: Context) {
             return null
         }
 
-        val platform = if (lower.contains("sms") || lower.contains("text ") || lower.contains("text to")) "sms" else "whatsapp"
+        // Clean any leading "open whatsapp and " or "launch whatsapp and "
+        var cleanedText = userText
+            .replace(Regex("""(?i)^open\s+whatsapp\s+(?:and\s+)?"""), "")
+            .replace(Regex("""(?i)^launch\s+whatsapp\s+(?:and\s+)?"""), "")
+            .trim()
+
+        val cleanedLower = cleanedText.lowercase()
+
+        // Conversational inquiry about messaging capability (e.g. "you will message?")
+        if (cleanedLower == "you will message" || cleanedLower == "you will message?" ||
+            cleanedLower == "will you message" || cleanedLower == "will you message?" ||
+            cleanedLower == "can you message" || cleanedLower == "can you message?" ||
+            cleanedLower == "did you message" || cleanedLower == "did you message?" ||
+            cleanedLower == "message?" || cleanedLower == "send message?") {
+            return """{"type": "message", "thought": "", "content": "Yes! I can draft and send WhatsApp messages or SMS for you. For example, just say:\n\n• 'Message Ekansh on WhatsApp: hello'\n• 'Send WhatsApp to Mom: I reached safely'\n• 'Send SMS to Rahul: meet me at 5 PM'"}"""
+        }
+
+        val platform = if (cleanedLower.contains("sms") || cleanedLower.contains("text ") || cleanedLower.contains("text to")) "sms" else "whatsapp"
 
         var recipient = "Contact"
         var body = "Hello"
 
-        // Pattern matching: e.g. "message Rahul on WhatsApp: hello" or "send message to Ekansh saying meet at 5"
-        val toMatch = Regex("""(?:message|msg|send message to|send a message to|send whatsapp to|whatsapp|text|sms|tell)\s+([a-zA-Z0-9_+]+)(?:\s+on\s+whatsapp)?(?:\s+(?:saying|that|to|:)\s*(.*)|\s+(.*))?""", RegexOption.IGNORE_CASE).find(userText)
+        // Pattern matching: e.g. "message to ekansh hello" or "message ekansh: hello"
+        val toMatch = Regex("""(?:message|msg|send message|send a message|send whatsapp|whatsapp|text|sms|tell)\s+(?:to\s+)?([a-zA-Z0-9_+]+)(?:\s+on\s+whatsapp)?(?:\s+(?:saying|that|to|:)\s*(.*)|\s+(.*))?""", RegexOption.IGNORE_CASE).find(cleanedText)
 
         if (toMatch != null) {
             val rec = toMatch.groupValues[1].trim()
