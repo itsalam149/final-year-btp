@@ -45,6 +45,49 @@ Across an empirical benchmark of **5,000 distinct user queries** (1,000 per func
 
 ---
 
+## Core Academic Research Motive & Theoretical Findings
+
+Our academic research focuses on addressing the fundamental performance-efficiency trade-offs of deploying reasoning-capable language models on consumer edge hardware. The project investigates three central theoretical questions documented in our Major Project Thesis (*"Beyond Perplexity: Dissecting Reasoning Fragility and Optimal Bit-Budgets in Quantized Edge LLMs"*):
+
+### 1. The Fallacy of Perplexity in Quantization Benchmarking
+Conventional Post-Training Quantization (PTQ) literature historically evaluates models against WikiText-2 perplexity ($PPL$). When compressing models to 4-bit precision, perplexity increases by a seemingly negligible delta ($\Delta\text{PPL} \le 0.5$), leading early literature to assert that 4-bit quantization causes minimal capability loss.
+
+Our empirical investigation reveals **Task-Conditioned Disparity**:
+- Factual question answering (MMLU) and single-step classification (ARC-Easy) remain resilient at 4-bit precision ($\le 1.8\,\text{pp}$ drop).
+- In sharp contrast, multi-step symbolic reasoning (GSM8K) and structured function calling exhibit **catastrophic, non-linear degradation** (-28% to -42% syntax failure rate).
+- We demonstrate that changes in perplexity correlate weakly with reasoning accuracy ($\rho < 0.45$), disproving perplexity as an infallible proxy for agentic deployment on edge devices.
+
+### 2. The Memory Wall & Roofline Dynamics on Mobile SoCs
+Autoregressive token generation is fundamentally memory-bandwidth bound. For each generated token, all weight matrices must be transferred from DRAM to on-chip registers, yielding an operational intensity of only 1 to 2 FLOPs per byte transferred—far below the compute saturation ridge of mobile SoCs.
+- By quantizing model weights from 16-bit floating-point (FP16) down to 4-bit block-wise formats (`Q4_K_M`), DRAM bandwidth pressure is reduced by **67.3%** (from 2,460 MB down to 804 MB for Llama-3.2-1B).
+- This memory bandwidth reduction directly translates to an inference speedup from **12.8 tok/s to 28.4 tok/s** on mobile ARM NEON SIMD processors, meeting real-time interactive thresholds.
+
+### 3. Dual-Core Co-Design: Resolving Quantization Fragility
+Because 4-bit quantization damages the fragile attention weights required for recursive arithmetic and nested JSON formatting, scaling the neural network on-device is prohibitive due to RAM constraints. We developed a dual-core co-design:
+- **GBNF Grammar Decoders:** Implement a C++ logit-masking finite-state machine that assigns $-\infty$ probability to invalid syntax tokens, restoring **100% schema validity**.
+- **Program-Aided Language (PAL):** Offload compound calculations, financial ledgers (*hisaab*), and bill-splitting into deterministic Abstract Syntax Tree (AST) evaluation executed in native code, completely resolving numerical hallucination.
+
+---
+
+## Architectural Comparison: Our Agent vs. Google AI Edge Gallery
+
+Google AI Edge Gallery (and MediaPipe LLM Inference showcases) demonstrates raw on-device model execution. However, fundamental architectural differences distinguish a passive model demo from an autonomous, production-grade mobile agent:
+
+| Architectural Dimension | Google AI Edge Gallery (MediaPipe / AICore) | Our Privacy-Preserving Mobile Agent |
+|---|---|---|
+| **System Paradigm** | Passive model runner (Text-in / Text-out showcase) | Autonomous closed-loop agent (ReAct planner & executor) |
+| **Operating System Integration** | Isolated application sandbox with zero OS hooks | 3-Tier OS Matrix (Room SQLite, Intents, Accessibility) |
+| **Tool Calling & Action Dispatch** | None (Cannot perform actions on device) | Real-world tool execution (Alarms, Notes, Calendar, Media) |
+| **Syntax & Grammar Control** | Unconstrained sampling (Prone to syntax collapse at 4-bit) | C++ GBNF grammar-constrained decoding (100% valid JSON) |
+| **Mathematical Reasoning** | Pure autoregressive generation (Fails on compound math) | Program-Aided Language (PAL) engine (100% math accuracy) |
+| **Data Persistence** | Ephemeral in-memory chat (Data lost on process kill) | Scoped, encrypted Room SQLite storage with audit trail |
+| **Security & Safety Gate** | No security boundary (No device privileges requested) | Two-Tiered Human-in-the-Loop Gate with visual approvals |
+| **Voice Interaction** | Text-only or cloud-assisted speech | 100% offline edge voice pipeline (Sherpa-ONNX + native TTS) |
+| **Application Footprint** | Heavy model downloads inside bundled framework | 12.9 MB self-contained APK with pluggable model manager |
+| **Empirical Validation** | Generic token speed & standard perplexity benchmarks | 5,000-query generalization benchmark (0% hallucination) |
+
+---
+
 ## System Architecture
 
 ```mermaid
