@@ -347,49 +347,49 @@ class ToolExecutor(
     private fun dispatchToDeviceNotesApp(title: String, content: String) {
         var dispatched = false
 
-        // 1. Android standard CREATE_NOTE intent
-        try {
-            val createNoteIntent = Intent("android.intent.action.CREATE_NOTE").apply {
-                putExtra(Intent.EXTRA_TITLE, title)
-                putExtra(Intent.EXTRA_TEXT, content)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // 1. Direct package intents for primary Android notes apps (Google Keep, Xiaomi, Samsung, OnePlus, Oppo, Vivo)
+        val notePackages = listOf(
+            "com.google.android.keep",           // Google Keep
+            "com.miui.notes",                    // Xiaomi Notes
+            "com.samsung.android.app.notes",     // Samsung Notes
+            "com.coloros.note",                  // Oppo / Realme Notes
+            "com.oneplus.note",                  // OnePlus Notes
+            "com.vivo.notes"                     // Vivo / iQOO Notes
+        )
+
+        for (pkg in notePackages) {
+            try {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    setPackage(pkg)
+                    putExtra(Intent.EXTRA_SUBJECT, title)
+                    putExtra(Intent.EXTRA_TEXT, content)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                if (intent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(intent)
+                    dispatched = true
+                    break
+                }
+            } catch (e: Exception) {
+                // Try next
             }
-            if (createNoteIntent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(createNoteIntent)
-                dispatched = true
-            }
-        } catch (e: Exception) {
-            dispatched = false
         }
 
-        // 2. Direct package intents for primary Android notes apps
+        // 2. Android standard CREATE_NOTE intent fallback
         if (!dispatched) {
-            val notePackages = listOf(
-                "com.google.android.keep",           // Google Keep
-                "com.miui.notes",                    // Xiaomi Notes
-                "com.samsung.android.app.notes",     // Samsung Notes
-                "com.coloros.note",                  // Oppo / Realme Notes
-                "com.oneplus.note",                  // OnePlus Notes
-                "com.vivo.notes"                     // Vivo / iQOO Notes
-            )
-
-            for (pkg in notePackages) {
-                try {
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        setPackage(pkg)
-                        putExtra(Intent.EXTRA_SUBJECT, title)
-                        putExtra(Intent.EXTRA_TEXT, "$title\n\n$content")
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    if (intent.resolveActivity(context.packageManager) != null) {
-                        context.startActivity(intent)
-                        dispatched = true
-                        break
-                    }
-                } catch (e: Exception) {
-                    // Try next
+            try {
+                val createNoteIntent = Intent("android.intent.action.CREATE_NOTE").apply {
+                    putExtra(Intent.EXTRA_TITLE, title)
+                    putExtra(Intent.EXTRA_TEXT, content)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
+                if (createNoteIntent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(createNoteIntent)
+                    dispatched = true
+                }
+            } catch (e: Exception) {
+                dispatched = false
             }
         }
 

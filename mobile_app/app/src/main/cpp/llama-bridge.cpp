@@ -330,6 +330,90 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("schedule") != std::string::npos || userQuery.find("agenda") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"Checking calendar\", \"tool\": \"search_calendar\", \"parameters\": {\"date_iso\": \"2026-11-26\", \"query\": \"meeting\"}}";
     }
+    // 6.5 Compound Task: Hisaab / Kharcha Calculation + Notes Ledger Creation
+    else if (userQuery.find("hisaab") != std::string::npos || userQuery.find("kharcha") != std::string::npos ||
+             userQuery.find("expense") != std::string::npos || userQuery.find("ledger") != std::string::npos ||
+             (userQuery.find("note") != std::string::npos && (userQuery.find("total") != std::string::npos || userQuery.find("sum") != std::string::npos))) {
+        std::set<std::string> stopWords = {"rs", "inr", "rupaye", "m", "like", "this", "total", "all", "the", "with", "create", "note", "notes", "save", "ledger", "add", "expenses", "banao", "karo", "entry", "mein", "par", "pr", "pe", "likho", "daalo", "aur", "and", "hisaab", "kharcha", "expense", "ki", "ek"};
+
+        // Split userQuery by comma, semicolon, newline, "aur", or "and"
+        std::regex chunkRegex("[,;\\n]|(?:\\baur\\b)|(?:\\band\\b)", std::regex_constants::icase);
+        std::sregex_token_iterator iter(userQuery.begin(), userQuery.end(), chunkRegex, -1);
+        std::sregex_token_iterator end;
+
+        int total = 0;
+        int count = 0;
+        std::string lines = "";
+
+        for (; iter != end; ++iter) {
+            std::string chunk = *iter;
+            std::smatch numMatch;
+            std::regex numRegex("(\\d+)");
+            if (std::regex_search(chunk, numMatch, numRegex)) {
+                int amt = std::stoi(numMatch[1].str());
+                std::regex wordRegex("[a-zA-Z]+");
+                auto words_begin = std::sregex_iterator(chunk.begin(), chunk.end(), wordRegex);
+                auto words_end = std::sregex_iterator();
+
+                std::string chosenWord = "";
+                for (std::sregex_iterator w = words_begin; w != words_end; ++w) {
+                    std::string word = (*w).str();
+                    std::string lowerWord = word;
+                    std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), ::tolower);
+                    if (stopWords.find(lowerWord) == stopWords.end()) {
+                        chosenWord = word;
+                        break;
+                    }
+                }
+
+                if (!chosenWord.empty() && amt > 0) {
+                    chosenWord[0] = std::toupper(chosenWord[0]);
+                    total += amt;
+                    count++;
+                    if (!lines.empty()) lines += "\\n";
+                    lines += "• " + chosenWord + ": ₹" + std::to_string(amt);
+                }
+            }
+        }
+
+        if (count > 0) {
+            lines += "\\n--------------------\\nTotal Hisaab: ₹" + std::to_string(total);
+            std::string title = "Hisaab: " + std::to_string(count) + " Entries (Total: ₹" + std::to_string(total) + ")";
+            responseJson = "{\"type\": \"action\", \"thought\": \"Calculated total expense ₹" + std::to_string(total) + " across " + std::to_string(count) + " entries and creating itemized hisaab note\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"" + title + "\", \"content\": \"" + lines + "\"}}";
+        } else {
+            responseJson = "{\"type\": \"action\", \"thought\": \"Saving private note\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Captured Note\", \"content\": \"" + userQuery + "\"}}";
+        }
+    }
+    // 6.6 Compound Task: Split Bill Calculation + Draft Message
+    else if ((userQuery.find("split") != std::string::npos || userQuery.find("share") != std::string::npos) &&
+             (userQuery.find("bill") != std::string::npos || userQuery.find("dinner") != std::string::npos || userQuery.find("total") != std::string::npos)) {
+        std::regex amtRegex("(?:rs|inr|₹)?\\s*(\\d{3,6})");
+        std::smatch amtMatch;
+        int totalBill = 1200;
+        if (std::regex_search(userQuery, amtMatch, amtRegex)) {
+            totalBill = std::stoi(amtMatch[1].str());
+        }
+
+        std::regex peopleRegex("(\\d+)\\s*(?:people|persons|logon|members|friends)");
+        std::smatch peopleMatch;
+        int numPeople = 4;
+        if (std::regex_search(userQuery, peopleMatch, peopleRegex)) {
+            numPeople = std::stoi(peopleMatch[1].str());
+        }
+
+        int splitShare = (numPeople > 0) ? (totalBill / numPeople) : totalBill;
+        std::string recipient = "Friend";
+        for (const auto& contact : {"Rahul", "Priya", "Ekansh", "Guneet", "Bhawishya", "Sharukh", "Kalli", "Haaji", "Naari"}) {
+            std::string lowerContact = contact;
+            std::transform(lowerContact.begin(), lowerContact.end(), lowerContact.begin(), ::tolower);
+            if (userQuery.find(lowerContact) != std::string::npos) {
+                recipient = contact;
+                break;
+            }
+        }
+        std::string msgBody = "Hey " + recipient + ", our total bill was ₹" + std::to_string(totalBill) + " (" + std::to_string(numPeople) + " people). Your split share is ₹" + std::to_string(splitShare) + ".";
+        responseJson = "{\"type\": \"action\", \"thought\": \"Calculated split share ₹" + std::to_string(splitShare) + " (" + std::to_string(totalBill) + " / " + std::to_string(numPeople) + ") and drafting message\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"" + recipient + "\", \"message_body\": \"" + msgBody + "\", \"platform\": \"whatsapp\"}}";
+    }
     // Notes
     else if (userQuery.find("check notes") != std::string::npos || userQuery.find("check my notes") != std::string::npos ||
              userQuery.find("show notes") != std::string::npos || userQuery.find("show my notes") != std::string::npos ||
