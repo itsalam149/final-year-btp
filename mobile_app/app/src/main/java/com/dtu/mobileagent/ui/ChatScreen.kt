@@ -108,7 +108,7 @@ fun ChatScreen(
                 drawerContainerColor = GoogleSurface,
                 modifier = Modifier.width(320.dp)
             ) {
-                GoogleDrawerContent(
+                EdgeAgentDrawerContent(
                     onNavigate = { screen ->
                         currentScreen = screen
                         coroutineScope.launch { drawerState.close() }
@@ -124,7 +124,7 @@ fun ChatScreen(
         ) {
             when (currentScreen) {
                 AppScreen.HOME_GALLERY -> {
-                    GoogleGalleryHomeScreen(
+                    EdgeAgentHomeScreen(
                         activeModelName = uiState.activeModel.displayName,
                         isModelDownloaded = galleryManager?.isModelDownloaded(uiState.activeModel) == true,
                         onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
@@ -133,7 +133,7 @@ fun ChatScreen(
                 }
 
                 AppScreen.AI_CHAT -> {
-                    GoogleAiChatScreen(
+                    EdgeAgentChatScreen(
                         isAgentMode = false,
                         controller = controller,
                         uiState = uiState,
@@ -156,7 +156,7 @@ fun ChatScreen(
                 }
 
                 AppScreen.AGENT_SKILLS -> {
-                    GoogleAiChatScreen(
+                    EdgeAgentChatScreen(
                         isAgentMode = true,
                         controller = controller,
                         uiState = uiState,
@@ -180,7 +180,7 @@ fun ChatScreen(
 
                 AppScreen.MODELS_CATALOG -> {
                     if (galleryManager != null) {
-                        GoogleModelGalleryView(
+                        EdgeModelGalleryView(
                             galleryManager = galleryManager,
                             onBack = { currentScreen = AppScreen.HOME_GALLERY },
                             onImportLocalFile = onImportLocalModel,
@@ -196,7 +196,7 @@ fun ChatScreen(
                 }
 
                 AppScreen.NOTES_LEDGER -> {
-                    GoogleNotesLedgerScreen(
+                    EdgeNotesLedgerScreen(
                         notes = allNotes,
                         onBack = { currentScreen = AppScreen.HOME_GALLERY },
                         onDeleteNote = { noteId ->
@@ -208,7 +208,7 @@ fun ChatScreen(
                 }
 
                 AppScreen.REMINDERS_NOTIFICATIONS -> {
-                    GoogleRemindersScreen(
+                    EdgeRemindersScreen(
                         reminders = activeReminders,
                         onBack = { currentScreen = AppScreen.HOME_GALLERY },
                         onMarkCompleted = { reminderId ->
@@ -220,7 +220,7 @@ fun ChatScreen(
                 }
 
                 AppScreen.HARDWARE_PROFILER -> {
-                    GoogleHardwareProfilerScreen(
+                    EdgeHardwareProfilerScreen(
                         telemetry = telemetry,
                         onBack = { currentScreen = AppScreen.HOME_GALLERY },
                         onRefresh = { controller.refreshTelemetry() }
@@ -228,14 +228,14 @@ fun ChatScreen(
                 }
 
                 AppScreen.SECURITY_AUDIT -> {
-                    GoogleSecurityAuditScreen(
+                    EdgeSecurityAuditScreen(
                         auditLogs = recentAuditLogs,
                         onBack = { currentScreen = AppScreen.HOME_GALLERY }
                     )
                 }
 
                 AppScreen.SETTINGS -> {
-                    GoogleSettingsScreen(
+                    EdgeSettingsScreen(
                         onBack = { currentScreen = AppScreen.HOME_GALLERY }
                     )
                 }
@@ -257,10 +257,10 @@ fun ChatScreen(
 }
 
 /**
- * Main Google AI Edge Gallery Home Screen (Matches Screenshot 2 and 4)
+ * EdgeAgent Home Screen
  */
 @Composable
-fun GoogleGalleryHomeScreen(
+fun EdgeAgentHomeScreen(
     activeModelName: String,
     isModelDownloaded: Boolean,
     onOpenDrawer: () -> Unit,
@@ -269,11 +269,11 @@ fun GoogleGalleryHomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(GoogleBackground)
+            .background(EdgeBackground)
     ) {
-        // Top App Bar matching Screenshot 2
+        // Top App Bar
         Surface(
-            color = GoogleSurface,
+            color = EdgeSurface,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -294,12 +294,12 @@ fun GoogleGalleryHomeScreen(
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    GoogleDotsLogo(dotSize = 7f, spacing = 3.5f)
+                    EdgeDotsLogo(dotSize = 7f, spacing = 3.5f)
 
                     Spacer(modifier = Modifier.width(10.dp))
 
                     Text(
-                        text = "Google AI Edge Gallery",
+                        text = "EdgeAgent",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -307,7 +307,7 @@ fun GoogleGalleryHomeScreen(
                 }
 
                 Surface(
-                    color = if (isModelDownloaded) GoogleGreenContainer else GoogleYellowContainer,
+                    color = if (isModelDownloaded) EdgeGreenContainer else EdgeAmberContainer,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.clickable { onNavigate(AppScreen.MODELS_CATALOG) }
                 ) {
@@ -319,13 +319,13 @@ fun GoogleGalleryHomeScreen(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(if (isModelDownloaded) GoogleGreen else GoogleYellow)
+                                .background(if (isModelDownloaded) EdgeGreen else EdgeAmber)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = activeModelName.replace("-Instruct", "").take(10),
                             fontSize = 11.sp,
-                            color = if (isModelDownloaded) GoogleGreen else GoogleYellow,
+                            color = if (isModelDownloaded) EdgeGreen else EdgeAmber,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -339,37 +339,37 @@ fun GoogleGalleryHomeScreen(
                 .padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Hero Title matching Screenshot 2
+            // Hero Title
             item {
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = "Google AI Edge Gallery",
+                    text = "EdgeAgent",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Discover the power of on-device AI models from the LiteRT community, featuring the all-new Gemma 2 and Llama 3.2.",
+                    text = "Autonomous on-device AI agent for privacy-first task execution. All inference runs locally on ARM — no cloud, no telemetry.",
                     fontSize = 14.sp,
                     color = TextSecondary,
                     lineHeight = 20.sp
                 )
             }
 
-            // Feature Banner: "Try ASR & TTS today" matching Screenshot 2
+            // Feature Banner: Voice capability
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.GraphicEq,
                         contentDescription = null,
-                        tint = GoogleBlue,
+                        tint = EdgeBlue,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Try ASR & TTS today",
+                        text = "Voice commands now live",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -379,7 +379,7 @@ fun GoogleGalleryHomeScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Speech recognition and text-to-speech are now available! Try them in XR Language Teacher and AI Chat today.",
+                    text = "Speak to your agent — 100% offline, no internet required. Voice in, voice out.",
                     fontSize = 13.sp,
                     color = TextSecondary,
                     lineHeight = 18.sp
@@ -387,34 +387,34 @@ fun GoogleGalleryHomeScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Feature Card 1: Edge Agent Assistant
-                GoogleFeatureCard(
-                    title = "XR Language Teacher & Assistant",
-                    subtitle = "Interactive XR Language Teacher with voice dictation, agent tools and local personas.",
-                    icon = Icons.Default.School,
-                    badgeColor = GoogleBlueBadge,
+                // Feature Card 1: Autonomous Agent
+                EdgeFeatureCard(
+                    title = "Autonomous Agent",
+                    subtitle = "Issue natural-language commands. The agent plans, selects tools, and executes tasks — all on-device.",
+                    icon = Icons.Default.SmartToy,
+                    badgeColor = EdgeBlueBadge,
                     isSquircle = true,
                     onClick = { onNavigate(AppScreen.AGENT_SKILLS) }
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Feature Card 2: AI Chat
-                GoogleFeatureCard(
-                    title = "AI Chat",
-                    subtitle = "Chat with Gemma models using voice dictation and spoken audio responses",
+                // Feature Card 2: On-Device Chat
+                EdgeFeatureCard(
+                    title = "On-Device Chat",
+                    subtitle = "Converse with a quantized LLM — GGUF Q4_K_M inference on ARM NEON, zero cloud dependency.",
                     icon = Icons.AutoMirrored.Filled.Chat,
-                    badgeColor = GoogleRedBadge,
+                    badgeColor = EdgeRedBadge,
                     isSquircle = false,
                     onClick = { onNavigate(AppScreen.AI_CHAT) }
                 )
             }
 
-            // Section: Explore other use cases matching Screenshot 2 and 4
+            // Section: Capabilities
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Explore other use cases",
+                    text = "What can EdgeAgent do?",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
@@ -422,31 +422,31 @@ fun GoogleGalleryHomeScreen(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            // 2-Column Grid matching Screenshot 2 and 4
+            // 2-Column Grid of actual EdgeAgent features
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Card 1: AI Chat
-                    GoogleGridCard(
+                    // Chat
+                    EdgeGridCard(
                         badgeText = "3 Models",
-                        title = "AI Chat",
-                        description = "Chat with an on-device LLM",
+                        title = "Chat",
+                        description = "Talk to a local quantized LLM",
                         icon = Icons.AutoMirrored.Filled.Chat,
-                        badgeColor = GoogleRedBadge,
+                        badgeColor = EdgeRedBadge,
                         isSquircle = false,
                         onClick = { onNavigate(AppScreen.AI_CHAT) },
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Card 2: Agent Skills
-                    GoogleGridCard(
+                    // Task Execution
+                    EdgeGridCard(
                         badgeText = "30+ Tools",
-                        title = "Agent Skills",
-                        description = "Complete agentic tasks with chat",
+                        title = "Task Agent",
+                        description = "Execute reminders, notes, app launches",
                         icon = Icons.Default.RocketLaunch,
-                        badgeColor = GoogleGreenBadge,
+                        badgeColor = EdgeGreenBadge,
                         isSquircle = false,
                         onClick = { onNavigate(AppScreen.AGENT_SKILLS) },
                         modifier = Modifier.weight(1f)
@@ -459,25 +459,25 @@ fun GoogleGalleryHomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Card 3: Instant media search / Local Ledger
-                    GoogleGridCard(
+                    // Notes
+                    EdgeGridCard(
                         badgeText = "SQLite Room",
-                        title = "Instant notes",
-                        description = "Organise and search encrypted notes locally",
-                        icon = Icons.Default.PhotoLibrary,
-                        badgeColor = GoogleBlueBadge,
+                        title = "Notes Ledger",
+                        description = "Encrypted local notes — zero cloud",
+                        icon = Icons.Default.Description,
+                        badgeColor = EdgeBlueBadge,
                         isSquircle = true,
                         onClick = { onNavigate(AppScreen.NOTES_LEDGER) },
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Card 4: Video Moment Finder / Hardware Profiler
-                    GoogleGridCard(
+                    // Hardware Monitor
+                    EdgeGridCard(
                         badgeText = "ARM NEON",
-                        title = "Moment Finder",
-                        description = "Search for moments in hardware telemetry",
-                        icon = Icons.Default.Search,
-                        badgeColor = GoogleYellowBadge,
+                        title = "HW Profiler",
+                        description = "Live tok/s, RAM, battery, thermal",
+                        icon = Icons.Default.Speed,
+                        badgeColor = EdgeAmberBadge,
                         isSquircle = true,
                         onClick = { onNavigate(AppScreen.HARDWARE_PROFILER) },
                         modifier = Modifier.weight(1f)
@@ -490,27 +490,27 @@ fun GoogleGalleryHomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Card 5: Ask Image
-                    GoogleGridCard(
-                        badgeText = "VLM Engine",
-                        title = "Ask Image",
-                        description = "Ask questions about images & local OCR",
-                        icon = Icons.Default.Image,
-                        badgeColor = GoogleRedBadge,
+                    // Reminders
+                    EdgeGridCard(
+                        badgeText = "AlarmManager",
+                        title = "Reminders",
+                        description = "Set and manage offline alarms",
+                        icon = Icons.Default.Notifications,
+                        badgeColor = EdgeRedBadge,
                         isSquircle = true,
-                        onClick = { onNavigate(AppScreen.AI_CHAT) },
+                        onClick = { onNavigate(AppScreen.REMINDERS_NOTIFICATIONS) },
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Card 6: Audio Scribe
-                    GoogleGridCard(
-                        badgeText = "Offline ASR",
-                        title = "Audio Scribe",
-                        description = "Transcribe and translate audio locally",
-                        icon = Icons.Default.Mic,
-                        badgeColor = GoogleGreenBadge,
-                        isSquircle = false,
-                        onClick = { onNavigate(AppScreen.AI_CHAT) },
+                    // Security Gate
+                    EdgeGridCard(
+                        badgeText = "Two-Tier Gate",
+                        title = "Security Log",
+                        description = "Audit autonomous action execution",
+                        icon = Icons.Default.Shield,
+                        badgeColor = EdgeAmberBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.SECURITY_AUDIT) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -521,27 +521,27 @@ fun GoogleGalleryHomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Card 7: Prompt Lab / Model Catalog
-                    GoogleGridCard(
+                    // Model Gallery
+                    EdgeGridCard(
                         badgeText = "GGUF Q4_K_M",
-                        title = "Prompt Lab",
-                        description = "Browse, try, and benchmark models",
+                        title = "Model Gallery",
+                        description = "Download and switch quantized LLMs",
                         icon = Icons.Default.GridView,
-                        badgeColor = GoogleBlueBadge,
+                        badgeColor = EdgeBlueBadge,
                         isSquircle = true,
                         onClick = { onNavigate(AppScreen.MODELS_CATALOG) },
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Card 8: Tiny Garden / Security Gate
-                    GoogleGridCard(
-                        badgeText = "Two-Tier Gate",
-                        title = "Security Gate",
-                        description = "Inspect autonomous execution & logs",
-                        icon = Icons.Default.Shield,
-                        badgeColor = GoogleYellowBadge,
+                    // Settings
+                    EdgeGridCard(
+                        badgeText = "Config",
+                        title = "Settings",
+                        description = "Agent behaviour and system config",
+                        icon = Icons.Default.Settings,
+                        badgeColor = EdgePurpleBadge,
                         isSquircle = true,
-                        onClick = { onNavigate(AppScreen.SECURITY_AUDIT) },
+                        onClick = { onNavigate(AppScreen.SETTINGS) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -553,10 +553,10 @@ fun GoogleGalleryHomeScreen(
 }
 
 /**
- * Slide-out Navigation Drawer matching Screenshot 3
+ * Slide-out Navigation Drawer
  */
 @Composable
-fun GoogleDrawerContent(
+fun EdgeAgentDrawerContent(
     onNavigate: (AppScreen) -> Unit
 ) {
     Column(
@@ -568,17 +568,17 @@ fun GoogleDrawerContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            GoogleDotsLogo(dotSize = 8f, spacing = 4f)
+            EdgeDotsLogo(dotSize = 8f, spacing = 4f)
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "Google AI Edge",
+                    text = "EdgeAgent",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Text(
-                    text = "EdgeAgent • 100% On-Device",
+                    text = "DTU BTP GP159 • ARM On-Device",
                     fontSize = 11.sp,
                     color = TextSecondary
                 )
@@ -611,7 +611,7 @@ fun GoogleDrawerContent(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.Default.Settings,
                         badgeColor = GoogleBlueBadge,
                         size = 36,
@@ -640,7 +640,7 @@ fun GoogleDrawerContent(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.AutoMirrored.Filled.FormatListBulleted,
                         badgeColor = GoogleGreenBadge,
                         size = 36,
@@ -676,7 +676,7 @@ fun GoogleDrawerContent(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.Default.Notifications,
                         badgeColor = GoogleRedBadge,
                         size = 36,
@@ -705,7 +705,7 @@ fun GoogleDrawerContent(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.Default.Description,
                         badgeColor = GoogleYellowBadge,
                         size = 36,
@@ -767,10 +767,10 @@ fun GoogleDrawerContent(
 }
 
 /**
- * Dedicated Google AI Chat Screen
+ * On-Device Chat Screen
  */
 @Composable
-fun GoogleAiChatScreen(
+fun EdgeAgentChatScreen(
     isAgentMode: Boolean,
     controller: AgentController,
     uiState: com.dtu.mobileagent.engine.AgentUiState,
@@ -927,7 +927,7 @@ fun GoogleAiChatScreen(
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
-                GoogleChatHero(
+                EdgeAgentChatHero(
                     isAgentMode = isAgentMode,
                     activeModel = uiState.activeModel.displayName,
                     onPromptSelected = onQuickPrompt
@@ -943,12 +943,12 @@ fun GoogleAiChatScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(messages) { msg ->
-                    GoogleMessageBubble(msg)
+                    EdgeMessageBubble(msg)
                 }
 
                 if (uiState.isProcessing) {
                     item {
-                        GoogleProcessingIndicator()
+                        EdgeProcessingIndicator()
                     }
                 }
             }
@@ -986,7 +986,7 @@ fun GoogleAiChatScreen(
         }
 
         // Quick Suggestion Chips Row
-        GoogleQuickPromptChipsRow(
+        EdgeQuickPromptChipsRow(
             onPromptSelected = onQuickPrompt
         )
 
@@ -1096,7 +1096,7 @@ fun GoogleAiChatScreen(
 }
 
 @Composable
-fun GoogleChatHero(
+fun EdgeAgentChatHero(
     isAgentMode: Boolean,
     activeModel: String,
     onPromptSelected: (String) -> Unit
@@ -1105,7 +1105,7 @@ fun GoogleChatHero(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        GoogleIconBadge(
+        EdgeIconBadge(
             icon = if (isAgentMode) Icons.Default.RocketLaunch else Icons.AutoMirrored.Filled.Chat,
             badgeColor = if (isAgentMode) GoogleGreenBadge else GoogleRedBadge,
             size = 56,
@@ -1191,7 +1191,7 @@ fun GoogleChatHero(
 }
 
 @Composable
-fun GoogleMessageBubble(message: ChatMessageEntity) {
+fun EdgeMessageBubble(message: ChatMessageEntity) {
     val isUser = message.sender == "user"
     val bubbleColor = if (isUser) GoogleCardElevated else GoogleCard
     val alignment = if (isUser) Alignment.End else Alignment.Start
@@ -1216,7 +1216,7 @@ fun GoogleMessageBubble(message: ChatMessageEntity) {
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(bottom = 4.dp)
                     ) {
-                        GoogleDotsLogo(dotSize = 4f, spacing = 2f)
+                        EdgeDotsLogo(dotSize = 4f, spacing = 2f)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "EdgeAgent",
@@ -1267,7 +1267,7 @@ fun GoogleMessageBubble(message: ChatMessageEntity) {
 }
 
 @Composable
-fun GoogleProcessingIndicator() {
+fun EdgeProcessingIndicator() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(vertical = 6.dp)
@@ -1287,7 +1287,7 @@ fun GoogleProcessingIndicator() {
 }
 
 @Composable
-fun GoogleQuickPromptChipsRow(
+fun EdgeQuickPromptChipsRow(
     onPromptSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1344,7 +1344,7 @@ fun GoogleQuickPromptChipsRow(
  * Local Notes & Ledgers Screen
  */
 @Composable
-fun GoogleNotesLedgerScreen(
+fun EdgeNotesLedgerScreen(
     notes: List<NoteEntity>,
     onBack: () -> Unit,
     onDeleteNote: (Long) -> Unit
@@ -1407,7 +1407,7 @@ fun GoogleNotesLedgerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        GoogleIconBadge(icon = Icons.Default.Description, badgeColor = GoogleYellowBadge, size = 52, iconSize = 26, isSquircle = true)
+                        EdgeIconBadge(icon = Icons.Default.Description, badgeColor = GoogleYellowBadge, size = 52, iconSize = 26, isSquircle = true)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text("No local notes recorded yet.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
@@ -1481,7 +1481,7 @@ fun GoogleNotesLedgerScreen(
  * Scheduled Reminders Screen
  */
 @Composable
-fun GoogleRemindersScreen(
+fun EdgeRemindersScreen(
     reminders: List<ReminderEntity>,
     onBack: () -> Unit,
     onMarkCompleted: (Long) -> Unit
@@ -1510,7 +1510,7 @@ fun GoogleRemindersScreen(
             if (reminders.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        GoogleIconBadge(icon = Icons.Default.Notifications, badgeColor = GoogleRedBadge, size = 52, iconSize = 26, isSquircle = true)
+                        EdgeIconBadge(icon = Icons.Default.Notifications, badgeColor = GoogleRedBadge, size = 52, iconSize = 26, isSquircle = true)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text("No pending reminders or alarms.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
@@ -1558,7 +1558,7 @@ fun GoogleRemindersScreen(
  * Hardware Profiler Screen
  */
 @Composable
-fun GoogleHardwareProfilerScreen(
+fun EdgeHardwareProfilerScreen(
     telemetry: com.dtu.mobileagent.engine.HardwareTelemetry,
     onBack: () -> Unit,
     onRefresh: () -> Unit
@@ -1624,7 +1624,7 @@ fun GoogleHardwareProfilerScreen(
  * Security Audit Screen
  */
 @Composable
-fun GoogleSecurityAuditScreen(
+fun EdgeSecurityAuditScreen(
     auditLogs: List<AuditLogEntity>,
     onBack: () -> Unit
 ) {
@@ -1689,7 +1689,7 @@ fun GoogleSecurityAuditScreen(
  * Application Settings Screen
  */
 @Composable
-fun GoogleSettingsScreen(
+fun EdgeSettingsScreen(
     onBack: () -> Unit
 ) {
     Column(

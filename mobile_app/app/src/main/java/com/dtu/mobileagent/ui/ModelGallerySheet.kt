@@ -30,7 +30,7 @@ import com.dtu.mobileagent.engine.ModelSpec
 import kotlinx.coroutines.launch
 
 @Composable
-fun GoogleModelGalleryView(
+fun EdgeModelGalleryView(
     galleryManager: ModelGalleryManager,
     onBack: () -> Unit,
     onImportLocalFile: () -> Unit,
@@ -88,7 +88,7 @@ fun GoogleModelGalleryView(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.AutoMirrored.Filled.Chat,
                         badgeColor = GoogleRedBadge,
                         size = 64,
@@ -174,7 +174,7 @@ fun GoogleModelGalleryView(
                 val isActive = activeModel.id == spec.id
                 val downloadProgress = downloadStates[spec.id]
 
-                GoogleModelCardItem(
+                EdgeModelCardItem(
                     spec = spec,
                     isDownloaded = isDownloaded,
                     isActive = isActive,
@@ -226,7 +226,7 @@ fun GoogleModelGalleryView(
 }
 
 @Composable
-fun GoogleModelCardItem(
+fun EdgeModelCardItem(
     spec: ModelSpec,
     isDownloaded: Boolean,
     isActive: Boolean,

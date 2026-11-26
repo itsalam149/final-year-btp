@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.dtu.mobileagent.engine.PendingAction
 
 @Composable
-fun GoogleDotsLogo(
+fun EdgeDotsLogo(
     modifier: Modifier = Modifier,
     dotSize: Float = 6f,
     spacing: Float = 3f
@@ -61,7 +61,7 @@ fun GoogleDotsLogo(
 }
 
 @Composable
-fun GoogleIconBadge(
+fun EdgeIconBadge(
     icon: ImageVector,
     badgeColor: Color,
     modifier: Modifier = Modifier,
@@ -86,7 +86,7 @@ fun GoogleIconBadge(
 }
 
 @Composable
-fun GoogleFeatureCard(
+fun EdgeFeatureCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
@@ -107,7 +107,7 @@ fun GoogleFeatureCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            GoogleIconBadge(
+            EdgeIconBadge(
                 icon = icon,
                 badgeColor = badgeColor,
                 size = 46,
@@ -139,7 +139,7 @@ fun GoogleFeatureCard(
 }
 
 @Composable
-fun GoogleGridCard(
+fun EdgeGridCard(
     badgeText: String,
     title: String,
     description: String,
@@ -163,7 +163,7 @@ fun GoogleGridCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            GoogleIconBadge(
+            EdgeIconBadge(
                 icon = icon,
                 badgeColor = badgeColor,
                 size = 42,
@@ -300,7 +300,7 @@ fun HardwareTelemetryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    GoogleIconBadge(
+                    EdgeIconBadge(
                         icon = Icons.Default.Memory,
                         badgeColor = GoogleYellow,
                         size = 32,
@@ -379,7 +379,7 @@ fun ConfirmationDialog(
     AlertDialog(
         onDismissRequest = { onConfirm(false) },
         icon = {
-            GoogleIconBadge(
+            EdgeIconBadge(
                 icon = Icons.Default.Warning,
                 badgeColor = GoogleRed,
                 size = 46,
