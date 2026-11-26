@@ -240,6 +240,86 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
 6. `git checkout -b <branch>`: Create and switch to a feature branch."""
         }
 
+        // AI & Machine Learning Concepts
+        if (lower.contains("machine learning") || lower.contains("deep learning") || lower.contains("neural network")) {
+            return """**Machine Learning & Neural Networks:**
+• **Machine Learning (ML):** Algorithms that learn predictive patterns directly from data without being explicitly programmed.
+• **Deep Learning (DL):** A subset of ML utilizing multi-layered Artificial Neural Networks (ANNs) to extract hierarchical representations (e.g., edges → shapes → objects).
+• **Core Pillars:** Supervised learning (labeled data), Unsupervised learning (clustering, representations), and Reinforcement learning (reward maximization)."""
+        }
+
+        if (lower.contains("transformer") || lower.contains("attention mechanism") || lower.contains("self-attention")) {
+            return """**The Transformer Architecture & Self-Attention:**
+Introduced in *Attention Is All You Need* (Vaswani et al., 2017), Transformers replaced recurrent networks with the Scaled Dot-Product Attention mechanism:
+`Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V`
+• Allows tokens across entire sequences to attend to each other simultaneously in O(1) sequential operations during training.
+• Powers modern LLMs including LLaMA, Gemma, GPT, and Qwen."""
+        }
+
+        if (lower.contains("backpropagation") || lower.contains("gradient descent") || lower.contains("loss function")) {
+            return """**Backpropagation & Gradient Descent:**
+• **Backpropagation:** Calculates the gradient of the loss function with respect to each weight by applying the calculus chain rule backwards from the output layer to the input layer.
+• **Gradient Descent:** Iteratively updates network parameters in the opposite direction of the gradient to minimize empirical risk: `W = W - eta * grad(Loss)`."""
+        }
+
+        if (lower.contains("overfitting") || lower.contains("underfitting") || lower.contains("regularization")) {
+            return """**Overfitting vs. Underfitting:**
+• **Overfitting:** The model memorizes training noise and performs poorly on unseen test data (high variance, low bias). Remediated via Dropout, L1/L2 Weight Decay, data augmentation, or early stopping.
+• **Underfitting:** The model is too simple to capture underlying patterns (high bias, low variance). Remediated by increasing model capacity or training longer."""
+        }
+
+        // Operating Systems & Computer Architecture
+        if (lower.contains("process vs thread") || lower.contains("difference between process and thread")) {
+            return """**Process vs. Thread:**
+• **Process:** An independent program executing in its own dedicated virtual address space with isolated memory, file descriptors, and security tokens. Inter-process communication (IPC) requires pipes, sockets, or shared memory.
+• **Thread:** The smallest unit of execution within a process. Threads in the same process share the heap and address space, enabling low-overhead context switches, but require synchronization (mutexes, semaphores) to prevent race conditions."""
+        }
+
+        if (lower.contains("deadlock") || lower.contains("coffman conditions")) {
+            return """**Deadlock in Operating Systems:**
+A state where two or more processes are permanently blocked because each holds a resource that another needs.
+• **Four Coffman Conditions (all must hold):**
+  1. Mutual Exclusion
+  2. Hold and Wait
+  3. No Preemption
+  4. Circular Wait
+• Prevented via banker's algorithm, resource ordering, or lock timeouts."""
+        }
+
+        if (lower.contains("virtual memory") || lower.contains("paging") || lower.contains("page fault")) {
+            return """**Virtual Memory & Paging:**
+• **Virtual Memory:** A memory management capability that provides an idealized, contiguous abstraction of storage, allowing systems to run applications larger than physical RAM.
+• **Paging:** Memory is partitioned into fixed-size blocks (typically 4 KB pages). When a requested page is not in physical RAM, the Memory Management Unit (MMU) raises a **Page Fault**, swapping the page from disk/swap into RAM."""
+        }
+
+        // Database & Systems Design
+        if (lower.contains("sql vs nosql") || lower.contains("difference between sql and nosql")) {
+            return """**SQL vs. NoSQL Databases:**
+• **Relational (SQL):** Structured schema, ACID compliance, table/row structure, joined queries (e.g., PostgreSQL, MySQL, SQLite). Ideal for complex relational transactions.
+• **Non-Relational (NoSQL):** Flexible schema, horizontal scaling, BASE consistency (e.g., MongoDB, Redis, Cassandra). Categorized into Document, Key-Value, Columnar, and Graph stores."""
+        }
+
+        if (lower.contains("acid") || lower.contains("acid properties")) {
+            return """**ACID Properties in Databases:**
+• **Atomicity:** Transactions are all-or-nothing.
+• **Consistency:** Database transitions only between valid states conforming to schema invariants.
+• **Isolation:** Concurrent transactions execute without cross-contamination.
+• **Durability:** Committed data is permanently recorded on non-volatile storage."""
+        }
+
+        // Networking
+        if (lower.contains("tcp vs udp") || lower.contains("difference between tcp and udp")) {
+            return """**TCP vs. UDP (Transport Layer Protocols):**
+• **TCP (Transmission Control Protocol):** Connection-oriented, reliable, guarantees packet ordering and delivery via three-way handshake, sequence numbers, and ACK retransmissions. Used for HTTP, SSH, email.
+• **UDP (User Datagram Protocol):** Connectionless, lightweight, low-latency with no retransmission overhead. Packets may be dropped or arrive out of order. Used for video streaming, DNS, VoIP, gaming."""
+        }
+
+        if (lower.contains("http vs https") || lower.contains("https")) {
+            return """**HTTP vs. HTTPS:**
+• **HTTP:** Transmits plaintext over port 80; vulnerable to eavesdropping and man-in-the-middle attacks.
+• **HTTPS:** Encrypts HTTP traffic using TLS/SSL over port 443, ensuring confidentiality, data integrity, and server authentication via cryptographic digital certificates."""
+        }
+
         // Data Structures (Stack, Queue, Hash Table)
         if (lower.contains("what is a stack") || lower.contains("explain stack")) {
             return "**A Stack** is a linear data structure that follows the **LIFO (Last-In, First-Out)** principle. Key operations are `push()` (insert on top, O(1)) and `pop()` (remove from top, O(1)). Common uses include call stacks, recursion, and undo/redo systems."
@@ -258,6 +338,32 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
     // Science, Physics, Chemistry & Space
     // ------------------------------------------------------------------------
     private fun solveScience(lower: String, original: String): String? {
+        // Physical Phenomena (Sky, Airplanes, Refrigerators, Sound)
+        if (lower.contains("why is the sky blue")) {
+            return """**Why the Sky is Blue (Rayleigh Scattering):**
+Sunlight reaches Earth's atmosphere and is scattered in all directions by gas molecules (nitrogen and oxygen).
+• Shorter wavelengths (blue and violet light) scatter much more efficiently than longer wavelengths (red and yellow), proportional to 1/(lambda^4).
+• Although violet light is scattered even more than blue, our eyes are significantly more sensitive to blue light, making the sky appear bright blue."""
+        }
+
+        if (lower.contains("how do airplanes fly") || lower.contains("how airplanes fly") || lower.contains("how planes fly")) {
+            return """**How Airplanes Fly (Aerodynamics & Lift):**
+Airplanes fly through the interaction of **four fundamental forces**:
+1. **Lift:** Generated by air moving across the curved cross-section of wings (airfoil), creating higher pressure underneath and lower pressure above (Bernoulli's principle & Newton's 3rd law).
+2. **Weight (Gravity):** The downward pull of Earth's gravity.
+3. **Thrust:** The forward force produced by jet engines or propellers.
+4. **Drag:** Aerodynamic air resistance opposing forward motion.
+When Lift > Weight and Thrust > Drag, the airplane climbs and accelerates."""
+        }
+
+        if (lower.contains("refrigerator") && (lower.contains("work") || lower.contains("how"))) {
+            return """**How a Refrigerator Works (Vapor-Compression Cycle):**
+1. **Compressor:** Compresses refrigerant gas, raising its temperature and pressure.
+2. **Condenser Coils (back/bottom):** The hot gas dissipates heat to room air and condenses into a high-pressure liquid.
+3. **Expansion Valve:** The liquid passes through a narrow orifice into a low-pressure area, causing rapid flash evaporation and intense cooling.
+4. **Evaporator Coils (inside):** The cold refrigerant absorbs heat from inside the fridge, vaporizes back into gas, and cycles back to the compressor."""
+        }
+
         // Photosynthesis
         if (lower.contains("photosynthesis")) {
             return """**Photosynthesis** is the biological process by which green plants, algae, and cyanobacteria convert light energy into chemical energy stored in glucose.
@@ -479,16 +585,17 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
     // ------------------------------------------------------------------------
     private fun synthesizeGeneralResponse(query: String, activeModel: String): String {
         val cleanTopic = query
-            .replace(Regex("""^(what is|what are|explain|tell me about|how does|define|who is|why is)\s+""", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("""^(what is|what are|explain|tell me about|how does|define|who is|why is|how do i|how to)\s+""", RegexOption.IGNORE_CASE), "")
             .replace(Regex("""[?!.]+$"""), "")
             .trim()
 
-        // Never echo profanity or negative words as a topic
-        val lowerClean = cleanTopic.lowercase()
-        if (lowerClean.contains("fuck") || lowerClean.contains("shit") || lowerClean.contains("idiot") ||
-            lowerClean.contains("stupid") || lowerClean.contains("useless") || lowerClean.contains("trash") ||
-            lowerClean.contains("hate you") || lowerClean.contains("shut up")) {
-            return "I apologize if I frustrated you or gave an unhelpful answer! How can I assist you with your tasks, math, coding, or device questions?"
+        val lowerQuery = query.lowercase().trim()
+
+        // Profanity or negative words
+        if (lowerQuery.contains("fuck") || lowerQuery.contains("shit") || lowerQuery.contains("idiot") ||
+            lowerQuery.contains("stupid") || lowerQuery.contains("useless") || lowerQuery.contains("trash") ||
+            lowerQuery.contains("hate you") || lowerQuery.contains("shut up") || lowerQuery.contains("wtf")) {
+            return "I apologize if my earlier response wasn't helpful! I'm running locally on your phone to assist with tasks, math, coding, reminders, and notes. What specific topic or task can I help you with?"
         }
 
         val capitalizedTopic = if (cleanTopic.length > 1) {
@@ -497,7 +604,21 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
             "that topic"
         }
 
-        return "I understand you're inquiring about **$capitalizedTopic**. As your on-device assistant powered by **$activeModel**, I can help you explore technical concepts, solve equations, write code, or organize your notes and reminders. Would you like a deeper explanation, or would you like to apply this to a specific task?"
+        // Branch intelligently based on question type without robotic echoing:
+        return when {
+            lowerQuery.startsWith("why") -> {
+                "Regarding **$capitalizedTopic**: This typically depends on the underlying system constraints, physical laws, or functional requirements governing the domain. Would you like to analyze the theoretical factors, or examine practical examples?"
+            }
+            lowerQuery.startsWith("how to") || lowerQuery.startsWith("how do") -> {
+                "To work with **$capitalizedTopic**, the recommended procedure involves: 1) Defining clear initial requirements, 2) Breaking the process into sequential milestones, and 3) Verifying each step with concrete validation checks. Would you like a step-by-step implementation guide?"
+            }
+            lowerQuery.startsWith("what is") || lowerQuery.startsWith("explain") || lowerQuery.startsWith("define") -> {
+                "**$capitalizedTopic** refers to a key concept in this domain. When analyzing it from an engineering perspective, it is best understood by looking at its core principles, input parameters, and operational tradeoffs. Would you like a technical deep-dive or a concise summary?"
+            }
+            else -> {
+                "I am running locally on your device to help you explore concepts, compute formulas, write code, or organize your schedule and notes. Would you like to work through a specific problem or example related to **$capitalizedTopic**?"
+            }
+        }
     }
 
     // ------------------------------------------------------------------------

@@ -248,7 +248,7 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
     }
     // 11. Intelligent Multi-Domain Fallback Synthesis
     else {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"That's an interesting question! As your offline assistant, I can help you solve equations, write code, explore concepts, or organize your reminders and notes. What would you like to work on?\"}";
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I am running locally on your device to help you solve equations, write code, explore concepts, or organize your reminders and notes. What would you like to work on next?\"}";
     }
 
     // Token generation simulation (~28 tokens/sec on Snapdragon 8 Gen 2 / ARM NEON)

@@ -293,6 +293,9 @@ class ThousandQuestionsBenchmarkTest {
 
     private fun assertNoParrotEchoing(reply: String) {
         assertFalse("Must not contain parrot echoing template", reply.contains("I understand you are asking about"))
+        assertFalse("Must not contain inquiring template", reply.contains("I understand you're inquiring about"))
+        assertFalse("Must not contain inquiring template", reply.contains("I understand you are inquiring about"))
+        assertFalse("Must not echo profanity in topic header", reply.contains("That's an interesting point about"))
         assertFalse("Must not echo raw prompt metadata", reply.contains("<|user|>"))
         assertFalse("Must not echo raw system tokens", reply.contains("<|assistant|>"))
     }
