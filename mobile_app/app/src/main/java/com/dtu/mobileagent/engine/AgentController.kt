@@ -24,6 +24,8 @@ data class AgentUiState(
     val isProcessing: Boolean = false,
     val isModelLoaded: Boolean = false,
     val isVoiceOutputEnabled: Boolean = true,
+    val isHybridRoutingEnabled: Boolean = true,
+    val currentTaskCategory: String = "Hybrid Auto-Router",
     val pendingConfirmation: PendingAction? = null,
     val activeModel: ModelSpec = ModelGalleryManager.CATALOG[0],
     val currentTokensPerSec: Double = 22.4,
@@ -59,6 +61,57 @@ class AgentController(
     fun toggleVoiceOutput() {
         val nextState = !_uiState.value.isVoiceOutputEnabled
         _uiState.value = _uiState.value.copy(isVoiceOutputEnabled = nextState)
+    }
+
+    fun setHybridRoutingEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isHybridRoutingEnabled = enabled)
+    }
+
+    fun routeModelForTask(text: String): Pair<ModelSpec, String> {
+        val lower = text.lowercase().trim()
+
+        // 1. Tool dispatch / App launch / Fast Alarms -> Qwen2.5-0.5B (41.2 tok/s, 392 MB)
+        val isFastTool = lower.startsWith("open ") || lower.startsWith("launch ") ||
+                lower.startsWith("play ") || lower.contains("alarm") ||
+                lower.startsWith("remind ") || lower.contains("reminder") ||
+                lower.contains("camera") || lower.contains("settings") ||
+                lower.contains("calculator") || lower == "time" || lower == "date"
+
+        if (isFastTool) {
+            val spec = ModelGalleryManager.CATALOG.find { it.id == "qwen2.5-0.5b" }
+                ?: ModelGalleryManager.CATALOG[0]
+            return Pair(spec, "Fast Tool Dispatch (41.2 tok/s • 392 MB)")
+        }
+
+        // 2. Structured Agent Operations (WhatsApp, SMS, Split Bill, Hisaab, Calendar, Documents) -> Llama-3.2-1B (28.6 tok/s, 804 MB)
+        val isStructuredAgent = lower.contains("whatsapp") || lower.contains("message") ||
+                lower.contains("sms") || lower.contains("text ") || lower.contains("split") ||
+                lower.contains("hisaab") || lower.contains("kharcha") || lower.contains("ledger") ||
+                lower.contains("calendar") || lower.contains("meeting") || lower.contains("schedule") ||
+                lower.contains("files") || lower.contains("documents") || lower.contains("note")
+
+        if (isStructuredAgent) {
+            val spec = ModelGalleryManager.CATALOG.find { it.id == "llama-3.2-1b" }
+                ?: ModelGalleryManager.CATALOG[0]
+            return Pair(spec, "Structured Agent Operations (28.6 tok/s • 804 MB)")
+        }
+
+        // 3. Multi-Step Symbolic Math & Code Generation -> Llama-3.2-3B (18.2 tok/s, 1925 MB)
+        val isComplexMathOrCode = lower.contains("code") || lower.contains("python") ||
+                lower.contains("kotlin") || lower.contains("algorithm") || lower.contains("solve") ||
+                lower.contains("derivative") || lower.contains("integral") || lower.contains("calculate") ||
+                lower.contains("complexity") || lower.contains("function")
+
+        if (isComplexMathOrCode) {
+            val spec = ModelGalleryManager.CATALOG.find { it.id == "llama-3.2-3b" }
+                ?: ModelGalleryManager.CATALOG[0]
+            return Pair(spec, "Multi-Step Symbolic Reasoning (18.2 tok/s • 1925 MB)")
+        }
+
+        // 4. Knowledge, Science, Concepts, Academic Project -> Gemma-2-2B (22.4 tok/s, 1629 MB)
+        val spec = ModelGalleryManager.CATALOG.find { it.id == "gemma-2-2b" }
+            ?: ModelGalleryManager.CATALOG[0]
+        return Pair(spec, "Semantic Knowledge & Reasoning (22.4 tok/s • 1629 MB)")
     }
 
     val messages: Flow<List<ChatMessageEntity>> = database.chatMessageDao().getAllMessages()
@@ -144,13 +197,35 @@ class AgentController(
         _uiState.value = _uiState.value.copy(isProcessing = true)
 
         try {
+            // Task-Conditioned Hybrid Model Dynamic Routing
+            if (_uiState.value.isHybridRoutingEnabled) {
+                val (routedModel, category) = routeModelForTask(text)
+                if (routedModel.id != _uiState.value.activeModel.id) {
+                    llamaBridge.initialize(routedModel)
+                    val metrics = llamaBridge.getMetrics()
+                    hardwareProfiler.refreshTelemetry(metrics.tokensPerSecond)
+                    _uiState.value = _uiState.value.copy(
+                        activeModel = routedModel,
+                        currentTaskCategory = category,
+                        currentTokensPerSec = metrics.tokensPerSecond,
+                        currentMemoryMb = metrics.memoryFootprintMb
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(currentTaskCategory = category)
+                }
+            }
+
+            val currentModelShortName = _uiState.value.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")
+            val hybridThoughtPrefix = if (_uiState.value.isHybridRoutingEnabled) "[$currentModelShortName • ${_uiState.value.currentTokensPerSec} tok/s] " else ""
+
             // Check direct memory storage, recall, or document indexing intents
             val memoryOrDocResp = tryHandleMemoryOrDocIntent(text)
             if (memoryOrDocResp != null) {
                 database.chatMessageDao().insertMessage(
                     ChatMessageEntity(
                         sender = "agent",
-                        content = memoryOrDocResp
+                        content = memoryOrDocResp,
+                        thought = hybridThoughtPrefix
                     )
                 )
                 if (_uiState.value.isVoiceOutputEnabled) {
@@ -178,7 +253,7 @@ class AgentController(
                             ChatMessageEntity(
                                 sender = "agent",
                                 content = "I need your authorization to execute: $toolName",
-                                thought = parsed.thought,
+                                thought = hybridThoughtPrefix + parsed.thought,
                                 toolName = toolName,
                                 toolParamsJson = gson.toJson(params),
                                 requiresConfirmation = true
@@ -200,7 +275,7 @@ class AgentController(
                             ChatMessageEntity(
                                 sender = "agent",
                                 content = execution.resultSummary,
-                                thought = parsed.thought,
+                                thought = hybridThoughtPrefix + parsed.thought,
                                 toolName = toolName,
                                 toolParamsJson = gson.toJson(params)
                             )
@@ -216,7 +291,7 @@ class AgentController(
                         ChatMessageEntity(
                             sender = "agent",
                             content = parsed.content,
-                            thought = parsed.thought
+                            thought = hybridThoughtPrefix + parsed.thought
                         )
                     )
                     if (_uiState.value.isVoiceOutputEnabled) {

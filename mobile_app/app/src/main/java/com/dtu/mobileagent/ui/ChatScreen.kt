@@ -187,10 +187,13 @@ fun ChatScreen(
                     if (galleryManager != null) {
                         EdgeModelGalleryView(
                             galleryManager = galleryManager,
+                            isHybridEnabled = uiState.isHybridRoutingEnabled,
+                            onToggleHybrid = { enable -> controller.setHybridRoutingEnabled(enable) },
                             onBack = { currentScreen = AppScreen.HOME_GALLERY },
                             onImportLocalFile = onImportLocalModel,
                             onModelActivated = { spec ->
                                 coroutineScope.launch {
+                                    controller.setHybridRoutingEnabled(false)
                                     controller.switchModel(spec)
                                     galleryManager.setActiveModel(spec)
                                 }
@@ -886,13 +889,15 @@ fun EdgeAgentChatScreen(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (isModelDownloaded) GoogleGreen else GoogleYellow)
+                                    .background(if (uiState.isHybridRoutingEnabled || isModelDownloaded) GoogleGreen else GoogleYellow)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", ""),
+                                text = if (uiState.isHybridRoutingEnabled) "⚡ Auto: " + uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")
+                                       else uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", ""),
                                 fontSize = 11.sp,
-                                color = TextSecondary
+                                color = if (uiState.isHybridRoutingEnabled) GoogleGreen else TextSecondary,
+                                fontWeight = if (uiState.isHybridRoutingEnabled) FontWeight.Bold else FontWeight.Normal
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
@@ -1278,6 +1283,22 @@ fun EdgeMessageBubble(message: ChatMessageEntity) {
                             fontWeight = FontWeight.Bold,
                             color = GoogleBlue
                         )
+                    }
+
+                    if (message.thought.isNotBlank()) {
+                        Surface(
+                            color = GoogleSurface,
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        ) {
+                            Text(
+                                text = message.thought,
+                                fontSize = 10.sp,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                 }
 

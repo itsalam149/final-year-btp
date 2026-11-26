@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun EdgeModelGalleryView(
     galleryManager: ModelGalleryManager,
+    isHybridEnabled: Boolean = true,
+    onToggleHybrid: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     onImportLocalFile: () -> Unit,
     onModelActivated: (ModelSpec) -> Unit,
@@ -158,13 +160,113 @@ fun EdgeModelGalleryView(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Task-Conditioned Hybrid Auto-Router Card
+                Surface(
+                    color = if (isHybridEnabled) GoogleGreenContainer.copy(alpha = 0.35f) else GoogleCard,
+                    shape = RoundedCornerShape(18.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isHybridEnabled) GoogleGreen else GoogleBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    color = if (isHybridEnabled) GoogleGreenContainer else GoogleBlueContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = if (isHybridEnabled) "ACTIVE HYBRID" else "MANUAL PIN",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isHybridEnabled) GoogleGreen else GoogleBlue,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Hybrid Auto-Router",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+
+                            Switch(
+                                checked = isHybridEnabled,
+                                onCheckedChange = { onToggleHybrid(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = GoogleGreen
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "Dynamically routes incoming requests across quantized models based on cognitive task complexity:\n" +
+                                    "• Fast Tool Calling & Alarms: Qwen2.5-0.5B (41.2 tok/s)\n" +
+                                    "• WhatsApp, SMS & Hisaab: Llama-3.2-1B (28.6 tok/s)\n" +
+                                    "• Knowledge QA & Concepts: Gemma-2-2B (22.4 tok/s)\n" +
+                                    "• Symbolic Math & Coding: Llama-3.2-3B (18.2 tok/s)",
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            lineHeight = 17.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (!isHybridEnabled) {
+                            Button(
+                                onClick = { onToggleHybrid(true) },
+                                colors = ButtonDefaults.buttonColors(containerColor = GoogleGreen),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Re-Enable Hybrid Auto-Routing", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Surface(
+                                color = GoogleGreenContainer,
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = GoogleGreen, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Auto-routing is actively optimizing tokens/sec & RAM",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = GoogleGreen
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Recommended models",
-                    fontSize = 16.sp,
+                    text = "Individual Models (Manual Pin)",
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = TextSecondary
                 )
             }
 
@@ -178,6 +280,7 @@ fun EdgeModelGalleryView(
                     spec = spec,
                     isDownloaded = isDownloaded,
                     isActive = isActive,
+                    isHybridEnabled = isHybridEnabled,
                     downloadProgress = downloadProgress,
                     onActivate = {
                         coroutineScope.launch {
@@ -230,6 +333,7 @@ fun EdgeModelCardItem(
     spec: ModelSpec,
     isDownloaded: Boolean,
     isActive: Boolean,
+    isHybridEnabled: Boolean = true,
     downloadProgress: ModelDownloadProgress?,
     onActivate: () -> Unit,
     onDownload: () -> Unit,
@@ -415,7 +519,25 @@ fun EdgeModelCardItem(
                 }
 
                 isDownloaded -> {
-                    if (isActive) {
+                    if (isHybridEnabled) {
+                        Button(
+                            onClick = onActivate,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isActive) GoogleGreen.copy(alpha = 0.2f) else GoogleCardElevated
+                            )
+                        ) {
+                            Text(
+                                text = if (isActive) "Managed by Hybrid Router • Tap to Pin" else "Pin to Use Exclusively",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isActive) GoogleGreen else TextPrimary
+                            )
+                        }
+                    } else if (isActive) {
                         Button(
                             onClick = onStartChat,
                             modifier = Modifier
@@ -432,7 +554,7 @@ fun EdgeModelCardItem(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Active Engine • Start Chat",
+                                text = "Pinned Engine • Start Chat",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
