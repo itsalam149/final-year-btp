@@ -21,6 +21,9 @@ interface UserMemoryDao {
     @Query("DELETE FROM user_memories WHERE keyTag = :keyTag OR fact LIKE '%' || :keyTag || '%'")
     suspend fun deleteMemoryByKey(keyTag: String): Int
 
+    @Query("DELETE FROM user_memories WHERE id = :id")
+    suspend fun deleteMemoryById(id: Long): Int
+
     @Query("DELETE FROM user_memories")
     suspend fun clearMemories()
 }

@@ -81,6 +81,14 @@ class AgentController(
         database.reminderDao().markCompleted(id)
     }
 
+    suspend fun deleteMemory(keyTag: String) {
+        database.userMemoryDao().deleteMemoryByKey(keyTag)
+    }
+
+    suspend fun deleteMemoryById(id: Long) {
+        database.userMemoryDao().deleteMemoryById(id)
+    }
+
     suspend fun initialize() {
         _uiState.value = _uiState.value.copy(isProcessing = true)
         val initialSpec = ModelGalleryManager.CATALOG[0]

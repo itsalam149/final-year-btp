@@ -37,6 +37,8 @@ import com.dtu.mobileagent.data.local.entities.AuditLogEntity
 import com.dtu.mobileagent.data.local.entities.ChatMessageEntity
 import com.dtu.mobileagent.data.local.entities.NoteEntity
 import com.dtu.mobileagent.data.local.entities.ReminderEntity
+import com.dtu.mobileagent.data.local.entities.UserMemoryEntity
+import com.dtu.mobileagent.data.local.entities.DocumentEntity
 import com.dtu.mobileagent.engine.AgentController
 import com.dtu.mobileagent.engine.ModelGalleryManager
 import com.dtu.mobileagent.voice.VoiceInputState
@@ -52,6 +54,7 @@ enum class AppScreen {
     AGENT_SKILLS,
     MODELS_CATALOG,
     NOTES_LEDGER,
+    KNOWLEDGE_VAULT,
     REMINDERS_NOTIFICATIONS,
     HARDWARE_PROFILER,
     SECURITY_AUDIT,
@@ -72,6 +75,8 @@ fun ChatScreen(
     val uiState by controller.uiState.collectAsState()
     val messages by controller.messages.collectAsState(initial = emptyList())
     val allNotes by controller.allNotes.collectAsState(initial = emptyList())
+    val allMemories by controller.allMemories.collectAsState(initial = emptyList())
+    val allDocuments by controller.allDocuments.collectAsState(initial = emptyList())
     val activeReminders by controller.activeReminders.collectAsState(initial = emptyList())
     val recentAuditLogs by controller.recentAuditLogs.collectAsState(initial = emptyList())
     val telemetry by controller.telemetry.collectAsState()
@@ -202,6 +207,29 @@ fun ChatScreen(
                         onDeleteNote = { noteId ->
                             coroutineScope.launch {
                                 controller.deleteNote(noteId)
+                            }
+                        }
+                    )
+                }
+
+                AppScreen.KNOWLEDGE_VAULT -> {
+                    EdgeKnowledgeVaultScreen(
+                        memories = allMemories,
+                        documents = allDocuments,
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onDeleteMemory = { memoryId ->
+                            coroutineScope.launch {
+                                controller.deleteMemoryById(memoryId)
+                            }
+                        },
+                        onClearMemories = {
+                            coroutineScope.launch {
+                                controller.clearMemories()
+                            }
+                        },
+                        onRescanDocuments = {
+                            coroutineScope.launch {
+                                controller.rescanDocuments()
                             }
                         }
                     )
@@ -546,6 +574,24 @@ fun EdgeAgentHomeScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Memory & Document Vault
+                    EdgeGridCard(
+                        badgeText = "Local RAG Store",
+                        title = "Memory & Document Vault",
+                        description = "Personal knowledge memory & indexed device files",
+                        icon = Icons.Default.Storage,
+                        badgeColor = EdgeGreenBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.KNOWLEDGE_VAULT) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -736,6 +782,14 @@ fun EdgeAgentDrawerContent(
             icon = { Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = GoogleGreen) },
             selected = false,
             onClick = { onNavigate(AppScreen.AGENT_SKILLS) },
+            colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Memory & Documents", color = TextPrimary, fontSize = 14.sp) },
+            icon = { Icon(Icons.Default.Storage, contentDescription = null, tint = GoogleGreen) },
+            selected = false,
+            onClick = { onNavigate(AppScreen.KNOWLEDGE_VAULT) },
             colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
         )
 
@@ -1733,6 +1787,239 @@ fun EdgeSettingsScreen(
                     Text("• Zero cloud egress: INTERNET permission omitted from manifest", fontSize = 12.sp, color = TextSecondary)
                     Text("• Local SQLite Room ORM with AES-256 encrypted storage", fontSize = 12.sp, color = TextSecondary)
                     Text("• Two-Tier Security Gate for all destructive system tools", fontSize = 12.sp, color = TextSecondary)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * On-Device Knowledge, Memory & Document Vault Screen
+ */
+@Composable
+fun EdgeKnowledgeVaultScreen(
+    memories: List<UserMemoryEntity>,
+    documents: List<DocumentEntity>,
+    onBack: () -> Unit,
+    onDeleteMemory: (Long) -> Unit,
+    onClearMemories: () -> Unit,
+    onRescanDocuments: () -> Unit
+) {
+    var selectedTab by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
+    ) {
+        // Top App Bar
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Column {
+                    Text("Memory & Document Vault", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Persistent On-Device Knowledge & Local RAG", fontSize = 11.sp, color = TextSecondary)
+                }
+            }
+        }
+
+        // Tab Selector Row
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = GoogleSurface,
+            contentColor = GoogleBlue
+        ) {
+            Tab(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                text = { Text("Memories (${memories.size})", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+            )
+            Tab(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                text = { Text("Indexed Files (${documents.size})", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+            )
+        }
+
+        if (selectedTab == 0) {
+            // Memories Tab Content
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Stored Personal Facts", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    if (memories.isNotEmpty()) {
+                        TextButton(onClick = onClearMemories) {
+                            Text("Clear All", color = GoogleRed, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (memories.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize().padding(bottom = 60.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            EdgeIconBadge(icon = Icons.Default.Info, badgeColor = GoogleGreenBadge, size = 52, iconSize = 26, isSquircle = true)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("No persistent memories stored yet.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Tell EdgeAgent in chat: 'Remember that my car is DL4C1234'", color = TextSecondary, fontSize = 12.sp)
+                        }
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(memories, key = { it.id }) { mem ->
+                            Surface(
+                                color = GoogleCard,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Surface(
+                                            color = when (mem.category.lowercase()) {
+                                                "project" -> GoogleBlueContainer
+                                                "personal" -> GoogleGreenContainer
+                                                else -> GoogleYellowBadge
+                                            },
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = mem.category.uppercase(),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = when (mem.category.lowercase()) {
+                                                    "project" -> GoogleBlue
+                                                    "personal" -> GoogleGreen
+                                                    else -> GoogleYellow
+                                                },
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(text = mem.fact, fontSize = 13.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(text = "Tag: #${mem.keyTag}", fontSize = 11.sp, color = TextMuted)
+                                    }
+
+                                    IconButton(onClick = { onDeleteMemory(mem.id) }) {
+                                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = TextMuted, modifier = Modifier.size(20.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Documents Tab Content
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("On-Device Index", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("${documents.size} local files indexed for offline RAG", fontSize = 11.sp, color = TextSecondary)
+                    }
+
+                    Button(
+                        onClick = onRescanDocuments,
+                        colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Rescan Files", fontSize = 12.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (documents.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize().padding(bottom = 60.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            EdgeIconBadge(icon = Icons.Default.Folder, badgeColor = GoogleYellowBadge, size = 52, iconSize = 26, isSquircle = true)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("No indexed files found.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Tap 'Rescan Files' above to index documents from your phone.", color = TextSecondary, fontSize = 12.sp)
+                        }
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(documents, key = { it.id }) { doc ->
+                            Surface(
+                                color = GoogleCard,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            color = GoogleYellowBadge,
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = doc.filename.substringAfterLast('.', "DOC").uppercase(),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = GoogleYellow,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = doc.filename,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = doc.summary.ifEmpty { doc.content.take(120) },
+                                        fontSize = 12.sp,
+                                        color = TextSecondary,
+                                        lineHeight = 16.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = doc.filepath,
+                                        fontSize = 10.sp,
+                                        color = TextMuted,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
