@@ -1,17 +1,26 @@
 package com.dtu.mobileagent.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,11 +46,16 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-enum class MainNavTab(val title: String, val shortBadge: String, val icon: ImageVector) {
-    ASSISTANT("Assistant", "AI", Icons.Default.Chat),
-    NOTES("Notes & Hisaab", "NOTES", Icons.Default.Description),
-    REMINDERS("Reminders", "ALARMS", Icons.Default.Alarm),
-    SYSTEM("Audit & Stats", "SYS", Icons.Default.Analytics)
+enum class AppScreen {
+    HOME_GALLERY,
+    AI_CHAT,
+    AGENT_SKILLS,
+    MODELS_CATALOG,
+    NOTES_LEDGER,
+    REMINDERS_NOTIFICATIONS,
+    HARDWARE_PROFILER,
+    SECURITY_AUDIT,
+    SETTINGS
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,164 +79,784 @@ fun ChatScreen(
     val voiceState by voiceManager?.inputState?.collectAsState() ?: remember { mutableStateOf(VoiceInputState.Idle) }
     val isListening = voiceState is VoiceInputState.Listening
 
-    var currentTab by remember { mutableStateOf(MainNavTab.ASSISTANT) }
-    var showModelMenu by remember { mutableStateOf(false) }
-    var showModelGallery by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf(AppScreen.HOME_GALLERY) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val listState = rememberLazyListState()
     var inputText by remember { mutableStateOf("") }
 
-    // Auto-scroll chat to latest message
+    // Intercept back navigation
+    BackHandler(enabled = drawerState.isOpen || currentScreen != AppScreen.HOME_GALLERY) {
+        if (drawerState.isOpen) {
+            coroutineScope.launch { drawerState.close() }
+        } else {
+            currentScreen = AppScreen.HOME_GALLERY
+        }
+    }
+
+    // Auto-scroll chat to bottom
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .clip(CircleShape)
-                                    .background(EmeraldGlow)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "EdgeAgent",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = GoogleSurface,
+                modifier = Modifier.width(320.dp)
+            ) {
+                GoogleDrawerContent(
+                    onNavigate = { screen ->
+                        currentScreen = screen
+                        coroutineScope.launch { drawerState.close() }
+                    }
+                )
+            }
+        }
+    ) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(GoogleBackground)
+        ) {
+            when (currentScreen) {
+                AppScreen.HOME_GALLERY -> {
+                    GoogleGalleryHomeScreen(
+                        activeModelName = uiState.activeModel.displayName,
+                        isModelDownloaded = galleryManager?.isModelDownloaded(uiState.activeModel) == true,
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        onNavigate = { screen -> currentScreen = screen }
+                    )
+                }
+
+                AppScreen.AI_CHAT -> {
+                    GoogleAiChatScreen(
+                        isAgentMode = false,
+                        controller = controller,
+                        uiState = uiState,
+                        messages = messages,
+                        isListening = isListening,
+                        voiceManager = voiceManager,
+                        galleryManager = galleryManager,
+                        onRequestRecordAudio = onRequestRecordAudio,
+                        listState = listState,
+                        inputText = inputText,
+                        onInputTextChanged = { inputText = it },
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onNavigateToModels = { currentScreen = AppScreen.MODELS_CATALOG },
+                        onQuickPrompt = { prompt ->
+                            coroutineScope.launch {
+                                controller.handleUserMessage(prompt)
+                            }
                         }
-                        val isCurrentDownloaded = galleryManager?.isModelDownloaded(uiState.activeModel) == true
-                        Text(
-                            text = if (isCurrentDownloaded) {
-                                "100% on-device • ${uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")} • ${uiState.currentTokensPerSec} tps"
-                            } else {
-                                "Weights not on disk • Tap GET to download"
+                    )
+                }
+
+                AppScreen.AGENT_SKILLS -> {
+                    GoogleAiChatScreen(
+                        isAgentMode = true,
+                        controller = controller,
+                        uiState = uiState,
+                        messages = messages,
+                        isListening = isListening,
+                        voiceManager = voiceManager,
+                        galleryManager = galleryManager,
+                        onRequestRecordAudio = onRequestRecordAudio,
+                        listState = listState,
+                        inputText = inputText,
+                        onInputTextChanged = { inputText = it },
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onNavigateToModels = { currentScreen = AppScreen.MODELS_CATALOG },
+                        onQuickPrompt = { prompt ->
+                            coroutineScope.launch {
+                                controller.handleUserMessage(prompt)
+                            }
+                        }
+                    )
+                }
+
+                AppScreen.MODELS_CATALOG -> {
+                    if (galleryManager != null) {
+                        GoogleModelGalleryView(
+                            galleryManager = galleryManager,
+                            onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                            onImportLocalFile = onImportLocalModel,
+                            onModelActivated = { spec ->
+                                coroutineScope.launch {
+                                    controller.switchModel(spec)
+                                    galleryManager.setActiveModel(spec)
+                                }
                             },
-                            fontSize = 11.sp,
-                            color = if (isCurrentDownloaded) TextSecondary else Color(0xFFFBBF24)
+                            onStartChat = { currentScreen = AppScreen.AI_CHAT }
                         )
                     }
-                },
-                actions = {
-                    // Quick Engine Switcher Dropdown Pill
-                    Box {
-                        Surface(
-                            onClick = { showModelMenu = true },
-                            color = CardBackground,
-                            shape = RoundedCornerShape(14.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Bolt,
-                                    contentDescription = null,
-                                    tint = EmeraldGlow,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = uiState.activeModel.displayName.take(11),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
-                        }
+                }
 
-                        DropdownMenu(
-                            expanded = showModelMenu,
-                            onDismissRequest = { showModelMenu = false },
-                            modifier = Modifier.background(SurfaceDark)
-                        ) {
-                            ModelGalleryManager.CATALOG.forEach { spec ->
-                                val isSelected = uiState.activeModel.id == spec.id
-                                val isDownloaded = galleryManager?.isModelDownloaded(spec) == true
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = spec.displayName,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isSelected) EmeraldGlow else TextPrimary,
-                                                    fontSize = 13.sp
-                                                )
-                                                Text(
-                                                    text = if (isDownloaded) "[Ready] (${spec.sizeMb} MB)" else "[Download Required] (${spec.sizeMb} MB)",
-                                                    fontSize = 10.sp,
-                                                    color = if (isDownloaded) EmeraldOffline else TextMuted
-                                                )
-                                            }
-                                            if (!isDownloaded) {
-                                                Surface(
-                                                    color = BlueAccent.copy(alpha = 0.2f),
-                                                    shape = RoundedCornerShape(6.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "GET",
-                                                        fontSize = 9.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = BlueAccent,
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    },
-                                    onClick = {
-                                        showModelMenu = false
-                                        if (isDownloaded) {
-                                            coroutineScope.launch {
-                                                controller.switchModel(spec)
-                                                galleryManager?.setActiveModel(spec)
-                                            }
-                                        } else {
-                                            showModelGallery = true
-                                        }
-                                    }
-                                )
+                AppScreen.NOTES_LEDGER -> {
+                    GoogleNotesLedgerScreen(
+                        notes = allNotes,
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onDeleteNote = { noteId ->
+                            coroutineScope.launch {
+                                controller.deleteNote(noteId)
                             }
                         }
+                    )
+                }
+
+                AppScreen.REMINDERS_NOTIFICATIONS -> {
+                    GoogleRemindersScreen(
+                        reminders = activeReminders,
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onMarkCompleted = { reminderId ->
+                            coroutineScope.launch {
+                                controller.markReminderCompleted(reminderId)
+                            }
+                        }
+                    )
+                }
+
+                AppScreen.HARDWARE_PROFILER -> {
+                    GoogleHardwareProfilerScreen(
+                        telemetry = telemetry,
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY },
+                        onRefresh = { controller.refreshTelemetry() }
+                    )
+                }
+
+                AppScreen.SECURITY_AUDIT -> {
+                    GoogleSecurityAuditScreen(
+                        auditLogs = recentAuditLogs,
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY }
+                    )
+                }
+
+                AppScreen.SETTINGS -> {
+                    GoogleSettingsScreen(
+                        onBack = { currentScreen = AppScreen.HOME_GALLERY }
+                    )
+                }
+            }
+
+            // Two-Tier Security Gate Modal Dialog
+            uiState.pendingConfirmation?.let { pending ->
+                ConfirmationDialog(
+                    pending = pending,
+                    onConfirm = { approved ->
+                        coroutineScope.launch {
+                            controller.confirmPendingAction(approved)
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Main Google AI Edge Gallery Home Screen (Matches Screenshot 2 and 4)
+ */
+@Composable
+fun GoogleGalleryHomeScreen(
+    activeModelName: String,
+    isModelDownloaded: Boolean,
+    onOpenDrawer: () -> Unit,
+    onNavigate: (AppScreen) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
+    ) {
+        // Top App Bar matching Screenshot 2
+        Surface(
+            color = GoogleSurface,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = TextPrimary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    GoogleDotsLogo(dotSize = 7f, spacing = 3.5f)
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Text(
+                        text = "Google AI Edge Gallery",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+
+                Surface(
+                    color = if (isModelDownloaded) GoogleGreenContainer else GoogleYellowContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.clickable { onNavigate(AppScreen.MODELS_CATALOG) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (isModelDownloaded) GoogleGreen else GoogleYellow)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = activeModelName.replace("-Instruct", "").take(10),
+                            fontSize = 11.sp,
+                            color = if (isModelDownloaded) GoogleGreen else GoogleYellow,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Hero Title matching Screenshot 2
+            item {
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(
+                    text = "Google AI Edge Gallery",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Discover the power of on-device AI models from the LiteRT community, featuring the all-new Gemma 2 and Llama 3.2.",
+                    fontSize = 14.sp,
+                    color = TextSecondary,
+                    lineHeight = 20.sp
+                )
+            }
+
+            // Feature Banner: "Try ASR & TTS today" matching Screenshot 2
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.GraphicEq,
+                        contentDescription = null,
+                        tint = GoogleBlue,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Try ASR & TTS today",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Speech recognition and text-to-speech are now available! Try them in XR Language Teacher and AI Chat today.",
+                    fontSize = 13.sp,
+                    color = TextSecondary,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Feature Card 1: Edge Agent Assistant
+                GoogleFeatureCard(
+                    title = "XR Language Teacher & Assistant",
+                    subtitle = "Interactive XR Language Teacher with voice dictation, agent tools and local personas.",
+                    icon = Icons.Default.School,
+                    badgeColor = GoogleBlueBadge,
+                    isSquircle = true,
+                    onClick = { onNavigate(AppScreen.AGENT_SKILLS) }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Feature Card 2: AI Chat
+                GoogleFeatureCard(
+                    title = "AI Chat",
+                    subtitle = "Chat with Gemma models using voice dictation and spoken audio responses",
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    badgeColor = GoogleRedBadge,
+                    isSquircle = false,
+                    onClick = { onNavigate(AppScreen.AI_CHAT) }
+                )
+            }
+
+            // Section: Explore other use cases matching Screenshot 2 and 4
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Explore other use cases",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            // 2-Column Grid matching Screenshot 2 and 4
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Card 1: AI Chat
+                    GoogleGridCard(
+                        badgeText = "3 Models",
+                        title = "AI Chat",
+                        description = "Chat with an on-device LLM",
+                        icon = Icons.AutoMirrored.Filled.Chat,
+                        badgeColor = GoogleRedBadge,
+                        isSquircle = false,
+                        onClick = { onNavigate(AppScreen.AI_CHAT) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Card 2: Agent Skills
+                    GoogleGridCard(
+                        badgeText = "30+ Tools",
+                        title = "Agent Skills",
+                        description = "Complete agentic tasks with chat",
+                        icon = Icons.Default.RocketLaunch,
+                        badgeColor = GoogleGreenBadge,
+                        isSquircle = false,
+                        onClick = { onNavigate(AppScreen.AGENT_SKILLS) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Card 3: Instant media search / Local Ledger
+                    GoogleGridCard(
+                        badgeText = "SQLite Room",
+                        title = "Instant notes",
+                        description = "Organise and search encrypted notes locally",
+                        icon = Icons.Default.PhotoLibrary,
+                        badgeColor = GoogleBlueBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.NOTES_LEDGER) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Card 4: Video Moment Finder / Hardware Profiler
+                    GoogleGridCard(
+                        badgeText = "ARM NEON",
+                        title = "Moment Finder",
+                        description = "Search for moments in hardware telemetry",
+                        icon = Icons.Default.Search,
+                        badgeColor = GoogleYellowBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.HARDWARE_PROFILER) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Card 5: Ask Image
+                    GoogleGridCard(
+                        badgeText = "VLM Engine",
+                        title = "Ask Image",
+                        description = "Ask questions about images & local OCR",
+                        icon = Icons.Default.Image,
+                        badgeColor = GoogleRedBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.AI_CHAT) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Card 6: Audio Scribe
+                    GoogleGridCard(
+                        badgeText = "Offline ASR",
+                        title = "Audio Scribe",
+                        description = "Transcribe and translate audio locally",
+                        icon = Icons.Default.Mic,
+                        badgeColor = GoogleGreenBadge,
+                        isSquircle = false,
+                        onClick = { onNavigate(AppScreen.AI_CHAT) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Card 7: Prompt Lab / Model Catalog
+                    GoogleGridCard(
+                        badgeText = "GGUF Q4_K_M",
+                        title = "Prompt Lab",
+                        description = "Browse, try, and benchmark models",
+                        icon = Icons.Default.GridView,
+                        badgeColor = GoogleBlueBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.MODELS_CATALOG) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Card 8: Tiny Garden / Security Gate
+                    GoogleGridCard(
+                        badgeText = "Two-Tier Gate",
+                        title = "Security Gate",
+                        description = "Inspect autonomous execution & logs",
+                        icon = Icons.Default.Shield,
+                        badgeColor = GoogleYellowBadge,
+                        isSquircle = true,
+                        onClick = { onNavigate(AppScreen.SECURITY_AUDIT) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Slide-out Navigation Drawer matching Screenshot 3
+ */
+@Composable
+fun GoogleDrawerContent(
+    onNavigate: (AppScreen) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleSurface)
+            .padding(16.dp)
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GoogleDotsLogo(dotSize = 8f, spacing = 4f)
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = "Google AI Edge",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = "EdgeAgent • 100% On-Device",
+                    fontSize = 11.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HorizontalDivider(color = GoogleDivider, thickness = 1.dp)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Grid of Drawer items matching Screenshot 3
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Settings Card
+            Surface(
+                onClick = { onNavigate(AppScreen.SETTINGS) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    GoogleIconBadge(
+                        icon = Icons.Default.Settings,
+                        badgeColor = GoogleBlueBadge,
+                        size = 36,
+                        iconSize = 18,
+                        isSquircle = true
+                    )
+                    Column {
+                        Text("Settings", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Manage settings", fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                    }
+                }
+            }
+
+            // Models Card
+            Surface(
+                onClick = { onNavigate(AppScreen.MODELS_CATALOG) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    GoogleIconBadge(
+                        icon = Icons.AutoMirrored.Filled.FormatListBulleted,
+                        badgeColor = GoogleGreenBadge,
+                        size = 36,
+                        iconSize = 18,
+                        isSquircle = true
+                    )
+                    Column {
+                        Text("Models", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Browse & try", fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Notifications / Reminders Card
+            Surface(
+                onClick = { onNavigate(AppScreen.REMINDERS_NOTIFICATIONS) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    GoogleIconBadge(
+                        icon = Icons.Default.Notifications,
+                        badgeColor = GoogleRedBadge,
+                        size = 36,
+                        iconSize = 18,
+                        isSquircle = true
+                    )
+                    Column {
+                        Text("Notifications", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Scheduled alarms", fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                    }
+                }
+            }
+
+            // Notes & Hisaab Card
+            Surface(
+                onClick = { onNavigate(AppScreen.NOTES_LEDGER) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    GoogleIconBadge(
+                        icon = Icons.Default.Description,
+                        badgeColor = GoogleYellowBadge,
+                        size = 36,
+                        iconSize = 18,
+                        isSquircle = true
+                    )
+                    Column {
+                        Text("Notes", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Encrypted store", fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Direct Navigation items
+        NavigationDrawerItem(
+            label = { Text("AI Chat", color = TextPrimary, fontSize = 14.sp) },
+            icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null, tint = GoogleRed) },
+            selected = false,
+            onClick = { onNavigate(AppScreen.AI_CHAT) },
+            colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Agent Skills", color = TextPrimary, fontSize = 14.sp) },
+            icon = { Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = GoogleGreen) },
+            selected = false,
+            onClick = { onNavigate(AppScreen.AGENT_SKILLS) },
+            colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Hardware Telemetry", color = TextPrimary, fontSize = 14.sp) },
+            icon = { Icon(Icons.Default.Speed, contentDescription = null, tint = GoogleYellow) },
+            selected = false,
+            onClick = { onNavigate(AppScreen.HARDWARE_PROFILER) },
+            colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Security Audit Logs", color = TextPrimary, fontSize = 14.sp) },
+            icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = GoogleBlue) },
+            selected = false,
+            onClick = { onNavigate(AppScreen.SECURITY_AUDIT) },
+            colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = "DTU CSE • Minor Project GP159\nEdgeAgent v1.1.0 • ARM NEON SIMD",
+            fontSize = 11.sp,
+            color = TextMuted,
+            lineHeight = 16.sp
+        )
+    }
+}
+
+/**
+ * Dedicated Google AI Chat Screen
+ */
+@Composable
+fun GoogleAiChatScreen(
+    isAgentMode: Boolean,
+    controller: AgentController,
+    uiState: com.dtu.mobileagent.engine.AgentUiState,
+    messages: List<ChatMessageEntity>,
+    isListening: Boolean,
+    voiceManager: VoiceManager?,
+    galleryManager: ModelGalleryManager?,
+    onRequestRecordAudio: ((() -> Unit) -> Unit),
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    inputText: String,
+    onInputTextChanged: (String) -> Unit,
+    onBack: () -> Unit,
+    onNavigateToModels: () -> Unit,
+    onQuickPrompt: (String) -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val isModelDownloaded = galleryManager?.isModelDownloaded(uiState.activeModel) == true
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
+    ) {
+        // Top App Bar with back navigation
+        Surface(
+            color = GoogleSurface,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(4.dp))
 
+                    Column {
+                        Text(
+                            text = if (isAgentMode) "Agent Skills" else "AI Chat",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { onNavigateToModels() }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isModelDownloaded) GoogleGreen else GoogleYellow)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", ""),
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     // Voice Output Toggle
                     IconButton(onClick = { controller.toggleVoiceOutput() }) {
                         Icon(
-                            imageVector = if (uiState.isVoiceOutputEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
-                            contentDescription = if (uiState.isVoiceOutputEnabled) "Mute Voice" else "Enable Voice",
-                            tint = if (uiState.isVoiceOutputEnabled) EmeraldGlow else TextSecondary
-                        )
-                    }
-
-                    // Model Gallery Hub Button
-                    IconButton(onClick = { showModelGallery = true }) {
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "Model Gallery",
-                            tint = TextSecondary
+                            imageVector = if (uiState.isVoiceOutputEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                            contentDescription = "Voice Output",
+                            tint = if (uiState.isVoiceOutputEnabled) GoogleGreen else TextSecondary
                         )
                     }
 
@@ -234,159 +868,10 @@ fun ChatScreen(
                             tint = TextSecondary
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceDark
-                )
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = SurfaceDark,
-                contentColor = TextPrimary,
-                tonalElevation = 8.dp
-            ) {
-                MainNavTab.values().forEach { tab ->
-                    val isSelected = currentTab == tab
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { currentTab = tab },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.title,
-                                tint = if (isSelected) EmeraldGlow else TextSecondary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = tab.title,
-                                fontSize = 10.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) EmeraldGlow else TextSecondary
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = EmeraldDark.copy(alpha = 0.25f),
-                            selectedIconColor = EmeraldGlow,
-                            unselectedIconColor = TextSecondary,
-                            selectedTextColor = EmeraldGlow,
-                            unselectedTextColor = TextSecondary
-                        )
-                    )
-                }
-            }
-        },
-        containerColor = DarkBackground
-    ) { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (currentTab) {
-                MainNavTab.ASSISTANT -> {
-                    AssistantChatView(
-                        controller = controller,
-                        uiState = uiState,
-                        messages = messages,
-                        isListening = isListening,
-                        voiceManager = voiceManager,
-                        galleryManager = galleryManager,
-                        onRequestRecordAudio = onRequestRecordAudio,
-                        listState = listState,
-                        inputText = inputText,
-                        onInputTextChanged = { inputText = it },
-                        onShowModelGallery = { showModelGallery = true },
-                        onQuickPrompt = { prompt ->
-                            coroutineScope.launch {
-                                controller.handleUserMessage(prompt)
-                            }
-                        }
-                    )
-                }
-                MainNavTab.NOTES -> {
-                    NotesHisaabView(
-                        notes = allNotes,
-                        onDeleteNote = { noteId ->
-                            coroutineScope.launch {
-                                controller.deleteNote(noteId)
-                            }
-                        }
-                    )
-                }
-                MainNavTab.REMINDERS -> {
-                    RemindersView(
-                        reminders = activeReminders,
-                        onMarkCompleted = { reminderId ->
-                            coroutineScope.launch {
-                                controller.markReminderCompleted(reminderId)
-                            }
-                        }
-                    )
-                }
-                MainNavTab.SYSTEM -> {
-                    SystemTelemetryView(
-                        telemetry = telemetry,
-                        auditLogs = recentAuditLogs,
-                        onRefreshTelemetry = { controller.refreshTelemetry() }
-                    )
                 }
             }
         }
 
-        // Active Confirmation Dialog
-        uiState.pendingConfirmation?.let { pending ->
-            ConfirmationDialog(
-                pending = pending,
-                onConfirm = { approved ->
-                    coroutineScope.launch {
-                        controller.confirmPendingAction(approved)
-                    }
-                }
-            )
-        }
-
-        // Edge Model Gallery Sheet
-        if (showModelGallery && galleryManager != null) {
-            ModelGallerySheet(
-                galleryManager = galleryManager,
-                onDismiss = { showModelGallery = false },
-                onImportLocalFile = {
-                    showModelGallery = false
-                    onImportLocalModel()
-                },
-                onModelActivated = { spec ->
-                    showModelGallery = false
-                    coroutineScope.launch {
-                        controller.switchModel(spec)
-                        galleryManager.setActiveModel(spec)
-                    }
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun AssistantChatView(
-    controller: AgentController,
-    uiState: com.dtu.mobileagent.engine.AgentUiState,
-    messages: List<ChatMessageEntity>,
-    isListening: Boolean,
-    voiceManager: VoiceManager?,
-    galleryManager: ModelGalleryManager?,
-    onRequestRecordAudio: ((() -> Unit) -> Unit),
-    listState: androidx.compose.foundation.lazy.LazyListState,
-    inputText: String,
-    onInputTextChanged: (String) -> Unit,
-    onShowModelGallery: () -> Unit,
-    onQuickPrompt: (String) -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(modifier = Modifier.fillMaxSize()) {
         // Hardware Performance Meter Bar
         ModelMetricsBar(
             tokensPerSec = uiState.currentTokensPerSec,
@@ -394,15 +879,15 @@ fun AssistantChatView(
         )
 
         // Missing Model Notification Banner
-        if (galleryManager != null && !galleryManager.isModelDownloaded(uiState.activeModel)) {
+        if (!isModelDownloaded) {
             Surface(
-                color = CardBackground,
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFBBF24).copy(alpha = 0.4f)),
+                color = GoogleCard,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoogleYellow.copy(alpha = 0.5f)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 6.dp)
-                    .clickable { onShowModelGallery() }
+                    .clickable { onNavigateToModels() }
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -411,14 +896,14 @@ fun AssistantChatView(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(
-                            imageVector = Icons.Default.CloudDownload,
+                            imageVector = Icons.Default.Download,
                             contentDescription = null,
-                            tint = Color(0xFFFBBF24),
+                            tint = GoogleYellow,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${uiState.activeModel.displayName.take(16)} weights (${uiState.activeModel.sizeMb} MB) not on disk.",
+                            text = "${uiState.activeModel.displayName} weights (${uiState.activeModel.sizeMb} MB) not on disk.",
                             fontSize = 11.sp,
                             color = TextPrimary
                         )
@@ -427,13 +912,13 @@ fun AssistantChatView(
                         text = "DOWNLOAD",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFBBF24)
+                        color = GoogleYellow
                     )
                 }
             }
         }
 
-        // Messages List or Clean Welcome
+        // Chat Message Thread
         if (messages.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -442,7 +927,8 @@ fun AssistantChatView(
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CleanWelcomeCard(
+                GoogleChatHero(
+                    isAgentMode = isAgentMode,
                     activeModel = uiState.activeModel.displayName,
                     onPromptSelected = onQuickPrompt
                 )
@@ -454,44 +940,44 @@ fun AssistantChatView(
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(messages) { msg ->
-                    CleanMessageBubble(msg)
+                    GoogleMessageBubble(msg)
                 }
 
                 if (uiState.isProcessing) {
                     item {
-                        ProcessingIndicator()
+                        GoogleProcessingIndicator()
                     }
                 }
             }
         }
 
-        // Active Voice Listening Indicator Banner
+        // Listening Indicator
         if (isListening) {
             Surface(
-                color = CardBackground,
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline),
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoogleGreen),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 4.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(EmeraldGlow)
+                            .background(GoogleGreen)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Listening... Speak now",
-                        color = EmeraldGlow,
+                        text = "Listening... Speak your command",
+                        color = GoogleGreen,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -499,76 +985,88 @@ fun AssistantChatView(
             }
         }
 
-        // Quick Prompt Action Chips Carousel
-        QuickPromptChipsRow(
+        // Quick Suggestion Chips Row
+        GoogleQuickPromptChipsRow(
             onPromptSelected = onQuickPrompt
         )
 
-        // Bottom Input Bar
+        // Bottom Input Bar in floating pill shape
         Surface(
-            color = SurfaceDark,
+            color = GoogleBackground,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextField(
-                    value = inputText,
-                    onValueChange = onInputTextChanged,
-                    placeholder = {
-                        Text(
-                            "Ask offline agent...",
-                            color = TextMuted,
-                            fontSize = 13.sp
-                        )
-                    },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = CardBackground,
-                        unfocusedContainerColor = CardBackground,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        cursorColor = EmeraldOffline,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    shape = RoundedCornerShape(22.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 46.dp)
-                )
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                // Voice Mic Button
-                IconButton(
-                    onClick = {
-                        if (isListening) {
-                            voiceManager?.stopListening()
-                        } else {
-                            onRequestRecordAudio {
-                                voiceManager?.startListening()
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(if (isListening) EmeraldOffline else CardBackground)
+                // Input Container Pill
+                Surface(
+                    color = GoogleCard,
+                    shape = RoundedCornerShape(26.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoogleBorder),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Voice Input",
-                        tint = if (isListening) Color.White else TextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = inputText,
+                            onValueChange = onInputTextChanged,
+                            placeholder = {
+                                Text(
+                                    if (isAgentMode) "Command device tasks..." else "Ask on-device LLM...",
+                                    color = TextMuted,
+                                    fontSize = 13.sp
+                                )
+                            },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                cursorColor = GoogleBlue,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 44.dp)
+                        )
+
+                        // Voice Mic Button
+                        IconButton(
+                            onClick = {
+                                if (isListening) {
+                                    voiceManager?.stopListening()
+                                } else {
+                                    onRequestRecordAudio {
+                                        voiceManager?.startListening()
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (isListening) GoogleGreen else GoogleCardElevated)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Voice Input",
+                                tint = if (isListening) Color.White else TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                // Send Button
+                // Send Button Pill
                 IconButton(
                     onClick = {
                         if (inputText.isNotBlank() && !uiState.isProcessing) {
@@ -581,14 +1079,14 @@ fun AssistantChatView(
                     },
                     enabled = inputText.isNotBlank() && !uiState.isProcessing,
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(46.dp)
                         .clip(CircleShape)
-                        .background(if (inputText.isNotBlank()) EmeraldOffline else BorderSubtle)
+                        .background(if (inputText.isNotBlank()) GoogleBlue else GoogleCard)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Send",
-                        tint = Color.White,
+                        tint = if (inputText.isNotBlank()) Color.White else TextMuted,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -598,53 +1096,92 @@ fun AssistantChatView(
 }
 
 @Composable
-fun QuickPromptChipsRow(
-    onPromptSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+fun GoogleChatHero(
+    isAgentMode: Boolean,
+    activeModel: String,
+    onPromptSelected: (String) -> Unit
 ) {
-    val prompts = listOf(
-        "HISAAB" to "Notes pr hisaab likho 200 sharukh, 500 kalli, 300 haaji aur total karo",
-        "SPLIT" to "Split dinner bill of 1800 with 4 friends",
-        "ALARM" to "Remind me to study at 7 PM",
-        "YOUTUBE" to "Open YouTube and play saas song",
-        "NOTES" to "Show my notes",
-        "SCHEDULE" to "Check my schedule for today",
-        "KNOWLEDGE" to "What is the capital of France?"
-    )
-
-    LazyRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        items(prompts) { (badge, promptText) ->
+        GoogleIconBadge(
+            icon = if (isAgentMode) Icons.Default.RocketLaunch else Icons.AutoMirrored.Filled.Chat,
+            badgeColor = if (isAgentMode) GoogleGreenBadge else GoogleRedBadge,
+            size = 56,
+            iconSize = 28
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Text(
+            text = if (isAgentMode) "Agent Skills" else "AI Chat",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = if (isAgentMode) "Autonomous on-device agent with tool calling" else "Chat with on-device large language models",
+            fontSize = 13.sp,
+            color = TextSecondary
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Active: $activeModel",
+            fontSize = 11.sp,
+            color = TextMuted
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OfflineSecurityBadge()
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        val prompts = if (isAgentMode) {
+            listOf(
+                "Notes pr hisaab likho 200 sharukh, 500 kalli, 300 haaji aur total karo",
+                "Split dinner bill of 1800 with 4 friends",
+                "Remind me to study at 7 PM",
+                "Open YouTube and play saas song"
+            )
+        } else {
+            listOf(
+                "Explain how 4-bit quantization reduces memory bandwidth",
+                "What is the difference between perplexity and reasoning accuracy?",
+                "Draft a technical summary of on-device LLM inference",
+                "How does GBNF grammar constrain autoregressive decoding?"
+            )
+        }
+
+        prompts.forEach { prompt ->
             Surface(
-                color = CardBackground,
-                shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                modifier = Modifier.clickable { onPromptSelected(promptText) }
+                onClick = { onPromptSelected(prompt) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        color = BlueAccent.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = badge,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BlueAccent,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = GoogleBlue,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = promptText.take(24) + if (promptText.length > 24) "..." else "",
-                        fontSize = 11.sp,
+                        text = prompt,
+                        fontSize = 12.sp,
                         color = TextPrimary
                     )
                 }
@@ -654,8 +1191,162 @@ fun QuickPromptChipsRow(
 }
 
 @Composable
-fun NotesHisaabView(
+fun GoogleMessageBubble(message: ChatMessageEntity) {
+    val isUser = message.sender == "user"
+    val bubbleColor = if (isUser) GoogleCardElevated else GoogleCard
+    val alignment = if (isUser) Alignment.End else Alignment.Start
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = alignment
+    ) {
+        Surface(
+            color = bubbleColor,
+            shape = RoundedCornerShape(
+                topStart = 18.dp,
+                topEnd = 18.dp,
+                bottomStart = if (isUser) 18.dp else 4.dp,
+                bottomEnd = if (isUser) 4.dp else 18.dp
+            ),
+            modifier = Modifier.widthIn(max = 310.dp)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                if (!isUser) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    ) {
+                        GoogleDotsLogo(dotSize = 4f, spacing = 2f)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "EdgeAgent",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GoogleBlue
+                        )
+                    }
+                }
+
+                Text(
+                    text = message.content,
+                    color = TextPrimary,
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
+                )
+            }
+        }
+
+        if (!message.toolName.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Surface(
+                color = GoogleGreenContainer,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(start = 4.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = GoogleGreen,
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Executed: ${message.toolName}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GoogleGreen
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GoogleProcessingIndicator() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(14.dp),
+            strokeWidth = 1.8.dp,
+            color = GoogleBlue
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Generating via ARM NEON...",
+            fontSize = 11.sp,
+            color = TextSecondary
+        )
+    }
+}
+
+@Composable
+fun GoogleQuickPromptChipsRow(
+    onPromptSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val prompts = listOf(
+        "HISAAB" to "Notes pr hisaab likho 200 sharukh, 500 kalli, 300 haaji aur total karo",
+        "SPLIT" to "Split dinner bill of 1800 with 4 friends",
+        "ALARM" to "Remind me to study at 7 PM",
+        "YOUTUBE" to "Open YouTube and play saas song",
+        "NOTES" to "Show my notes",
+        "KNOWLEDGE" to "What is the capital of France?"
+    )
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(prompts) { (badge, promptText) ->
+            Surface(
+                onClick = { onPromptSelected(promptText) },
+                color = GoogleCard,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = GoogleBlueContainer,
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = badge,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GoogleBlue,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = promptText.take(22) + if (promptText.length > 22) "..." else "",
+                        fontSize = 11.sp,
+                        color = TextPrimary
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Local Notes & Ledgers Screen
+ */
+@Composable
+fun GoogleNotesLedgerScreen(
     notes: List<NoteEntity>,
+    onBack: () -> Unit,
     onDeleteNote: (Long) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -667,145 +1358,117 @@ fun NotesHisaabView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .background(GoogleBackground)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Local Encrypted Notes & Ledgers",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "${notes.size} total items stored in SQLite Room ORM (Zero Cloud)",
-                    fontSize = 11.sp,
-                    color = TextSecondary
-                )
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Local Notes & Ledgers", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Filter notes or hisaab entries...", color = TextMuted, fontSize = 12.sp) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp)) },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = CardBackground,
-                unfocusedContainerColor = CardBackground,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
-                cursorColor = EmeraldOffline,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (filteredNotes.isEmpty()) {
-            Box(
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Search Pill
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Filter notes or hisaab entries...", color = TextMuted, fontSize = 12.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = GoogleCard,
+                    unfocusedContainerColor = GoogleCard,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = GoogleBlue,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(22.dp),
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = if (searchQuery.isBlank()) "No local notes recorded yet." else "No matching notes found.",
-                        color = TextSecondary,
-                        fontSize = 13.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Say: 'Notes pr hisaab likho 200 sharukh, 500 kalli...'",
-                        color = TextMuted,
-                        fontSize = 11.sp
-                    )
+                    .fillMaxWidth()
+                    .height(48.dp)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (filteredNotes.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        GoogleIconBadge(icon = Icons.Default.Description, badgeColor = GoogleYellowBadge, size = 52, iconSize = 26, isSquircle = true)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("No local notes recorded yet.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Say: 'Notes pr hisaab likho 200 sharukh...'", color = TextSecondary, fontSize = 12.sp)
+                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filteredNotes, key = { it.id }) { note ->
-                    val isHisaab = note.title.contains("Hisaab", ignoreCase = true) || note.content.contains("₹")
-                    Surface(
-                        color = CardBackground,
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isHisaab) EmeraldOffline.copy(alpha = 0.4f) else BorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Surface(
-                                        color = if (isHisaab) EmeraldDark.copy(alpha = 0.3f) else BlueAccent.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(filteredNotes, key = { it.id }) { note ->
+                        val isHisaab = note.title.contains("Hisaab", ignoreCase = true) || note.content.contains("₹")
+                        Surface(
+                            color = GoogleCard,
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Surface(
+                                            color = if (isHisaab) GoogleGreenContainer else GoogleBlueContainer,
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isHisaab) "HISAAB" else "NOTE",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isHisaab) GoogleGreen else GoogleBlue,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = if (isHisaab) "[HISAAB]" else "[NOTE]",
-                                            fontSize = 9.sp,
+                                            text = note.title,
+                                            fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isHisaab) EmeraldGlow else BlueAccent,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = note.title,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                    IconButton(
+                                        onClick = { onDeleteNote(note.id) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = TextMuted, modifier = Modifier.size(16.dp))
+                                    }
                                 }
-                                IconButton(
-                                    onClick = { onDeleteNote(note.id) },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.DeleteOutline,
-                                        contentDescription = "Delete Note",
-                                        tint = TextMuted,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(text = note.content, fontSize = 12.sp, color = TextSecondary, lineHeight = 18.sp)
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                val dateStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(note.updatedAt))
+                                Text("Saved: $dateStr • SQLite Room ORM", fontSize = 10.sp, color = TextMuted)
                             }
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            Text(
-                                text = note.content,
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 18.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            val dateStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(note.updatedAt))
-                            Text(
-                                text = "Saved: $dateStr • Scoped Room Storage",
-                                fontSize = 10.sp,
-                                color = TextMuted
-                            )
                         }
                     }
                 }
@@ -814,115 +1477,74 @@ fun NotesHisaabView(
     }
 }
 
+/**
+ * Scheduled Reminders Screen
+ */
 @Composable
-fun RemindersView(
+fun GoogleRemindersScreen(
     reminders: List<ReminderEntity>,
+    onBack: () -> Unit,
     onMarkCompleted: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .background(GoogleBackground)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Scheduled Alarms & Reminders",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "${reminders.size} active reminders linked to Android AlarmManager",
-                    fontSize = 11.sp,
-                    color = TextSecondary
-                )
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Notifications & Reminders", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (reminders.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "No pending reminders or alarms.",
-                        color = TextSecondary,
-                        fontSize = 13.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Say: 'Remind me to study at 7 PM'",
-                        color = TextMuted,
-                        fontSize = 11.sp
-                    )
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (reminders.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        GoogleIconBadge(icon = Icons.Default.Notifications, badgeColor = GoogleRedBadge, size = 52, iconSize = 26, isSquircle = true)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("No pending reminders or alarms.", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Say: 'Remind me to study at 7 PM'", color = TextSecondary, fontSize = 12.sp)
+                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(reminders, key = { it.id }) { item ->
-                    Surface(
-                        color = CardBackground,
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(reminders, key = { it.id }) { item ->
+                        Surface(
+                            color = GoogleCard,
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Surface(
-                                        color = EmeraldDark.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "[ALARM]",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = EmeraldGlow,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = item.title,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Due: ${item.dueTimeIso} • Priority: ${item.priority.uppercase()}",
-                                    fontSize = 11.sp,
-                                    color = WarningAmber
-                                )
-                            }
-
-                            Button(
-                                onClick = { onMarkCompleted(item.id) },
-                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark),
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Mark Done", fontSize = 11.sp, color = Color.White)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(item.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Due: ${item.dueTimeIso} • ${item.priority.uppercase()}", fontSize = 11.sp, color = GoogleYellow)
+                                }
+                                Button(
+                                    onClick = { onMarkCompleted(item.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = GoogleGreenContainer),
+                                    shape = RoundedCornerShape(16.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Done", fontSize = 11.sp, color = GoogleGreen, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -932,125 +1554,128 @@ fun RemindersView(
     }
 }
 
+/**
+ * Hardware Profiler Screen
+ */
 @Composable
-fun SystemTelemetryView(
+fun GoogleHardwareProfilerScreen(
     telemetry: com.dtu.mobileagent.engine.HardwareTelemetry,
-    auditLogs: List<AuditLogEntity>,
-    onRefreshTelemetry: () -> Unit
+    onBack: () -> Unit,
+    onRefresh: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .background(GoogleBackground)
     ) {
-        // Live Hardware Profiler Card
-        HardwareTelemetryCard(telemetry = telemetry)
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Immutable Audit Log Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Immutable Security Audit Log",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "Cryptographic local ledger of autonomous tool invocations",
-                    fontSize = 11.sp,
-                    color = TextSecondary
-                )
-            }
-            TextButton(onClick = onRefreshTelemetry) {
-                Text("Refresh", fontSize = 11.sp, color = BlueAccent)
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Hardware Telemetry", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            HardwareTelemetryCard(telemetry = telemetry)
 
-        if (auditLogs.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+            Surface(
+                color = GoogleCard,
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "No autonomous actions logged yet.",
-                    color = TextMuted,
-                    fontSize = 12.sp
-                )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("ARM NEON Kernel Architecture", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("• Target ABI: arm64-v8a + fp16 + dotprod", fontSize = 12.sp, color = TextSecondary)
+                    Text("• Quantization Scheme: Q4_K_M Block Super-Weighting", fontSize = 12.sp, color = TextSecondary)
+                    Text("• Grammar Engine: Deterministic GBNF AST Logit Masking", fontSize = 12.sp, color = TextSecondary)
+                    Text("• Memory Hierarchy: L1/L2 Cache Tile Optimized Matrix Multiply", fontSize = 12.sp, color = TextSecondary)
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+
+            Button(
+                onClick = onRefresh,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue)
             ) {
-                items(auditLogs, key = { it.id }) { log ->
-                    Surface(
-                        color = CardBackground,
-                        shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    val statusColor = if (log.status == "EXECUTED") EmeraldGlow else WarningAmber
-                                    Surface(
-                                        color = statusColor.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "[${log.status}]",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = statusColor,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = log.toolName,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
+                Text("Refresh Telemetry Counters", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        }
+    }
+}
+
+/**
+ * Security Audit Screen
+ */
+@Composable
+fun GoogleSecurityAuditScreen(
+    auditLogs: List<AuditLogEntity>,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
+    ) {
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Security & Audit Logs", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+        }
+
+        Column(modifier = Modifier.padding(16.dp)) {
+            OfflineSecurityBadge()
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (auditLogs.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No autonomous actions logged yet.", color = TextMuted, fontSize = 13.sp)
+                }
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(auditLogs, key = { it.id }) { log ->
+                        Surface(
+                            color = GoogleCard,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(log.toolName, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    val timeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))
+                                    Text(timeStr, fontSize = 10.sp, color = TextMuted)
                                 }
-                                val timeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))
-                                Text(
-                                    text = timeStr,
-                                    fontSize = 10.sp,
-                                    color = TextMuted
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = log.executionDetails,
-                                fontSize = 11.sp,
-                                color = TextSecondary,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (log.parametersJson.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Args: ${log.parametersJson}",
-                                    fontSize = 10.sp,
-                                    color = TextMuted,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(log.executionDetails, fontSize = 11.sp, color = TextSecondary)
                             }
                         }
                     }
@@ -1060,137 +1685,54 @@ fun SystemTelemetryView(
     }
 }
 
+/**
+ * Application Settings Screen
+ */
 @Composable
-fun CleanWelcomeCard(
-    activeModel: String,
-    onPromptSelected: (String) -> Unit
+fun GoogleSettingsScreen(
+    onBack: () -> Unit
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
     ) {
-        Text(
-            text = "EdgeAgent",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "DTU Dept of CSE • GP159 | $activeModel",
-            fontSize = 12.sp,
-            color = TextSecondary
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        data class WelcomePrompt(val badge: String, val text: String)
-
-        val prompts = listOf(
-            WelcomePrompt("[HISAAB]", "Notes pr hisaab likho 200 sharukh, 500 kalli, 300 haaji aur total karo"),
-            WelcomePrompt("[ALARM]", "Remind me to study at 7 PM"),
-            WelcomePrompt("[MEDIA]", "Open YouTube and play saas song"),
-            WelcomePrompt("[CALENDAR]", "What's my schedule for today?")
-        )
-
-        prompts.forEach { item ->
-            Surface(
-                color = CardBackground,
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+        Surface(color = GoogleSurface, modifier = Modifier.fillMaxWidth()) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable { onPromptSelected(item.text) }
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        color = BlueAccent.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = item.badge,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BlueAccent,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = item.text,
-                        fontSize = 12.sp,
-                        color = TextPrimary
-                    )
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Settings", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+        }
+
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(color = GoogleCard, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("About EdgeAgent", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("EdgeAgent: Autonomous On-Device Agent Architecture for Privacy-First ARM-Based Task Execution and Mobile Communication", fontSize = 12.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Delhi Technological University • Department of CSE", fontSize = 11.sp, color = TextMuted)
+                    Text("Minor Project Session 2026-2027 • Group GP159", fontSize = 11.sp, color = TextMuted)
+                }
+            }
+
+            Surface(color = GoogleCard, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Privacy & Security Architecture", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• Zero cloud egress: INTERNET permission omitted from manifest", fontSize = 12.sp, color = TextSecondary)
+                    Text("• Local SQLite Room ORM with AES-256 encrypted storage", fontSize = 12.sp, color = TextSecondary)
+                    Text("• Two-Tier Security Gate for all destructive system tools", fontSize = 12.sp, color = TextSecondary)
                 }
             }
         }
-    }
-}
-
-@Composable
-fun CleanMessageBubble(message: ChatMessageEntity) {
-    val isUser = message.sender == "user"
-    val bubbleColor = if (isUser) Color(0xFF1D4ED8) else CardBackground
-    val alignment = if (isUser) Alignment.End else Alignment.Start
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = alignment
-    ) {
-        Surface(
-            color = bubbleColor,
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isUser) 16.dp else 4.dp,
-                bottomEnd = if (isUser) 4.dp else 16.dp
-            ),
-            modifier = Modifier.widthIn(max = 300.dp)
-        ) {
-            Text(
-                text = message.content,
-                color = TextPrimary,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
-            )
-        }
-
-        if (!message.toolName.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(3.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "[Executed: ${message.toolName}]",
-                    fontSize = 10.sp,
-                    color = EmeraldGlow
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ProcessingIndicator() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(13.dp),
-            strokeWidth = 1.5.dp,
-            color = EmeraldOffline
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = "Thinking...",
-            fontSize = 11.sp,
-            color = TextSecondary
-        )
     }
 }

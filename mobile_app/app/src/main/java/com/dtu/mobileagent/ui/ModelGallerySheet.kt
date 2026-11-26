@@ -3,13 +3,17 @@ package com.dtu.mobileagent.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,8 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,366 +29,456 @@ import com.dtu.mobileagent.engine.ModelGalleryManager
 import com.dtu.mobileagent.engine.ModelSpec
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModelGallerySheet(
+fun GoogleModelGalleryView(
     galleryManager: ModelGalleryManager,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
     onImportLocalFile: () -> Unit,
-    onModelActivated: (ModelSpec) -> Unit
+    onModelActivated: (ModelSpec) -> Unit,
+    onStartChat: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
     val activeModel by galleryManager.activeModel.collectAsState()
     val downloadStates by galleryManager.downloadStates.collectAsState()
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceDark,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = TextSecondary.copy(alpha = 0.4f)) }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(GoogleBackground)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
+        // Top App Bar
+        Surface(
+            color = GoogleSurface,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Header
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(EmeraldOffline)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "On-Device Model Gallery",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    }
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = TextPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "On-Device Models",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Hero Header matching Screenshot 5
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    GoogleIconBadge(
+                        icon = Icons.AutoMirrored.Filled.Chat,
+                        badgeColor = GoogleRedBadge,
+                        size = 64,
+                        iconSize = 32
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     Text(
-                        text = "Switch or download offline LLM engines • 100% private",
-                        fontSize = 12.sp,
+                        text = "AI Chat & Models",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Chat with on-device large language models",
+                        fontSize = 13.sp,
                         color = TextSecondary
                     )
-                }
-                IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextSecondary)
-                }
-            }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(ModelGalleryManager.CATALOG) { spec ->
-                    val isDownloaded = galleryManager.isModelDownloaded(spec)
-                    val isActive = activeModel.id == spec.id
-                    val downloadProgress = downloadStates[spec.id]
-
-                    ModelCardItem(
-                        spec = spec,
-                        isDownloaded = isDownloaded,
-                        isActive = isActive,
-                        downloadProgress = downloadProgress,
-                        onActivate = {
-                            coroutineScope.launch {
-                                galleryManager.setActiveModel(spec)
-                                onModelActivated(spec)
-                            }
-                        },
-                        onDownload = {
-                            galleryManager.startDownload(spec)
-                        },
-                        onCancelDownload = {
-                            galleryManager.cancelDownload(spec)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Description,
+                                contentDescription = null,
+                                tint = GoogleBlue,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Zero Cloud Spec",
+                                fontSize = 12.sp,
+                                color = GoogleBlue
+                            )
                         }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Code,
+                                contentDescription = null,
+                                tint = GoogleBlue,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "ARM NEON GBNF",
+                                fontSize = 12.sp,
+                                color = GoogleBlue
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "${ModelGalleryManager.CATALOG.size} models available",
+                        fontSize = 12.sp,
+                        color = TextMuted
                     )
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onImportLocalFile,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = BlueAccent),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
-                    ) {
-                        Icon(imageVector = Icons.Default.FileOpen, contentDescription = "Import GGUF", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Import .GGUF from Storage", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                    }
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Recommended models",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            }
+
+            // Model Cards matching Screenshot 5
+            items(ModelGalleryManager.CATALOG) { spec ->
+                val isDownloaded = galleryManager.isModelDownloaded(spec)
+                val isActive = activeModel.id == spec.id
+                val downloadProgress = downloadStates[spec.id]
+
+                GoogleModelCardItem(
+                    spec = spec,
+                    isDownloaded = isDownloaded,
+                    isActive = isActive,
+                    downloadProgress = downloadProgress,
+                    onActivate = {
+                        coroutineScope.launch {
+                            galleryManager.setActiveModel(spec)
+                            onModelActivated(spec)
+                        }
+                    },
+                    onDownload = {
+                        galleryManager.startDownload(spec)
+                    },
+                    onCancelDownload = {
+                        galleryManager.cancelDownload(spec)
+                    },
+                    onStartChat = onStartChat
+                )
+            }
+
+            // Import .GGUF option
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick = onImportLocalFile,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GoogleBlue),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoogleBorder)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FileOpen,
+                        contentDescription = "Import",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Import .GGUF from Storage",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
 
 @Composable
-fun ModelCardItem(
+fun GoogleModelCardItem(
     spec: ModelSpec,
     isDownloaded: Boolean,
     isActive: Boolean,
     downloadProgress: ModelDownloadProgress?,
     onActivate: () -> Unit,
     onDownload: () -> Unit,
-    onCancelDownload: () -> Unit
+    onCancelDownload: () -> Unit,
+    onStartChat: () -> Unit
 ) {
     val isDownloading = downloadProgress?.isDownloading == true
     val animatedProgress by animateFloatAsState(
         targetValue = downloadProgress?.progressPct ?: 0f,
         label = "DownloadProgress"
     )
-
-    // Visual model identity mapping
-    val (icon, iconColor) = when {
-        spec.id.contains("gemma") -> Pair(Icons.Default.AutoAwesome, Color(0xFF60A5FA))
-        spec.id.contains("3b") -> Pair(Icons.Default.Psychology, Color(0xFFA78BFA))
-        spec.id.contains("1b") -> Pair(Icons.Default.Bolt, Color(0xFF38BDF8))
-        spec.id.contains("qwen") -> Pair(Icons.Default.Speed, Color(0xFF34D399))
-        else -> Pair(Icons.Default.ChatBubbleOutline, Color(0xFFFBBF24))
-    }
+    var isExpanded by remember { mutableStateOf(false) }
 
     Surface(
-        color = CardBackground,
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            width = if (isActive) 1.5.dp else 1.dp,
-            color = if (isActive) EmeraldOffline else BorderSubtle
-        ),
+        color = GoogleCard,
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            // Header with Engine Icon & Active Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
+            // Badge tag row (e.g. "Best overall" or "Fastest TTFT")
+            if (spec.id == "gemma-2-2b") {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.padding(bottom = 6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(iconColor.copy(alpha = 0.15f))
-                            .border(1.dp, iconColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconColor,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = spec.displayName,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "${spec.precision} • ${spec.sizeMb} MB • ~${spec.ramMb} MB RAM",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = GoogleYellow,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Best overall",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
                 }
-
-                if (isActive) {
-                    Surface(
-                        color = EmeraldDark.copy(alpha = 0.35f),
-                        shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.5f))
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(EmeraldGlow)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "ACTIVE",
-                                color = EmeraldGlow,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+            } else if (spec.id == "llama-3.2-1b") {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bolt,
+                        contentDescription = null,
+                        tint = GoogleGreen,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Fastest TTFT • Low Memory",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
                 }
             }
 
+            // Title and expand chevron
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = spec.displayName,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Specs with Info icon: (?) size, RAM
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(13.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "${spec.sizeMb} MB • ~${spec.ramMb} MB RAM • ${spec.precision}",
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Link: Learn more and see model licence
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    tint = GoogleBlue,
+                    modifier = Modifier.size(12.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Learn more and see model license",
+                    fontSize = 12.sp,
+                    color = GoogleBlue
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Description
             Text(
                 text = spec.description,
                 fontSize = 12.sp,
                 color = TextSecondary,
-                lineHeight = 16.sp
+                lineHeight = 17.sp
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isDownloading) {
-                // Live Download Progress Bar & Statistics
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val mbDownloaded = (downloadProgress?.downloadedBytes ?: 0L).toDouble() / (1024.0 * 1024.0)
-                        val pctInt = ((downloadProgress?.progressPct ?: 0f) * 100).toInt()
-
-                        Text(
-                            text = "Downloading: ${String.format("%.1f", mbDownloaded)} MB / ${spec.sizeMb} MB ($pctInt%)",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = BlueAccent,
-                            fontFamily = FontFamily.Monospace
-                        )
-
-                        TextButton(
-                            onClick = onCancelDownload,
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Cancel", tint = DtuRedLight, modifier = Modifier.size(13.dp))
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text("Cancel", color = DtuRedLight, fontSize = 11.sp)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(5.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = EmeraldOffline,
-                        trackColor = BorderSubtle
-                    )
+            // Expanded technical details
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                ) {
+                    HorizontalDivider(color = GoogleDivider, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("Architecture: 4-bit ARM NEON SIMD", fontSize = 11.sp, color = TextMuted)
+                    Text("Inference Kernel: llama.cpp GBNF Grammar Engine", fontSize = 11.sp, color = TextMuted)
+                    Text("File Name: ${spec.filename}", fontSize = 11.sp, color = TextMuted)
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
-            } else {
-                // Actions: Allow instant switching to any engine + optional offline weights download
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    if (downloadProgress?.errorMessage != null) {
-                        Surface(
-                            color = DtuRedDark.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(6.dp),
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Action Button Area
+            when {
+                isDownloading -> {
+                    val dlMb = (downloadProgress?.downloadedBytes ?: 0L) / (1024 * 1024)
+                    val totMb = (downloadProgress?.totalBytes ?: 0L) / (1024 * 1024)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Downloading: $dlMb MB / $totMb MB (${((downloadProgress?.progressPct ?: 0f) * 100).toInt()}%)",
+                                fontSize = 12.sp,
+                                color = GoogleBlue,
+                                fontWeight = FontWeight.Medium
+                            )
+                            TextButton(onClick = onCancelDownload) {
+                                Text("Cancel", color = GoogleRed, fontSize = 12.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { animatedProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp)
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = GoogleBlue,
+                            trackColor = GoogleCardElevated
+                        )
+                    }
+                }
+
+                isDownloaded -> {
+                    if (isActive) {
+                        Button(
+                            onClick = onStartChat,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = GoogleGreen)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Active Engine • Start Chat",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    } else {
+                        Button(
+                            onClick = onActivate,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = GoogleCardElevated)
                         ) {
                             Text(
-                                text = "Notice: ${downloadProgress.errorMessage}. You can still use the active engine profile.",
-                                color = DtuRedLight,
-                                fontSize = 11.sp,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = "Select Active Engine",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary
                             )
                         }
                     }
+                }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                else -> {
+                    Button(
+                        onClick = onDownload,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue)
                     ) {
-                        if (isDownloaded) {
-                            // Offline weights status indicator
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = EmeraldOffline,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Weights on disk",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = EmeraldOffline
-                                )
-                            }
-
-                            // Activate / Active Button
-                            if (!isActive) {
-                                Button(
-                                    onClick = onActivate,
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldOffline),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Activate Model", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                            } else {
-                                Surface(
-                                    color = EmeraldDark.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(8.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.4f))
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = EmeraldGlow,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "Active Engine",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = EmeraldGlow
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            // NOT DOWNLOADED: Strictly only allow downloading! Cannot switch without downloading!
-                            Text(
-                                text = "Not downloaded",
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
-                            Button(
-                                onClick = onDownload,
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8)),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Download GGUF (${spec.sizeMb} MB)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Download GGUF (${spec.sizeMb} MB)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
             }

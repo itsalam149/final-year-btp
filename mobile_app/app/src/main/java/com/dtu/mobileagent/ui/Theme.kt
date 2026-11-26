@@ -4,22 +4,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
-    primary = DtuRedLight,
+private val GoogleAIEdgeColorScheme = darkColorScheme(
+    primary = GoogleBlue,
     onPrimary = TextPrimary,
-    primaryContainer = DtuRedDark,
+    primaryContainer = GoogleBlueContainer,
     onPrimaryContainer = TextPrimary,
-    secondary = EmeraldOffline,
-    onSecondary = DarkBackground,
-    secondaryContainer = EmeraldDark,
+    secondary = GoogleGreen,
+    onSecondary = GoogleBackground,
+    secondaryContainer = GoogleGreenContainer,
     onSecondaryContainer = TextPrimary,
-    background = DarkBackground,
+    tertiary = GoogleYellow,
+    onTertiary = GoogleBackground,
+    background = GoogleBackground,
     onBackground = TextPrimary,
-    surface = SurfaceDark,
+    surface = GoogleSurface,
     onSurface = TextPrimary,
-    surfaceVariant = CardBackground,
+    surfaceVariant = GoogleCard,
     onSurfaceVariant = TextSecondary,
-    outline = BorderSubtle
+    outline = GoogleBorder,
+    outlineVariant = GoogleDivider
 )
 
 @Composable
@@ -27,7 +30,7 @@ fun OfflineMobileAgentTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = GoogleAIEdgeColorScheme,
         content = content
     )
 }
