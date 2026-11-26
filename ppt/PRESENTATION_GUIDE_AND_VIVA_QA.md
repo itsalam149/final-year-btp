@@ -1,6 +1,6 @@
 # Privacy-First Offline AI Mobile Agent Using LLM Quantization
 ## Comprehensive Presentation Guide & Viva Defense Master Manual
-**Academic Project Title:** *Design and Implementation of a Privacy-Preserving, Quantized On-Device LLM for Autonomous Mobile Task Execution*  
+**Academic Project Title:** *EdgeAgent: An Autonomous On-Device Agent Architecture for Privacy-First ARM-Based Task Execution and Mobile Communication*  
 **Department:** Computer Science & Engineering, Delhi Technological University (DTU)  
 **Group ID:** DTU/CSE/BTP/GP159 | Session 2026–2027  
 **Supervisor:** Ms. Gull Kaur, Assistant Professor, Dept of CSE, DTU  

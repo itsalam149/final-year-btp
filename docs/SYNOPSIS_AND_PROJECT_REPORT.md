@@ -5,7 +5,7 @@
 ---
 
 ### Project Title:
-## Design and Implementation of a Privacy-Preserving, Quantized On-Device LLM for Autonomous Mobile Task Execution
+## EdgeAgent: An Autonomous On-Device Agent Architecture for Privacy-First ARM-Based Task Execution and Mobile Communication
 *(Privacy-First Offline AI Mobile Agent Using LLM Quantization)*
 
 ---

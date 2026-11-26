@@ -93,7 +93,7 @@ fun ChatScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Offline Mobile Agent",
+                                text = "EdgeAgent",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -1070,7 +1070,7 @@ fun CleanWelcomeCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "Offline Mobile Agent",
+            text = "EdgeAgent",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary

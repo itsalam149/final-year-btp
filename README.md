@@ -1,5 +1,5 @@
-# Privacy-First Offline AI Mobile Agent Using LLM Quantization
-### Autonomous On-Device Mobile Assistant with Program-Aided Language (PAL) Reasoning, GBNF Grammar Decoding, and Zero-Trust Scoped Execution
+# EdgeAgent: An Autonomous On-Device Agent Architecture for Privacy-First ARM-Based Task Execution and Mobile Communication
+### Autonomous On-Device Edge Agent with Program-Aided Language (PAL) Reasoning, GBNF Grammar Decoding, and Zero-Trust Scoped Execution
 
 [![DTU CSE Major Project](https://img.shields.io/badge/DTU%20CSE-Major%20Project%20GP159-blue.svg)](https://www.dtu.ac.in/)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20%7C%20Linux%20%7C%20macOS-green.svg)]()
@@ -47,7 +47,7 @@ Across an empirical benchmark of **5,000 distinct user queries** (1,000 per func
 
 ## Core Academic Research Motive & Theoretical Findings
 
-Our academic research focuses on addressing the fundamental performance-efficiency trade-offs of deploying reasoning-capable language models on consumer edge hardware. The project investigates three central theoretical questions documented in our Major Project Thesis (*"Beyond Perplexity: Dissecting Reasoning Fragility and Optimal Bit-Budgets in Quantized Edge LLMs"*):
+Our academic research focuses on addressing the fundamental performance-efficiency trade-offs of deploying reasoning-capable language models on consumer edge hardware. The project investigates three central theoretical questions documented in our Major Project Thesis (*"EdgeAgent: An Autonomous On-Device Agent Architecture for Privacy-First ARM-Based Task Execution and Mobile Communication"*):
 
 ### 1. The Fallacy of Perplexity in Quantization Benchmarking
 Conventional Post-Training Quantization (PTQ) literature historically evaluates models against WikiText-2 perplexity ($PPL$). When compressing models to 4-bit precision, perplexity increases by a seemingly negligible delta ($\Delta\text{PPL} \le 0.5$), leading early literature to assert that 4-bit quantization causes minimal capability loss.
