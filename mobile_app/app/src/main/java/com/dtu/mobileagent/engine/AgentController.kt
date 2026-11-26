@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.dtu.mobileagent.data.local.AppDatabase
 import com.dtu.mobileagent.data.local.entities.ChatMessageEntity
+import com.dtu.mobileagent.data.local.entities.NoteEntity
+import com.dtu.mobileagent.data.local.entities.ReminderEntity
+import com.dtu.mobileagent.data.local.entities.AuditLogEntity
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -53,6 +56,22 @@ class AgentController(
     }
 
     val messages: Flow<List<ChatMessageEntity>> = database.chatMessageDao().getAllMessages()
+    val allNotes: Flow<List<NoteEntity>> = database.noteDao().getAllNotes()
+    val activeReminders: Flow<List<ReminderEntity>> = database.reminderDao().getActiveReminders()
+    val recentAuditLogs: Flow<List<AuditLogEntity>> = database.auditLogDao().getRecentLogs(50)
+    val telemetry: StateFlow<HardwareTelemetry> = hardwareProfiler.telemetry
+
+    fun refreshTelemetry() {
+        hardwareProfiler.refreshTelemetry(_uiState.value.currentTokensPerSec)
+    }
+
+    suspend fun deleteNote(id: Long) {
+        database.noteDao().deleteNote(id)
+    }
+
+    suspend fun markReminderCompleted(id: Long) {
+        database.reminderDao().markCompleted(id)
+    }
 
     suspend fun initialize() {
         _uiState.value = _uiState.value.copy(isProcessing = true)
