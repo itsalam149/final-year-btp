@@ -3,7 +3,7 @@
 
 **Department of Computer Science & Engineering, Delhi Technological University (DTU)**  
 **Major Project Group GP159** | Guide: Ms. Gull Kaur  
-**Authors:** Faqre Alam (23/CS/150), Ekansh Agarwal (23/CS/149), Guneet Toppo (23/CS/160), Bhawishya (24/CS/137)  
+**Authors:** Faqre Alam (23/CS/150), Ekansh Agarwal (23/CS/149), Guneet Toppo (23/CS/160)  
 **Evaluated Architecture:** On-Device Privacy-Preserving Agent with Program-Aided Language (PAL), GBNF Grammar Constraints, and Android Intent Dispatcher  
 
 ---

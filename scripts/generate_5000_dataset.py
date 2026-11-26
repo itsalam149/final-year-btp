@@ -155,7 +155,7 @@ def generate_1000_agent_tools():
     times = ["9 AM", "11:30 AM", "2 PM", "4:15 PM", "6 PM", "7:45 PM", "8:30 PM", "10 PM"]
     dates = ["November 27", "November 28", "December 1", "Monday", "Friday"]
     apps = ["WhatsApp", "Spotify", "Settings", "Gmail", "Camera", "Files", "Calendar", "Notes"]
-    recipients = ["Rahul", "Priya", "Ekansh", "Guneet", "Bhawishya", "Prof Sharma"]
+    recipients = ["Rahul", "Priya", "Ekansh", "Guneet", "Prof Sharma"]
     buttons = ["Confirm", "Submit", "Cancel", "Next", "Save", "Download", "Allow", "Proceed"]
 
     while len(items) < 1000:

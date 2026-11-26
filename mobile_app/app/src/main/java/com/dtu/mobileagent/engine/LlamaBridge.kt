@@ -321,7 +321,7 @@ class LlamaBridge(private val context: Context) {
 
         val splitShare = totalBill / numPeople
 
-        val contacts = listOf("Rahul", "Priya", "Ekansh", "Guneet", "Bhawishya", "Sharukh", "Kalli", "Haaji", "Naari")
+        val contacts = listOf("Rahul", "Priya", "Ekansh", "Guneet", "Sharukh", "Kalli", "Haaji", "Naari")
         val recipient = contacts.find { lower.contains(it.lowercase()) } ?: "Friend"
 
         val msgBody = "Hey $recipient, our total bill was ₹$totalBill ($numPeople people). Your split share is ₹$splitShare."

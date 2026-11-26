@@ -27,7 +27,6 @@
 | **Faqre Alam** | 23/CS/150 | **Lead Systems & Agent Architect:** ReAct loop controller, PAL arithmetic reasoning engine, GBNF grammar constraints, multi-tier tool dispatcher, and Android UI orchestration. |
 | **Ekansh Agarwal** | 23/CS/149 | **Model Optimization & Mobile Inference Lead:** GGUF quantization pipeline (`Q4_K_M`, `Q4_0`, `Q8_0`), `llama.cpp` ARM NEON C++ JNI bridge, KV-cache tuning, and battery/thermal profiling. |
 | **Guneet Toppo** | 23/CS/160 | **Mobile Integrations & Offline Voice Lead:** Android OS API handlers (Room ORM, CalendarProvider, AlarmManager, Scoped Storage), on-device Whisper/Sherpa-ONNX STT and Android TTS. |
-| **Bhawishya** | 24/CS/137 | **Benchmarking & Security Verification Lead (3rd Year):** 5,000-task empirical generalization benchmark, adversarial boundary stress-testing, and Two-Tier Security Gate audit validation. |
 
 ---
 

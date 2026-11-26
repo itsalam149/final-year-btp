@@ -2,7 +2,7 @@
 
 **Department of Computer Science & Engineering, Delhi Technological University (DTU)**  
 **Major Project Group GP159** | Guide: Ms. Gull Kaur  
-**Authors:** Faqre Alam (23/CS/150), Ekansh Agarwal (23/CS/149), Guneet Toppo (23/CS/160), Bhawishya (24/CS/137)  
+**Authors:** Faqre Alam (23/CS/150), Ekansh Agarwal (23/CS/149), Guneet Toppo (23/CS/160)  
 **Evaluated Model:** `Qwen2.5-0.5B-Instruct` (Q4_K_M GGUF, 468.6 MB) via `llama.cpp` + GBNF Constrained Logit Masking  
 
 ---
