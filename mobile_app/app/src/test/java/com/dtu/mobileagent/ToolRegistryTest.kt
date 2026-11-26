@@ -24,10 +24,12 @@ class ToolRegistryTest {
         assertEquals(ToolSafetyLevel.SAFE_AUTONOMOUS, ToolRegistry.TOOLS["search_calendar"]?.safetyLevel)
         assertEquals(ToolSafetyLevel.SAFE_AUTONOMOUS, ToolRegistry.TOOLS["manage_notes"]?.safetyLevel)
         assertEquals(ToolSafetyLevel.SAFE_AUTONOMOUS, ToolRegistry.TOOLS["open_app"]?.safetyLevel)
+        assertEquals(ToolSafetyLevel.SAFE_AUTONOMOUS, ToolRegistry.TOOLS["draft_message"]?.safetyLevel)
 
         // Dangerous / external actions requiring confirmation
-        assertEquals(ToolSafetyLevel.REQUIRES_CONFIRMATION, ToolRegistry.TOOLS["draft_message"]?.safetyLevel)
-        assertTrue(ToolRegistry.isConfirmationRequired("draft_message"))
+        assertEquals(ToolSafetyLevel.REQUIRES_CONFIRMATION, ToolRegistry.TOOLS["automate_ui"]?.safetyLevel)
+        assertTrue(ToolRegistry.isConfirmationRequired("automate_ui"))
+        assertFalse(ToolRegistry.isConfirmationRequired("draft_message"))
         assertFalse(ToolRegistry.isConfirmationRequired("create_reminder"))
         assertFalse(ToolRegistry.isConfirmationRequired("open_app"))
     }
