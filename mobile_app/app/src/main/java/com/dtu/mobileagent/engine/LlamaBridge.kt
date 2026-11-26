@@ -157,13 +157,17 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "message", "thought": "", "content": "I can help you with these core offline tasks on your device:\n\n• Reminders: 'Remind me to study at 7 PM'\n• Calendar: 'What's my schedule for today?'\n• Notes: 'Take a note: BTP review on Monday'\n• Apps: 'Open WhatsApp' or 'Open Spotify'\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen."}"""
         }
 
-        // 4. App Launching & Media Search / Play (WhatsApp, Spotify, YouTube, Maps, Camera, Settings, Calculator)
+        // 4. Messaging Intent (WhatsApp / SMS / Text)
+        val messagingAction = tryHandleMessaging(userText, lower)
+        if (messagingAction != null) return messagingAction
+
+        // 5. App Launching & Media Search / Play (WhatsApp, Spotify, YouTube, Maps, Camera, Settings, Calculator)
         if (lower.contains("whatsapp") || lower.contains("spotify") || lower.contains("youtube") ||
             lower.contains("maps") || lower.contains("camera") || lower.contains("settings") ||
             lower.contains("calculator") || lower.startsWith("open ") || lower.startsWith("launch ") ||
             lower.startsWith("play ") || lower.contains("play on youtube") || lower.contains("play on spotify")) {
             val app = when {
-                "youtube" in lower -> "youtube"
+                "youtube" in lower || lower.startsWith("play ") -> "youtube"
                 "spotify" in lower -> "spotify"
                 "maps" in lower || "google maps" in lower || "navigate" in lower -> "maps"
                 "settings" in lower -> "settings"
@@ -174,12 +178,15 @@ class LlamaBridge(private val context: Context) {
 
             var query = ""
             if (app == "youtube") {
-                if (lower.contains("and play ")) {
-                    query = userText.substringAfter("and play ").trim()
-                } else if (lower.contains("play on youtube")) {
-                    query = userText.substringBefore("play on youtube").replace(Regex("""(?i)^open\s+"""), "").trim()
-                } else if (lower.startsWith("play ")) {
-                    query = userText.substring(5).replace(Regex("""(?i)\s+on youtube"""), "").trim()
+                query = when {
+                    lower.contains("and play ") -> userText.substringAfter("and play ").trim()
+                    lower.contains("play on youtube") -> userText.substringBefore("play on youtube").replace(Regex("""(?i)^open\s+"""), "").trim()
+                    lower.contains("on youtube") && lower.contains("play ") -> userText.substringAfter("play ").substringBefore("on youtube").trim()
+                    lower.startsWith("play ") -> userText.substring(5).replace(Regex("""(?i)\s+on youtube"""), "").trim()
+                    lower.contains("youtube play ") -> userText.substringAfter("youtube play ").trim()
+                    lower.contains("search ") && lower.contains("on youtube") -> userText.substringAfter("search ").substringBefore(" on youtube").trim()
+                    lower.contains("play ") -> userText.substringAfter("play ").trim()
+                    else -> ""
                 }
             } else if (app == "spotify") {
                 if (lower.contains("and play ")) {
@@ -329,5 +336,53 @@ class LlamaBridge(private val context: Context) {
         val escBody = gson.toJson(msgBody)
 
         return """{"type": "action", "thought": "Calculated split share ₹$splitShare ($totalBill / $numPeople) and drafting message", "tool": "draft_message", "parameters": {"recipient": $escRecipient, "message_body": $escBody, "platform": "whatsapp"}}"""
+    }
+
+    private fun tryHandleMessaging(userText: String, lower: String): String? {
+        val hasKeyword = lower.contains("message") || lower.contains("whatsapp") ||
+                lower.contains("text ") || lower.startsWith("text ") ||
+                lower.contains("sms") || lower.startsWith("send ") ||
+                lower.startsWith("tell ") || lower.contains("msg")
+
+        if (!hasKeyword) return null
+
+        // Pure app launches without intent to message
+        if (lower == "open whatsapp" || lower == "launch whatsapp" || lower == "whatsapp" ||
+            lower == "go to whatsapp" || lower == "start whatsapp") {
+            return null
+        }
+
+        val platform = if (lower.contains("sms") || lower.contains("text ") || lower.contains("text to")) "sms" else "whatsapp"
+
+        var recipient = "Contact"
+        var body = "Hello"
+
+        // Pattern matching: e.g. "message Rahul on WhatsApp: hello" or "send message to Ekansh saying meet at 5"
+        val toMatch = Regex("""(?:message|msg|send message to|send a message to|send whatsapp to|whatsapp|text|sms|tell)\s+([a-zA-Z0-9_+]+)(?:\s+on\s+whatsapp)?(?:\s+(?:saying|that|to|:)\s*(.*)|\s+(.*))?""", RegexOption.IGNORE_CASE).find(userText)
+
+        if (toMatch != null) {
+            val rec = toMatch.groupValues[1].trim()
+            val text1 = toMatch.groupValues[2].trim()
+            val text2 = if (toMatch.groupValues.size > 3) toMatch.groupValues[3].trim() else ""
+            val rawBody = if (text1.isNotBlank()) text1 else text2
+
+            if (rec.lowercase() !in listOf("someone", "to", "a", "the", "on", "whatsapp")) {
+                recipient = rec.replaceFirstChar { it.uppercase() }
+            }
+            if (rawBody.isNotBlank()) {
+                body = rawBody
+            }
+        }
+
+        // Clean up body
+        body = body.replace(Regex("""(?i)\s*on whatsapp\s*"""), " ")
+            .replace(Regex("""(?i)^(?:saying|that|:)\s*"""), "")
+            .trim()
+        if (body.isBlank()) body = "Hello"
+
+        val escRecipient = gson.toJson(recipient)
+        val escBody = gson.toJson(body)
+
+        return """{"type": "action", "thought": "Drafting $platform message to $recipient", "tool": "draft_message", "parameters": {"recipient": $escRecipient, "message_body": $escBody, "platform": "$platform"}}"""
     }
 }

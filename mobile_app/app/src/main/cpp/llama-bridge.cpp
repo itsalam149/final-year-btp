@@ -112,9 +112,66 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("what else") != std::string::npos ||
              userQuery.find("features") != std::string::npos ||
              userQuery == "help") {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I can help you with these core offline tasks on your device:\\n\\n• Reminders: 'Remind me to study at 7 PM'\\n• Calendar: 'What's my schedule for today?'\\n• Notes: 'Take a note: BTP review on Monday'\\n• Apps: 'Open WhatsApp' or 'Open Spotify'\\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen.\"}";
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I can help you with these core offline tasks on your device:\\n\\n• Reminders: 'Remind me to study at 7 PM'\\n• Calendar: 'What's my schedule for today?'\\n• Notes: 'Take a note: BTP review on Monday'\\n• Messaging: 'Message Rahul on WhatsApp: hello'\\n• Media: 'Play Kesariya on YouTube'\\n• Apps: 'Open WhatsApp' or 'Open Spotify'\\n• Switch Models: Tap the engine pill in the top bar to switch models.\"}";
     }
-    // 4. App Launching & Media Playback (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
+    // 4. Messaging Intent (WhatsApp / SMS / Text)
+    else if (userQuery.find("message") != std::string::npos ||
+             (userQuery.find("whatsapp") != std::string::npos && userQuery != "open whatsapp" && userQuery != "launch whatsapp" && userQuery != "whatsapp") ||
+             userQuery.find("text ") != std::string::npos ||
+             userQuery.find("sms ") != std::string::npos) {
+        std::string platform = (userQuery.find("sms") != std::string::npos || userQuery.find("text ") != std::string::npos) ? "sms" : "whatsapp";
+        std::string recipient = "Contact";
+        std::string body = "Hello";
+
+        size_t toPos = userQuery.find("to ");
+        size_t msgPos = userQuery.find("message ");
+        size_t waPos = userQuery.find("whatsapp ");
+
+        if (toPos != std::string::npos) {
+            std::string rem = userQuery.substr(toPos + 3);
+            size_t spacePos = rem.find(' ');
+            if (spacePos != std::string::npos) {
+                recipient = rem.substr(0, spacePos);
+                body = rem.substr(spacePos + 1);
+            } else {
+                recipient = rem;
+            }
+        } else if (msgPos != std::string::npos) {
+            std::string rem = userQuery.substr(msgPos + 8);
+            size_t spacePos = rem.find(' ');
+            if (spacePos != std::string::npos) {
+                recipient = rem.substr(0, spacePos);
+                body = rem.substr(spacePos + 1);
+            } else {
+                recipient = rem;
+            }
+        } else if (waPos != std::string::npos) {
+            std::string rem = userQuery.substr(waPos + 9);
+            size_t spacePos = rem.find(' ');
+            if (spacePos != std::string::npos) {
+                recipient = rem.substr(0, spacePos);
+                body = rem.substr(spacePos + 1);
+            } else {
+                recipient = rem;
+            }
+        }
+
+        // Clean body
+        size_t onWa = body.find("on whatsapp ");
+        if (onWa != std::string::npos) {
+            body = body.substr(onWa + 12);
+        } else {
+            size_t onWa2 = body.find("on whatsapp");
+            if (onWa2 != std::string::npos) body = body.substr(0, onWa2);
+        }
+        if (body.rfind("saying ", 0) == 0) body = body.substr(7);
+        if (body.rfind("that ", 0) == 0) body = body.substr(5);
+        if (body.rfind(": ", 0) == 0) body = body.substr(2);
+        if (body.empty()) body = "Hello";
+
+        responseJson = "{\"type\": \"action\", \"thought\": \"Drafting " + platform + " message to " + recipient + "\", \"tool\": \"draft_message\", \"parameters\": {\"recipient\": \"" + recipient + "\", \"message_body\": \"" + body + "\", \"platform\": \"" + platform + "\"}}";
+    }
+    // 5. App Launching & Media Playback (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
     else if (userQuery.find("whatsapp") != std::string::npos ||
              userQuery.find("spotify") != std::string::npos ||
              userQuery.find("youtube") != std::string::npos ||
@@ -133,10 +190,21 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
             appName = "spotify";
             size_t playPos = userQuery.find("play ");
             if (playPos != std::string::npos) q = userQuery.substr(playPos + 5);
-        } else if (userQuery.find("youtube") != std::string::npos) {
+        } else if (userQuery.find("youtube") != std::string::npos || userQuery.rfind("play ", 0) == 0) {
             appName = "youtube";
             size_t playPos = userQuery.find("play ");
-            if (playPos != std::string::npos) q = userQuery.substr(playPos + 5);
+            if (playPos != std::string::npos) {
+                q = userQuery.substr(playPos + 5);
+                size_t onYt = q.find(" on youtube");
+                if (onYt != std::string::npos) q = q.substr(0, onYt);
+            } else {
+                size_t searchPos = userQuery.find("search ");
+                if (searchPos != std::string::npos) {
+                    q = userQuery.substr(searchPos + 7);
+                    size_t onYt = q.find(" on youtube");
+                    if (onYt != std::string::npos) q = q.substr(0, onYt);
+                }
+            }
         } else if (userQuery.find("settings") != std::string::npos) {
             appName = "settings";
         } else if (userQuery.find("camera") != std::string::npos) {

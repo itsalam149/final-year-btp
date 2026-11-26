@@ -108,6 +108,11 @@ class MainActivity : ComponentActivity() {
             permissions.add(Manifest.permission.RECORD_AUDIO)
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_CONTACTS)
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
             != PackageManager.PERMISSION_GRANTED) {
             permissions.add(Manifest.permission.READ_CALENDAR)

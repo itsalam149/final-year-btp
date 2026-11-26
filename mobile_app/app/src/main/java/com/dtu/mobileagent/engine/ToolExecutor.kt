@@ -1,8 +1,14 @@
 package com.dtu.mobileagent.engine
 
+import android.Manifest
+import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.ContactsContract
+import android.provider.MediaStore
+import androidx.core.content.ContextCompat
 import com.dtu.mobileagent.data.local.AppDatabase
 import com.dtu.mobileagent.data.local.entities.AuditLogEntity
 import com.dtu.mobileagent.data.local.entities.CalendarEventEntity
@@ -69,6 +75,7 @@ class ToolExecutor(
                     "search_local_docs" -> executeSearchLocalDocs(parameters)
                     "read_document_summary" -> executeReadDocSummary(parameters)
                     "open_app" -> executeOpenApp(parameters)
+                    "draft_message" -> executeDraftMessage(parameters)
                     "automate_ui" -> executeAutomateUi(parameters)
                     else -> ExecutionResult(toolName, false, "Unhandled tool $toolName")
                 }
@@ -82,27 +89,7 @@ class ToolExecutor(
     suspend fun executeConfirmedAction(toolName: String, parameters: JsonObject): ExecutionResult =
         withContext(Dispatchers.IO) {
             if (toolName == "draft_message") {
-                val recipient = parameters.get("recipient")?.asString ?: ""
-                val body = parameters.get("message_body")?.asString ?: ""
-                val platform = if (parameters.has("platform")) parameters.get("platform").asString else "sms"
-
-                // Create Android Intent for system SMS dispatcher
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("sms:$recipient")
-                    putExtra("sms_body", body)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-
-                try {
-                    context.startActivity(intent)
-                    val summary = "Dispatched $platform message to $recipient: \"$body\""
-                    logAudit(toolName, parameters, "EXECUTED", summary)
-                    ExecutionResult(toolName, true, summary)
-                } catch (e: Exception) {
-                    val err = "Could not open messaging intent: ${e.message}"
-                    logAudit(toolName, parameters, "FAILED", err)
-                    ExecutionResult(toolName, false, err)
-                }
+                executeDraftMessage(parameters)
             } else if (toolName == "automate_ui") {
                 executeAutomateUi(parameters)
             } else {
@@ -222,16 +209,46 @@ class ToolExecutor(
 
         // 1. YouTube with direct search/play intent
         if (lowerApp == "youtube" && query.isNotBlank()) {
-            val uri = Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))
-            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                setPackage("com.google.android.youtube")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            var launched = false
+            // Direct playback intent
             try {
-                context.startActivity(intent)
+                val playIntent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).apply {
+                    putExtra(SearchManager.QUERY, query)
+                    setPackage("com.google.android.youtube")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(playIntent)
+                launched = true
             } catch (e: Exception) {
-                intent.setPackage(null)
-                context.startActivity(intent)
+                launched = false
+            }
+
+            if (!launched) {
+                try {
+                    val searchIntent = Intent(Intent.ACTION_SEARCH).apply {
+                        setPackage("com.google.android.youtube")
+                        putExtra(SearchManager.QUERY, query)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(searchIntent)
+                    launched = true
+                } catch (e: Exception) {
+                    launched = false
+                }
+            }
+
+            if (!launched) {
+                val uri = Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))
+                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                    setPackage("com.google.android.youtube")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    intent.setPackage(null)
+                    context.startActivity(intent)
+                }
             }
             val summary = "Playing '$query' on YouTube"
             logAudit("open_app", params, "EXECUTED", summary)
@@ -358,6 +375,131 @@ class ToolExecutor(
                 val err = "Unsupported UI action '$action'. Permitted: click, type, read_screen, navigate."
                 logAudit("automate_ui", params, "FAILED", err)
                 ExecutionResult("automate_ui", false, err)
+            }
+        }
+    }
+
+    private fun findPhoneNumberByName(name: String): String? {
+        val trimmed = name.trim()
+        if (trimmed.isBlank()) return null
+        if (trimmed.matches(Regex("""\+?[0-9]{7,15}"""))) {
+            return trimmed
+        }
+
+        try {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                return null
+            }
+            val uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
+            val projection = arrayOf(
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+            )
+            val selection = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?"
+            val selectionArgs = arrayOf("%$trimmed%")
+            context.contentResolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
+                val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                while (cursor.moveToNext()) {
+                    if (numberIndex != -1) {
+                        val number = cursor.getString(numberIndex)
+                        if (!number.isNullOrBlank()) {
+                            val clean = number.replace(Regex("[^0-9+]"), "")
+                            if (clean.isNotBlank()) return clean
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Permission or cursor exception
+        }
+        return null
+    }
+
+    private fun formatPhoneForWhatsApp(raw: String): String {
+        val clean = raw.replace(Regex("[^0-9]"), "")
+        return when {
+            clean.length == 10 -> "91$clean"
+            clean.length == 11 && clean.startsWith("0") -> "91" + clean.substring(1)
+            clean.length == 12 && clean.startsWith("91") -> clean
+            else -> clean
+        }
+    }
+
+    private suspend fun executeDraftMessage(params: JsonObject): ExecutionResult {
+        val recipient = params.get("recipient")?.asString?.trim() ?: ""
+        val body = params.get("message_body")?.asString?.trim() ?: ""
+        val platform = if (params.has("platform")) params.get("platform").asString.lowercase() else "whatsapp"
+
+        val phone = findPhoneNumberByName(recipient)
+
+        if (platform == "whatsapp") {
+            var sent = false
+            if (!phone.isNullOrBlank()) {
+                val formattedPhone = formatPhoneForWhatsApp(phone)
+                try {
+                    val uri = Uri.parse("https://api.whatsapp.com/send?phone=$formattedPhone&text=" + Uri.encode(body))
+                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        setPackage("com.whatsapp")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                    sent = true
+                } catch (e: Exception) {
+                    try {
+                        val uri = Uri.parse("https://api.whatsapp.com/send?phone=$formattedPhone&text=" + Uri.encode(body))
+                        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                        sent = true
+                    } catch (e2: Exception) {
+                        sent = false
+                    }
+                }
+            }
+
+            if (!sent) {
+                // Open WhatsApp share/send with pre-filled message
+                try {
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        setPackage("com.whatsapp")
+                        putExtra(Intent.EXTRA_TEXT, body)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(sendIntent)
+                    sent = true
+                } catch (e: Exception) {
+                    val fallbackUri = Uri.parse("https://api.whatsapp.com/send?text=" + Uri.encode(body))
+                    context.startActivity(Intent(Intent.ACTION_VIEW, fallbackUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                    sent = true
+                }
+            }
+
+            val summary = if (!phone.isNullOrBlank()) {
+                "Opened WhatsApp chat with $recipient ($phone) with message: \"$body\""
+            } else {
+                "Opened WhatsApp with message: \"$body\" (select $recipient to send)"
+            }
+            logAudit("draft_message", params, "EXECUTED", summary)
+            return ExecutionResult("draft_message", true, summary)
+        } else {
+            // SMS platform
+            val targetNumber = phone ?: recipient
+            val smsUri = if (targetNumber.isNotBlank()) Uri.parse("smsto:$targetNumber") else Uri.parse("sms:")
+            val intent = Intent(Intent.ACTION_SENDTO, smsUri).apply {
+                putExtra("sms_body", body)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            try {
+                context.startActivity(intent)
+                val summary = "Dispatched SMS to $recipient ($targetNumber): \"$body\""
+                logAudit("draft_message", params, "EXECUTED", summary)
+                return ExecutionResult("draft_message", true, summary)
+            } catch (e: Exception) {
+                val err = "Could not open SMS messaging intent: ${e.message}"
+                logAudit("draft_message", params, "FAILED", err)
+                return ExecutionResult("draft_message", false, err)
             }
         }
     }

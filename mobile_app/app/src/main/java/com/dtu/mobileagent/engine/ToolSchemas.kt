@@ -48,8 +48,8 @@ object ToolRegistry {
         ),
         "draft_message" to ToolDefinition(
             name = "draft_message",
-            description = "Prepares an SMS or messaging intent to send to a contact. REQUIRES EXPLICIT USER CONFIRMATION.",
-            safetyLevel = ToolSafetyLevel.REQUIRES_CONFIRMATION,
+            description = "Prepares and dispatches an SMS or WhatsApp messaging intent with pre-filled content to a contact.",
+            safetyLevel = ToolSafetyLevel.SAFE_AUTONOMOUS,
             requiredParameters = listOf("recipient", "message_body")
         ),
         "open_app" to ToolDefinition(
