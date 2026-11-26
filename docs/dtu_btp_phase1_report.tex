@@ -438,7 +438,8 @@ Table~\ref{tab:aaqb_results} presents the empirical results across three Small L
 \caption{Empirical AAQB Benchmark Results across Model Architectures and Quantization Formats.}
 \label{tab:aaqb_results}
 \small
-\begin{tabularx}{\textwidth}{llccrrrr}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{llccrrrr}
 \toprule
 \textbf{Model} & \textbf{Format} & \textbf{GBNF} & \textbf{RAM} & \textbf{Speed} & \textbf{Syntax} & \textbf{Tool Acc} & \textbf{Success} \\
 & & & \textbf{(MB)} & \textbf{(tok/s)} & \textbf{(\%)} & \textbf{(\%)} & \textbf{(\%)} \\
@@ -459,7 +460,8 @@ Table~\ref{tab:aaqb_results} presents the empirical results across three Small L
 & \textbf{GGUF Q4\_K\_M} & \textbf{YES} & \textbf{880} & \textbf{29.7} & \textbf{100.0\%} & \textbf{70.0\%} & \textbf{68.0\%} \\
 & GGUF Q4\_0 (Naive) & No  & 790 & 31.8 & 58.0\% & 58.0\% & 46.0\% \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
+}
 \end{table}
 
 \section{Analysis of the 4-Bit Syntax Collapse Phenomenon}
@@ -484,7 +486,7 @@ The Major Project is executed by a three-member team from the Department of Comp
 \centering
 \caption{DTU CSE GP159 Team Member Responsibilities.}
 \label{tab:team}
-\begin{tabularx}{\textwidth}{p{3.5cm}cp{8.5cm}}
+\begin{tabularx}{\textwidth}{l c X}
 \toprule
 \textbf{Member Name} & \textbf{Roll No} & \textbf{Core Technical Ownership \& Deliverables} \\
 \midrule
