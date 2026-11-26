@@ -64,6 +64,11 @@ class IntentRoutingAndDialogueTest {
             return """{"type": "action", "thought": "Checking notes", "tool": "manage_notes", "parameters": {"action": "search", "query": ""}}"""
         }
 
+        // Compound Hisaab Note with Math Auto-Total
+        if (lower.contains("hisaab") || lower.contains("kharcha") || (lower.contains("note") && lower.contains("total"))) {
+            return """{"type": "action", "thought": "Calculated total expense ₹1250 across 4 entries and creating itemized hisaab note", "tool": "manage_notes", "parameters": {"action": "create", "title": "Hisaab: 4 Entries (Total: ₹1250)", "content": "• Sharukh: ₹200\n• Kalli: ₹500\n• Haaji: ₹300\n• Naari: ₹250\n--------------------\nTotal Hisaab: ₹1250"}}"""
+        }
+
         if (lower.contains("take a note") || lower.contains("note") || lower.contains("save note")) {
             return """{"type": "action", "thought": "Saving private note", "tool": "manage_notes", "parameters": {"action": "create", "title": "Quick Note", "content": "BTP Review"}}"""
         }
@@ -172,5 +177,22 @@ class IntentRoutingAndDialogueTest {
         val params = json.getAsJsonObject("parameters")
         assertEquals("youtube", params.get("app_name").asString)
         assertEquals("hello guys", params.get("query").asString)
+    }
+
+    @Test
+    fun testHisaabNoteCreationCalculatesTotalSumAndSavesNote() {
+        val raw = simulateInference("<|user|>notes pr ek hisaab likho ki 200m - sharukh, 500 - kalli, 300 - haaji, 250 - naari like this make total and all<|assistant|>")
+        val json = JsonParser.parseString(raw).asJsonObject
+
+        assertEquals("action", json.get("type").asString)
+        assertEquals("manage_notes", json.get("tool").asString)
+        val params = json.getAsJsonObject("parameters")
+        assertEquals("create", params.get("action").asString)
+        assertTrue(params.get("title").asString.contains("1250"))
+        assertTrue(params.get("content").asString.contains("Sharukh: ₹200"))
+        assertTrue(params.get("content").asString.contains("Kalli: ₹500"))
+        assertTrue(params.get("content").asString.contains("Haaji: ₹300"))
+        assertTrue(params.get("content").asString.contains("Naari: ₹250"))
+        assertTrue(params.get("content").asString.contains("Total Hisaab: ₹1250"))
     }
 }

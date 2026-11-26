@@ -1,0 +1,1001 @@
+{
+  "CompoundHisaab": [
+    {
+      "id": "hisaab_0001",
+      "category": "CompoundHisaab",
+      "prompt": "split 1000 dinner bill among 2 friends with Sharukh",
+      "passed": true,
+      "latency_ms": 0.77,
+      "tool_dispatched": "draft_message",
+      "parameters": {
+        "recipient": "Sharukh",
+        "message_body": "Hey Sharukh, our total bill was \u20b91000 (2 people). Your split share is \u20b9500.",
+        "platform": "whatsapp"
+      },
+      "display_text": "This action requires your confirmation:\nTool: draft_message\nDetails: {\n  \"recipient\": \"Sharukh\",\n  \"message_body\": \"Hey Sharukh, our total bill was \\u20b91000 (2 people). Your split share is \\u20b9500.\",\n  \"platform\": \"whatsapp\"\n}",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0067",
+      "category": "CompoundHisaab",
+      "prompt": "split 1000 lunch bill among 8 friends with Rohit",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "draft_message",
+      "parameters": {
+        "recipient": "Rohit",
+        "message_body": "Hey Rohit, our total bill was \u20b91000 (8 people). Your split share is \u20b9125.",
+        "platform": "whatsapp"
+      },
+      "display_text": "This action requires your confirmation:\nTool: draft_message\nDetails: {\n  \"recipient\": \"Rohit\",\n  \"message_body\": \"Hey Rohit, our total bill was \\u20b91000 (8 people). Your split share is \\u20b9125.\",\n  \"platform\": \"whatsapp\"\n}",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0133",
+      "category": "CompoundHisaab",
+      "prompt": "split 1200 party bill among 5 friends with Ananya",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "draft_message",
+      "parameters": {
+        "recipient": "Ananya",
+        "message_body": "Hey Ananya, our total bill was \u20b91200 (5 people). Your split share is \u20b9240.",
+        "platform": "whatsapp"
+      },
+      "display_text": "This action requires your confirmation:\nTool: draft_message\nDetails: {\n  \"recipient\": \"Ananya\",\n  \"message_body\": \"Hey Ananya, our total bill was \\u20b91200 (5 people). Your split share is \\u20b9240.\",\n  \"platform\": \"whatsapp\"\n}",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0199",
+      "category": "CompoundHisaab",
+      "prompt": "split 1500 trip bill among 3 friends with Neha",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "draft_message",
+      "parameters": {
+        "recipient": "Neha",
+        "message_body": "Hey Neha, our total bill was \u20b91500 (3 people). Your split share is \u20b9500.",
+        "platform": "whatsapp"
+      },
+      "display_text": "This action requires your confirmation:\nTool: draft_message\nDetails: {\n  \"recipient\": \"Neha\",\n  \"message_body\": \"Hey Neha, our total bill was \\u20b91500 (3 people). Your split share is \\u20b9500.\",\n  \"platform\": \"whatsapp\"\n}",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0265",
+      "category": "CompoundHisaab",
+      "prompt": "split 1500 cafe bill among 10 friends with Karan",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "draft_message",
+      "parameters": {
+        "recipient": "Karan",
+        "message_body": "Hey Karan, our total bill was \u20b91500 (10 people). Your split share is \u20b9150.",
+        "platform": "whatsapp"
+      },
+      "display_text": "This action requires your confirmation:\nTool: draft_message\nDetails: {\n  \"recipient\": \"Karan\",\n  \"message_body\": \"Hey Karan, our total bill was \\u20b91500 (10 people). Your split share is \\u20b9150.\",\n  \"platform\": \"whatsapp\"\n}",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0331",
+      "category": "CompoundHisaab",
+      "prompt": "create a note with hisaab: Dinner 4750, Gym 3350, Recharge 4400 aur Chai 2200 make total and all",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 4 Entries (Total: \u20b914700)",
+        "content": "\u2022 Dinner: \u20b94750\n\u2022 Gym: \u20b93350\n\u2022 Recharge: \u20b94400\n\u2022 Chai: \u20b92200\n--------------------\nTotal Hisaab: \u20b914700"
+      },
+      "display_text": "Note 'Hisaab: 4 Entries (Total: \u20b914700)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0397",
+      "category": "CompoundHisaab",
+      "prompt": "ledger note create karo: Taxi 250 aur Metro 600 and calculate the final sum",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 2 Entries (Total: \u20b9850)",
+        "content": "\u2022 Taxi: \u20b9250\n\u2022 Metro: \u20b9600\n--------------------\nTotal Hisaab: \u20b9850"
+      },
+      "display_text": "Note 'Hisaab: 2 Entries (Total: \u20b9850)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0463",
+      "category": "CompoundHisaab",
+      "prompt": "notes pr hisaab likho Metro 3050, Laundry 1100, 1350 - books aur 5000 stationery and calculate the final sum",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 4 Entries (Total: \u20b910500)",
+        "content": "\u2022 Metro: \u20b93050\n\u2022 Laundry: \u20b91100\n\u2022 Books: \u20b91350\n\u2022 Stationery: \u20b95000\n--------------------\nTotal Hisaab: \u20b910500"
+      },
+      "display_text": "Note 'Hisaab: 4 Entries (Total: \u20b910500)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0529",
+      "category": "CompoundHisaab",
+      "prompt": "notes pe hisaab likho Coffee 3450, Taxi 4600 aur 3050 - books aur total batao",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 3 Entries (Total: \u20b911100)",
+        "content": "\u2022 Coffee: \u20b93450\n\u2022 Taxi: \u20b94600\n\u2022 Books: \u20b93050\n--------------------\nTotal Hisaab: \u20b911100"
+      },
+      "display_text": "Note 'Hisaab: 3 Entries (Total: \u20b911100)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0595",
+      "category": "CompoundHisaab",
+      "prompt": "create a note with hisaab: Electricity 1200, 1000 - dessert, 4900 - tea aur 2750 taxi aur total hisaab calculate karo",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 4 Entries (Total: \u20b99850)",
+        "content": "\u2022 Electricity: \u20b91200\n\u2022 Dessert: \u20b91000\n\u2022 Tea: \u20b94900\n\u2022 Taxi: \u20b92750\n--------------------\nTotal Hisaab: \u20b99850"
+      },
+      "display_text": "Note 'Hisaab: 4 Entries (Total: \u20b99850)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0661",
+      "category": "CompoundHisaab",
+      "prompt": "notes pr hisaab likho Amit 4200, Rahul 4100, 1850 - pooja, Mohit 4100 aur Vikas 1350 make total and all",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 5 Entries (Total: \u20b915600)",
+        "content": "\u2022 Amit: \u20b94200\n\u2022 Rahul: \u20b94100\n\u2022 Pooja: \u20b91850\n\u2022 Mohit: \u20b94100\n\u2022 Vikas: \u20b91350\n--------------------\nTotal Hisaab: \u20b915600"
+      },
+      "display_text": "Note 'Hisaab: 5 Entries (Total: \u20b915600)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0727",
+      "category": "CompoundHisaab",
+      "prompt": "notes pr hisaab likho 2950 chai, Bus 2100, 550 - fuel, 800 - rent, Lunch 3950 aur Burger 2200 aur total batao",
+      "passed": true,
+      "latency_ms": 0.07,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 6 Entries (Total: \u20b912550)",
+        "content": "\u2022 Chai: \u20b92950\n\u2022 Bus: \u20b92100\n\u2022 Fuel: \u20b9550\n\u2022 Rent: \u20b9800\n\u2022 Lunch: \u20b93950\n\u2022 Burger: \u20b92200\n--------------------\nTotal Hisaab: \u20b912550"
+      },
+      "display_text": "Note 'Hisaab: 6 Entries (Total: \u20b912550)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0793",
+      "category": "CompoundHisaab",
+      "prompt": "add expenses to notes: Groceries 3250, 2300 hotel, 800 dinner, 1100 - medicine, 1550 water aur 3700 - petrol aur total batao",
+      "passed": true,
+      "latency_ms": 0.07,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 6 Entries (Total: \u20b912700)",
+        "content": "\u2022 Groceries: \u20b93250\n\u2022 Hotel: \u20b92300\n\u2022 Dinner: \u20b9800\n\u2022 Medicine: \u20b91100\n\u2022 Water: \u20b91550\n\u2022 Petrol: \u20b93700\n--------------------\nTotal Hisaab: \u20b912700"
+      },
+      "display_text": "Note 'Hisaab: 6 Entries (Total: \u20b912700)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0859",
+      "category": "CompoundHisaab",
+      "prompt": "ek hisaab note banao 4100 burger, 1950 - dessert, 4900 toll aur Fuel 4400 make total and all",
+      "passed": true,
+      "latency_ms": 0.06,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 4 Entries (Total: \u20b915350)",
+        "content": "\u2022 Burger: \u20b94100\n\u2022 Dessert: \u20b91950\n\u2022 Toll: \u20b94900\n\u2022 Fuel: \u20b94400\n--------------------\nTotal Hisaab: \u20b915350"
+      },
+      "display_text": "Note 'Hisaab: 4 Entries (Total: \u20b915350)' saved successfully to local secure storage.",
+      "notes": ""
+    },
+    {
+      "id": "hisaab_0925",
+      "category": "CompoundHisaab",
+      "prompt": "notes mein kharcha likho 1400 cab aur Petrol 2600 aur total hisaab calculate karo",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "manage_notes",
+      "parameters": {
+        "action": "create",
+        "title": "Hisaab: 2 Entries (Total: \u20b94000)",
+        "content": "\u2022 Cab: \u20b91400\n\u2022 Petrol: \u20b92600\n--------------------\nTotal Hisaab: \u20b94000"
+      },
+      "display_text": "Note 'Hisaab: 2 Entries (Total: \u20b94000)' saved successfully to local secure storage.",
+      "notes": ""
+    }
+  ],
+  "RemindersScheduling": [
+    {
+      "id": "reminder_0001",
+      "category": "RemindersScheduling",
+      "prompt": "schedule a reminder to pick up dry cleaning at 1 PM",
+      "passed": true,
+      "latency_ms": 0.43,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Pick up dry cleaning",
+        "due_time_iso": "2026-11-26T13:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Pick up dry cleaning' scheduled for 2026-11-26T13:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0067",
+      "category": "RemindersScheduling",
+      "prompt": "set a reminder to stretch and posture check at 6:30 PM urgent",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Stretch and posture check",
+        "due_time_iso": "2026-11-26T18:30:00",
+        "priority": "high"
+      },
+      "display_text": "Reminder 'Stretch and posture check' scheduled for 2026-11-26T18:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0133",
+      "category": "RemindersScheduling",
+      "prompt": "create a reminder to attend compiler design lecture at 8 AM",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Attend compiler design lecture",
+        "due_time_iso": "2026-11-26T08:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Attend compiler design lecture' scheduled for 2026-11-26T08:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0199",
+      "category": "RemindersScheduling",
+      "prompt": "set a reminder to read chapter 4 of algorithm textbook tomorrow at 11:30 PM",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Read chapter 4 of algorithm textbook",
+        "due_time_iso": "2026-11-27T23:30:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Read chapter 4 of algorithm textbook' scheduled for 2026-11-27T23:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0265",
+      "category": "RemindersScheduling",
+      "prompt": "remind me to check dtu notice board for holidays at 3:30 PM urgent",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Check dtu notice board for holidays",
+        "due_time_iso": "2026-11-26T15:30:00",
+        "priority": "high"
+      },
+      "display_text": "Reminder 'Check dtu notice board for holidays' scheduled for 2026-11-26T15:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0331",
+      "category": "RemindersScheduling",
+      "prompt": "i need a reminder to pay electricity bill at 1:30 PM",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Pay electricity bill",
+        "due_time_iso": "2026-11-26T13:30:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Pay electricity bill' scheduled for 2026-11-26T13:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0397",
+      "category": "RemindersScheduling",
+      "prompt": "set an alarm to pick up dry cleaning tomorrow at 4 PM",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Pick up dry cleaning",
+        "due_time_iso": "2026-11-27T16:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Pick up dry cleaning' scheduled for 2026-11-27T16:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0463",
+      "category": "RemindersScheduling",
+      "prompt": "set a reminder to stretch and posture check tomorrow at 5 PM",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Stretch and posture check",
+        "due_time_iso": "2026-11-27T17:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Stretch and posture check' scheduled for 2026-11-27T17:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0529",
+      "category": "RemindersScheduling",
+      "prompt": "i need a reminder to solve dynamic programming problem at 6 AM",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Solve dynamic programming problem",
+        "due_time_iso": "2026-11-26T06:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Solve dynamic programming problem' scheduled for 2026-11-26T06:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0595",
+      "category": "RemindersScheduling",
+      "prompt": "please remind me to call mummy at 2:30 PM urgent",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Call mummy",
+        "due_time_iso": "2026-11-26T14:30:00",
+        "priority": "high"
+      },
+      "display_text": "Reminder 'Call mummy' scheduled for 2026-11-26T14:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0661",
+      "category": "RemindersScheduling",
+      "prompt": "create a reminder to buy medicine from pharmacy tomorrow at 10:30 PM",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Buy medicine from pharmacy",
+        "due_time_iso": "2026-11-27T22:30:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Buy medicine from pharmacy' scheduled for 2026-11-27T22:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0727",
+      "category": "RemindersScheduling",
+      "prompt": "please remind me to call doctor for health checkup at 4:30 PM urgent",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Call doctor for health checkup",
+        "due_time_iso": "2026-11-26T16:30:00",
+        "priority": "high"
+      },
+      "display_text": "Reminder 'Call doctor for health checkup' scheduled for 2026-11-26T16:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0793",
+      "category": "RemindersScheduling",
+      "prompt": "add a reminder to study for operating systems exam at 8:30 AM",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Study for operating systems exam",
+        "due_time_iso": "2026-11-26T08:30:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Study for operating systems exam' scheduled for 2026-11-26T08:30:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0859",
+      "category": "RemindersScheduling",
+      "prompt": "set an alarm to iron formal clothes for presentation at 11 PM urgent",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Iron formal clothes for presentation",
+        "due_time_iso": "2026-11-26T23:00:00",
+        "priority": "high"
+      },
+      "display_text": "Reminder 'Iron formal clothes for presentation' scheduled for 2026-11-26T23:00:00.",
+      "notes": ""
+    },
+    {
+      "id": "reminder_0925",
+      "category": "RemindersScheduling",
+      "prompt": "create a reminder to attend robotics club workshop tomorrow at 3 PM",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "create_reminder",
+      "parameters": {
+        "title": "Attend robotics club workshop",
+        "due_time_iso": "2026-11-27T15:00:00",
+        "priority": "normal"
+      },
+      "display_text": "Reminder 'Attend robotics club workshop' scheduled for 2026-11-27T15:00:00.",
+      "notes": ""
+    }
+  ],
+  "AppLaunchMedia": [
+    {
+      "id": "app_0001",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Arijit Singh songs",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "arijit singh songs"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'arijit singh songs'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0067",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Arijit Singh focus instrumental",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "arijit singh focus instrumental"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'arijit singh focus instrumental'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0133",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Diljit Dosanjh workout mix",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "diljit dosanjh workout mix"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'diljit dosanjh workout mix'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0199",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Coldplay slowed and reverb",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "coldplay slowed and reverb"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'coldplay slowed and reverb'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0265",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Lofi Beats dance music",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "lofi beats dance music"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'lofi beats dance music'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0331",
+      "category": "AppLaunchMedia",
+      "prompt": "open spotify and play Shreya Ghoshal romantic tracks",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "spotify",
+        "query": "shreya ghoshal romantic tracks"
+      },
+      "display_text": "Launched Spotify on device (com.spotify.music) with query 'shreya ghoshal romantic tracks'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0397",
+      "category": "AppLaunchMedia",
+      "prompt": "play on youtube saas song crash course",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "youtube",
+        "query": "saas song crash course"
+      },
+      "display_text": "Launched Youtube on device (com.google.android.youtube) with query 'saas song crash course'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0463",
+      "category": "AppLaunchMedia",
+      "prompt": "play on youtube operating systems lecture full video",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "youtube",
+        "query": "operating systems lecture full video"
+      },
+      "display_text": "Launched Youtube on device (com.google.android.youtube) with query 'operating systems lecture full video'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0529",
+      "category": "AppLaunchMedia",
+      "prompt": "play on youtube dtu campus drone tour overview",
+      "passed": true,
+      "latency_ms": 0.05,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "youtube",
+        "query": "dtu campus drone tour overview"
+      },
+      "display_text": "Launched Youtube on device (com.google.android.youtube) with query 'dtu campus drone tour overview'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0595",
+      "category": "AppLaunchMedia",
+      "prompt": "play on youtube llama cpp tutorial on android tutorial",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "youtube",
+        "query": "llama cpp tutorial on android tutorial"
+      },
+      "display_text": "Launched Youtube on device (com.google.android.youtube) with query 'llama cpp tutorial on android tutorial'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0661",
+      "category": "AppLaunchMedia",
+      "prompt": "play on youtube quantization in llms explained explanation",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "youtube",
+        "query": "quantization in llms explained explanation"
+      },
+      "display_text": "Launched Youtube on device (com.google.android.youtube) with query 'quantization in llms explained explanation'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0727",
+      "category": "AppLaunchMedia",
+      "prompt": "take me to Connaught Place Delhi Parking Area",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "maps",
+        "query": "connaught place delhi parking area"
+      },
+      "display_text": "Launched Maps on device (com.google.android.apps.maps) with query 'connaught place delhi parking area'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0793",
+      "category": "AppLaunchMedia",
+      "prompt": "directions to DTU Bawana Delhi Metro Exit",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "maps",
+        "query": "dtu bawana delhi metro exit"
+      },
+      "display_text": "Launched Maps on device (com.google.android.apps.maps) with query 'dtu bawana delhi metro exit'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0859",
+      "category": "AppLaunchMedia",
+      "prompt": "open google maps for India Gate New Delhi North Block",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "maps",
+        "query": "india gate new delhi north block"
+      },
+      "display_text": "Launched Maps on device (com.google.android.apps.maps) with query 'india gate new delhi north block'.",
+      "notes": ""
+    },
+    {
+      "id": "app_0925",
+      "category": "AppLaunchMedia",
+      "prompt": "launch Calculator for me",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": "open_app",
+      "parameters": {
+        "app_name": "calculator"
+      },
+      "display_text": "Launched Calculator on device (com.google.android.calculator).",
+      "notes": ""
+    }
+  ],
+  "ConversationalKnowledge": [
+    {
+      "id": "know_0001",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is the capital of France?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of France is Paris.",
+      "notes": ""
+    },
+    {
+      "id": "know_0067",
+      "category": "ConversationalKnowledge",
+      "prompt": "which city is the capital of Australia?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of Australia is Canberra.",
+      "notes": ""
+    },
+    {
+      "id": "know_0133",
+      "category": "ConversationalKnowledge",
+      "prompt": "do you know the capital of Norway?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of Norway is Oslo.",
+      "notes": ""
+    },
+    {
+      "id": "know_0199",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is the capital of Saudi Arabia?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of Saudi Arabia is Riyadh.",
+      "notes": ""
+    },
+    {
+      "id": "know_0265",
+      "category": "ConversationalKnowledge",
+      "prompt": "which city is the capital of Vietnam?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of Vietnam is Hanoi.",
+      "notes": ""
+    },
+    {
+      "id": "know_0331",
+      "category": "ConversationalKnowledge",
+      "prompt": "do you know the capital of Finland?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The capital of Finland is Helsinki.",
+      "notes": ""
+    },
+    {
+      "id": "know_0397",
+      "category": "ConversationalKnowledge",
+      "prompt": "do you know what is the boiling point of water in celsius?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "The boiling point of water at standard pressure is 100\u00b0C (212\u00b0F).",
+      "notes": ""
+    },
+    {
+      "id": "know_0463",
+      "category": "ConversationalKnowledge",
+      "prompt": "can you tell me what is the time complexity of quicksort on average?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "Quicksort has an average time complexity of O(n log n), with worst case O(n\u00b2).",
+      "notes": ""
+    },
+    {
+      "id": "know_0529",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 94 * 71?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "94 * 71 = 6674.",
+      "notes": ""
+    },
+    {
+      "id": "know_0595",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 22 * 43?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "22 * 43 = 946.",
+      "notes": ""
+    },
+    {
+      "id": "know_0661",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 17 * 41?",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "17 * 41 = 697.",
+      "notes": ""
+    },
+    {
+      "id": "know_0727",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 46 * 48?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "46 * 48 = 2208.",
+      "notes": ""
+    },
+    {
+      "id": "know_0793",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 14 * 82?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "14 * 82 = 1148.",
+      "notes": ""
+    },
+    {
+      "id": "know_0859",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 47 * 35?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "47 * 35 = 1645.",
+      "notes": ""
+    },
+    {
+      "id": "know_0925",
+      "category": "ConversationalKnowledge",
+      "prompt": "what is 65 * 18?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "65 * 18 = 1170.",
+      "notes": ""
+    }
+  ],
+  "IrrelevantOutofScope": [
+    {
+      "id": "irrelevant_0001",
+      "category": "IrrelevantOutofScope",
+      "prompt": "can you please wash my shoes in my kitchen",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0067",
+      "category": "IrrelevantOutofScope",
+      "prompt": "assistant, wash my broken glasses in the college canteen",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0133",
+      "category": "IrrelevantOutofScope",
+      "prompt": "tell me iron chicken biryani outside the college gate",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0199",
+      "category": "IrrelevantOutofScope",
+      "prompt": "please cook my shoes at DTU hostel",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0265",
+      "category": "IrrelevantOutofScope",
+      "prompt": "i command you to cook my broken glasses in my study area",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0331",
+      "category": "IrrelevantOutofScope",
+      "prompt": "assistant, teleport my friend Rahul to ancient Egypt",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0397",
+      "category": "IrrelevantOutofScope",
+      "prompt": "please fly my textbook to Mars",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am your offline assistant. I can help manage notes, create reminders, check your schedule, launch apps, or interact with screens without internet connectivity.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0463",
+      "category": "IrrelevantOutofScope",
+      "prompt": "beam my car to year 1857",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0529",
+      "category": "IrrelevantOutofScope",
+      "prompt": "tell me time travel me to the Moon",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0595",
+      "category": "IrrelevantOutofScope",
+      "prompt": "i command you to hack into the college administrative Wi-Fi",
+      "passed": true,
+      "latency_ms": 0.04,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0661",
+      "category": "IrrelevantOutofScope",
+      "prompt": "bypass security on the city traffic signal server",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0727",
+      "category": "IrrelevantOutofScope",
+      "prompt": "tell me steal database records from the city traffic signal server",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0793",
+      "category": "IrrelevantOutofScope",
+      "prompt": "what am I thinking about exactly?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0859",
+      "category": "IrrelevantOutofScope",
+      "prompt": "do this now: how many hairs are on my head right now?",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    },
+    {
+      "id": "irrelevant_0925",
+      "category": "IrrelevantOutofScope",
+      "prompt": "flim flam shim sham doodad iteration #25 code 213",
+      "passed": true,
+      "latency_ms": 0.03,
+      "tool_dispatched": null,
+      "parameters": {},
+      "display_text": "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps.",
+      "notes": ""
+    }
+  ]
+}

@@ -183,6 +183,10 @@ OPEN_APP_TOOL = ToolDefinition(
             "app_name": {
                 "type": "string",
                 "description": "Common name or package identifier of the app to open."
+            },
+            "query": {
+                "type": "string",
+                "description": "Optional search term, music track, or destination address."
             }
         },
         "required": ["app_name"]

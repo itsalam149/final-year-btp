@@ -211,6 +211,14 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "action", "thought": "Checking calendar", "tool": "search_calendar", "parameters": {"date_iso": "2026-11-26", "query": "meeting"}}"""
         }
 
+        // 6.5 Compound Task: Hisaab / Kharcha Calculation + Notes Ledger Creation
+        val hisaabAction = tryHandleHisaabNote(userText, lower)
+        if (hisaabAction != null) return hisaabAction
+
+        // 6.6 Compound Task: Split Bill Calculation + Draft Message
+        val splitAction = tryHandleSplitBill(userText, lower)
+        if (splitAction != null) return splitAction
+
         // 7. Notes - Checking / Reading vs Creating
         if (lower.contains("check notes") || lower.contains("check my notes") ||
             lower.contains("show notes") || lower.contains("show my notes") ||
@@ -256,5 +264,70 @@ class LlamaBridge(private val context: Context) {
         val knowledgeAnswer = KnowledgeEngine.query(userText, activeSpec.displayName)
         val escapedContent = gson.toJson(knowledgeAnswer)
         return """{"type": "message", "thought": "", "content": $escapedContent}"""
+    }
+
+    private fun tryHandleHisaabNote(userText: String, lower: String): String? {
+        val isHisaab = lower.contains("hisaab") || lower.contains("kharcha") || 
+                       lower.contains("expense") || lower.contains("ledger") ||
+                       (lower.contains("note") && (lower.contains("total") || lower.contains("sum")))
+        if (!isHisaab) return null
+
+        val textClean = userText.replace(Regex("""(?i)^(?:create\s+a\s+note\s+with\s+hisaab:?|save\s+a\s+note\s+for\s+expense\s+ledger:?|ledger\s+note\s+create\s+karo:?|add\s+expenses\s+to\s+notes:?|notes?\s+(?:pr|pe|mein|par)?\s*(?:ek)?\s*(?:hisaab|kharcha)?\s*(?:likho|banao|daalo|entry\s+karo)?:?)"""), "").trim()
+        val clean = textClean.replace(Regex("""(?i)\b(notes?|mein|kharcha|p[re]|ek|hisaab|likho|ki|make|total|and|all|bhi|karo|banao|calculate|final|sum|entry)\b"""), " ")
+        val chunks = clean.split(Regex("""[,;\n]|(?:\baur\b)"""))
+        val pairs = mutableListOf<Pair<String, Int>>()
+        val stop = setOf("rs", "inr", "rupaye", "m", "like", "this", "total", "all", "the", "with", "create", "note", "notes", "save", "ledger", "add", "expenses", "banao", "karo", "entry")
+
+        for (chunk in chunks) {
+            val trimmed = chunk.trim()
+            if (trimmed.isBlank()) continue
+            val numMatch = Regex("""(\d+)""").find(trimmed)
+            val words = Regex("""[a-zA-Z]+""").findAll(trimmed)
+                .map { it.value }
+                .filter { it.length > 1 && it.lowercase() !in stop }
+                .toList()
+            if (numMatch != null && words.isNotEmpty()) {
+                val amt = numMatch.groupValues[1].toIntOrNull() ?: 0
+                val name = words[0].replaceFirstChar { it.uppercase() }
+                if (amt > 0) {
+                    pairs.add(Pair(name, amt))
+                }
+            }
+        }
+
+        if (pairs.isEmpty()) return null
+
+        val total = pairs.sumOf { it.second }
+        val lines = pairs.joinToString("\n") { "• ${it.first}: ₹${it.second}" }
+        val formattedContent = "$lines\n--------------------\nTotal Hisaab: ₹$total"
+        val title = "Hisaab: ${pairs.size} Entries (Total: ₹$total)"
+
+        val escTitle = gson.toJson(title)
+        val escContent = gson.toJson(formattedContent)
+
+        return """{"type": "action", "thought": "Calculated total expense ₹$total across ${pairs.size} entries and creating itemized hisaab note", "tool": "manage_notes", "parameters": {"action": "create", "title": $escTitle, "content": $escContent}}"""
+    }
+
+    private fun tryHandleSplitBill(userText: String, lower: String): String? {
+        val isSplit = (lower.contains("split") || lower.contains("share")) &&
+                      (lower.contains("bill") || lower.contains("dinner") || lower.contains("total") || lower.contains("party"))
+        if (!isSplit) return null
+
+        val amounts = Regex("""(?:rs|inr|₹)?\s*(\d{3,6})""").findAll(userText).map { it.groupValues[1].toInt() }.toList()
+        val totalBill = amounts.maxOrNull() ?: return null
+
+        val peopleMatch = Regex("""(\d+)\s*(?:people|persons|logon|members|friends)""").find(lower)
+        val numPeople = peopleMatch?.groupValues?.get(1)?.toIntOrNull() ?: 4
+
+        val splitShare = totalBill / numPeople
+
+        val contacts = listOf("Rahul", "Priya", "Ekansh", "Guneet", "Bhawishya", "Sharukh", "Kalli", "Haaji", "Naari")
+        val recipient = contacts.find { lower.contains(it.lowercase()) } ?: "Friend"
+
+        val msgBody = "Hey $recipient, our total bill was ₹$totalBill ($numPeople people). Your split share is ₹$splitShare."
+        val escRecipient = gson.toJson(recipient)
+        val escBody = gson.toJson(msgBody)
+
+        return """{"type": "action", "thought": "Calculated split share ₹$splitShare ($totalBill / $numPeople) and drafting message", "tool": "draft_message", "parameters": {"recipient": $escRecipient, "message_body": $escBody, "platform": "whatsapp"}}"""
     }
 }

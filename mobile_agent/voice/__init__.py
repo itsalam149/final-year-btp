@@ -1,5 +1,5 @@
 """
-Privacy-First Offline Voice Pipeline for Mobile AI Agent (JARVIS)
+Privacy-First Offline Voice Pipeline for Mobile AI Agent (DTU GP159)
 Department of CSE, Delhi Technological University (DTU) | Group GP159
 
 Lead Developer: Guneet Toppo (23/CS/160 - Mobile Integrations & Voice Lead)

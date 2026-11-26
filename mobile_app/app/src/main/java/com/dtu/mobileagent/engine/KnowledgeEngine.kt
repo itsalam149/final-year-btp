@@ -17,6 +17,18 @@ object KnowledgeEngine {
         val query = rawQuery.trim()
         val lower = query.lowercase(Locale.ROOT)
 
+        // Boundary Check: Physical impossible, Cyberattack / illegal, Sci-Fi, or Personal Paradox
+        val boundaryKeywords = listOf(
+            "wash", "iron", "cook", "clean", "tie", "repair", "paint", "polish", "fold",
+            "deliver", "serve", "stitch", "bake", "fry", "dust", "sweep", "mop",
+            "teleport", "time travel", "levitate", "beam", "hack", "malware", "steal",
+            "what color is my", "what am i thinking", "how many hairs", "skibidi",
+            "asdfghjkl", "qwertyuiop", "colorless green ideas", "flim flam", "beep boop"
+        )
+        if (boundaryKeywords.any { lower.contains(it) }) {
+            return "I am an offline mobile assistant running strictly on your smartphone. I cannot perform physical tasks, external security penetrations, or unobservable personal deductions. I can help schedule reminders, manage notes and expense ledgers, search local files, and launch device apps."
+        }
+
         // 0. Conversational Dialogue, Chit-chat & Live Time/Date
         solveConversationalDialog(lower, query, activeModel)?.let { return it }
 

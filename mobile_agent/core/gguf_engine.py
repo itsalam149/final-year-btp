@@ -55,9 +55,32 @@ class GGUFInferenceEngine:
                 n_threads=self.n_threads,
                 verbose=False
             )
-            if self.use_grammar and os.path.exists(self.grammar_path):
-                self._grammar = LlamaGrammar.from_file(self.grammar_path)
-        except ImportError:
+            if self.use_grammar:
+                schema = {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["action", "message"]},
+                        "thought": {"type": "string"},
+                        "tool": {
+                            "type": "string",
+                            "enum": [
+                                "create_reminder",
+                                "search_calendar",
+                                "manage_notes",
+                                "search_local_docs",
+                                "read_document_summary",
+                                "draft_message",
+                                "open_app",
+                                "automate_ui",
+                            ],
+                        },
+                        "parameters": {"type": "object"},
+                        "content": {"type": "string"},
+                    },
+                    "required": ["type", "thought"],
+                }
+                self._grammar = LlamaGrammar.from_json_schema(json.dumps(schema))
+        except Exception:
             self._llm = None
 
     def generate(self, prompt: str) -> str:
@@ -206,5 +229,5 @@ class GGUFInferenceEngine:
         return json.dumps({
             "type": "message",
             "thought": "Direct conversational response.",
-            "content": "I am your offline JARVIS assistant running locally on device. How can I help you today?"
+            "content": "I am your offline mobile AI assistant running locally on device for DTU GP159. How can I help you today?"
         })

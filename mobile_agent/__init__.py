@@ -1,7 +1,7 @@
 """
 Mobile Agent Core Package
 Privacy-First Offline AI Mobile Agent using LLM Quantization
-(JARVIS-like On-Device Intelligent Mobile Assistant)
+(On-Device Intelligent Mobile AI Assistant for DTU GP159)
 Department of CSE, Delhi Technological University (DTU)
 """
 

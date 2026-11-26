@@ -128,7 +128,7 @@ class MobileToolHandlers:
             "message": f"Prepared {platform.upper()} draft for {recipient}: '{message_body}'"
         }
 
-    def open_app(self, app_name: str) -> Dict[str, Any]:
+    def open_app(self, app_name: str, query: Optional[str] = None) -> Dict[str, Any]:
         """Launches target app on phone (Level 2/3 App Interaction)."""
         clean_app = app_name.strip().lower()
         package_map = {
@@ -140,15 +140,20 @@ class MobileToolHandlers:
             "gmail": "com.google.android.gm",
             "settings": "com.android.settings",
             "calculator": "com.google.android.calculator",
-            "clock": "com.google.android.deskclock"
+            "clock": "com.google.android.deskclock",
+            "camera": "com.android.camera2"
         }
         pkg = package_map.get(clean_app, f"com.{clean_app}.app")
-        return {
+        msg = f"Launched {app_name.capitalize()} on device ({pkg})" + (f" with query '{query}'." if query else ".")
+        res = {
             "status": "LAUNCHED",
             "app_name": app_name,
             "package_name": pkg,
-            "message": f"Launched {app_name.capitalize()} on device ({pkg})."
+            "message": msg
         }
+        if query:
+            res["query"] = query
+        return res
 
     def automate_ui(self, action: str, target: Optional[str] = None, input_text: Optional[str] = None) -> Dict[str, Any]:
         """Interacts with screen elements via Accessibility Service (Level 3 Automation)."""

@@ -1,39 +1,52 @@
 # ==============================================================================
-# GBNF Grammar for Privacy-First Offline AI Mobile Agent (JARVIS)
+# GBNF Grammar for Privacy-First Offline AI Mobile Agent (DTU GP159)
 # Department of CSE, Delhi Technological University (DTU) | Group GP159
 # 
 # Purpose: Mathematically guarantees 100% valid JSON syntax from 4-bit / 8-bit
 # quantized SLMs during on-device sampling, preventing the "4-bit syntax collapse".
 # ==============================================================================
 
-root ::= "{" ws "\"type\":" ws (action_payload | message_payload) ws "}"
+root ::= "{" ws "\"type\":" ws payload ws "}"
 
-# An action payload invokes a permitted mobile tool
+payload ::= action_payload | message_payload
+
 action_payload ::= "\"action\"," ws "\"thought\":" ws string "," ws "\"tool\":" ws tool_name "," ws "\"parameters\":" ws tool_params
 
-# A message payload delivers direct conversational response to the user
 message_payload ::= "\"message\"," ws "\"thought\":" ws string "," ws "\"content\":" ws string
 
-# Permitted core mobile tools (Levels 1, 2, and 3)
 tool_name ::= "\"create_reminder\"" | "\"search_calendar\"" | "\"manage_notes\"" | "\"search_local_docs\"" | "\"read_document_summary\"" | "\"draft_message\"" | "\"open_app\"" | "\"automate_ui\""
 
 tool_params ::= reminder_params | calendar_params | notes_params | docs_params | summary_params | message_params | open_app_params | automate_ui_params
 
-reminder_params ::= "{" ws "\"title\":" ws string "," ws "\"due_time_iso\":" ws string ("," ws "\"priority\":" ws ("\"low\"" | "\"normal\"" | "\"high\""))? ws "}"
+reminder_params ::= "{" ws "\"title\":" ws string "," ws "\"due_time_iso\":" ws string priority_opt ws "}"
+priority_opt ::= ("," ws "\"priority\":" ws priority_val)?
+priority_val ::= "\"low\"" | "\"normal\"" | "\"high\""
 
-calendar_params ::= "{" ws "\"date_iso\":" ws string ("," ws "\"query\":" ws string)? ws "}"
+calendar_params ::= "{" ws "\"date_iso\":" ws string query_opt ws "}"
+query_opt ::= ("," ws "\"query\":" ws string)?
 
-notes_params ::= "{" ws "\"action\":" ws ("\"create\"" | "\"read\"" | "\"list\"" | "\"search\"") ("," ws "\"title\":" ws string)? ("," ws "\"content\":" ws string)? ("," ws "\"query\":" ws string)? ws "}"
+notes_params ::= "{" ws "\"action\":" ws note_action note_title_opt note_content_opt note_query_opt ws "}"
+note_action ::= "\"create\"" | "\"read\"" | "\"list\"" | "\"search\""
+note_title_opt ::= ("," ws "\"title\":" ws string)?
+note_content_opt ::= ("," ws "\"content\":" ws string)?
+note_query_opt ::= ("," ws "\"query\":" ws string)?
 
-docs_params ::= "{" ws "\"query\":" ws string ("," ws "\"max_results\":" ws [0-9]+)? ws "}"
+docs_params ::= "{" ws "\"query\":" ws string docs_limit_opt ws "}"
+docs_limit_opt ::= ("," ws "\"max_results\":" ws [0-9]+)?
 
-summary_params ::= "{" ws "\"filename\":" ws string ("," ws "\"focus_topic\":" ws string)? ws "}"
+summary_params ::= "{" ws "\"filename\":" ws string summary_focus_opt ws "}"
+summary_focus_opt ::= ("," ws "\"focus_topic\":" ws string)?
 
-message_params ::= "{" ws "\"recipient\":" ws string "," ws "\"message_body\":" ws string ("," ws "\"platform\":" ws ("\"sms\"" | "\"whatsapp\""))? ws "}"
+message_params ::= "{" ws "\"recipient\":" ws string "," ws "\"message_body\":" ws string platform_opt ws "}"
+platform_opt ::= ("," ws "\"platform\":" ws platform_val)?
+platform_val ::= "\"sms\"" | "\"whatsapp\""
 
 open_app_params ::= "{" ws "\"app_name\":" ws string ws "}"
 
-automate_ui_params ::= "{" ws "\"action\":" ws ("\"click\"" | "\"type\"" | "\"read_screen\"" | "\"navigate\"") ("," ws "\"target\":" ws string)? ("," ws "\"input_text\":" ws string)? ws "}"
+automate_ui_params ::= "{" ws "\"action\":" ws ui_action ui_target_opt ui_input_opt ws "}"
+ui_action ::= "\"click\"" | "\"type\"" | "\"read_screen\"" | "\"navigate\""
+ui_target_opt ::= ("," ws "\"target\":" ws string)?
+ui_input_opt ::= ("," ws "\"input_text\":" ws string)?
 
 # JSON Primitives & Whitespace
 string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]))* "\""

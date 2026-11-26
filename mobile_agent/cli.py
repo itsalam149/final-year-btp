@@ -1,5 +1,5 @@
 """
-Interactive Terminal CLI for Privacy-First Offline Mobile Agent (JARVIS).
+Interactive Terminal CLI for Privacy-First Offline Mobile Agent (DTU CSE GP159).
 Allows live interaction, testing mobile tools, inspecting SQLite persistence,
 and verifying security confirmation gates.
 """
@@ -31,7 +31,7 @@ def print_banner(voice_enabled: bool = False):
     voice_status = f"{GREEN}ON{RESET}" if voice_enabled else f"{RED}OFF{RESET}"
     banner = f"""{CYAN}{BOLD}
 ======================================================================
-  JARVIS: Privacy-First Offline AI Mobile Agent (DTU GP159)
+  Offline Mobile AI Agent: Privacy-First On-Device Assistant (DTU GP159)
   Zero Cloud Reliance | 100% Local Inference & SQLite Storage
   Voice Mode: {voice_status} | Offline Audio Synthesizer Active
 ======================================================================{RESET}
@@ -85,7 +85,7 @@ def main():
 
     while True:
         try:
-            prompt_label = f"{YELLOW}[CONFIRM Y/N]{RESET} > " if pending_confirmation else f"{GREEN}JARVIS{RESET} > "
+            prompt_label = f"{YELLOW}[CONFIRM Y/N]{RESET} > " if pending_confirmation else f"{GREEN}Agent{RESET} > "
             user_input = input(prompt_label).strip()
 
             if not user_input:
@@ -93,7 +93,7 @@ def main():
 
             # Command handling
             if user_input.lower() in ["/exit", "exit", "quit", ":q"]:
-                print(f"{CYAN}Shutting down JARVIS offline sandbox. Goodbye!{RESET}")
+                print(f"{CYAN}Shutting down offline mobile agent sandbox. Goodbye!{RESET}")
                 break
 
             elif user_input.lower() == "/tools":
