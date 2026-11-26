@@ -78,10 +78,15 @@ fun ChatScreen(
                                 color = TextPrimary
                             )
                         }
+                        val isCurrentDownloaded = galleryManager?.isModelDownloaded(uiState.activeModel) == true
                         Text(
-                            text = "100% on-device • ${uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")} • ${uiState.currentTokensPerSec} tps",
+                            text = if (isCurrentDownloaded) {
+                                "100% on-device • ${uiState.activeModel.displayName.replace("-Instruct", "").replace("-Chat", "")} • ${uiState.currentTokensPerSec} tps"
+                            } else {
+                                "Weights not downloaded • Tap ⬇ to download"
+                            },
                             fontSize = 11.sp,
-                            color = TextSecondary
+                            color = if (isCurrentDownloaded) TextSecondary else Color(0xFFFBBF24)
                         )
                     }
                 },
@@ -127,27 +132,53 @@ fun ChatScreen(
                         ) {
                             ModelGalleryManager.CATALOG.forEach { spec ->
                                 val isSelected = uiState.activeModel.id == spec.id
+                                val isDownloaded = galleryManager?.isModelDownloaded(spec) == true
                                 DropdownMenuItem(
                                     text = {
-                                        Column {
-                                            Text(
-                                                text = spec.displayName,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) EmeraldGlow else TextPrimary,
-                                                fontSize = 13.sp
-                                            )
-                                            Text(
-                                                text = "${spec.precision} • ${spec.sizeMb} MB • ~${spec.ramMb} MB RAM",
-                                                fontSize = 10.sp,
-                                                color = TextSecondary
-                                            )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = spec.displayName,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected) EmeraldGlow else TextPrimary,
+                                                    fontSize = 13.sp
+                                                )
+                                                Text(
+                                                    text = if (isDownloaded) "✓ Downloaded (${spec.sizeMb} MB)" else "⬇ Download Required (${spec.sizeMb} MB)",
+                                                    fontSize = 10.sp,
+                                                    color = if (isDownloaded) EmeraldOffline else TextMuted
+                                                )
+                                            }
+                                            if (!isDownloaded) {
+                                                Surface(
+                                                    color = BlueAccent.copy(alpha = 0.2f),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "GET",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = BlueAccent,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
                                         }
                                     },
                                     onClick = {
                                         showModelMenu = false
-                                        coroutineScope.launch {
-                                            controller.switchModel(spec)
-                                            galleryManager?.setActiveModel(spec)
+                                        if (isDownloaded) {
+                                            coroutineScope.launch {
+                                                controller.switchModel(spec)
+                                                galleryManager?.setActiveModel(spec)
+                                            }
+                                        } else {
+                                            // Model not downloaded! Open gallery sheet to download it
+                                            showModelGallery = true
                                         }
                                     }
                                 )
@@ -196,6 +227,46 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Download Model Notice Banner
+            if (galleryManager != null && !galleryManager.isModelDownloaded(uiState.activeModel)) {
+                Surface(
+                    color = CardBackground,
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFBBF24).copy(alpha = 0.4f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                        .clickable { showModelGallery = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = null,
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "${uiState.activeModel.displayName.take(16)} weights (${uiState.activeModel.sizeMb} MB) not on disk.",
+                                fontSize = 11.sp,
+                                color = TextPrimary
+                            )
+                        }
+                        Text(
+                            text = "DOWNLOAD",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFBBF24)
+                        )
+                    }
+                }
+            }
+
             // Message Feed or Clean Welcome
             if (messages.isEmpty()) {
                 Box(

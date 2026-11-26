@@ -129,23 +129,31 @@ class LlamaBridge(private val context: Context) {
         }
         val lower = userText.lowercase().trim()
 
-        // 1. User corrections or negative feedback
+        // 1. User corrections, complaints, profanity or negative feedback
         if (lower.contains("not to") || lower.contains("didn't ask") || lower.contains("didnt ask") ||
             lower.contains("don't send") || lower.contains("dont send") || lower.contains("stop") ||
-            lower.contains("cancel") || lower.contains("wrong") || lower.contains("what the fuck") ||
-            lower.contains("wtf") || lower.contains("not that")) {
-            return """{"type": "message", "thought": "", "content": "My apologies! I am here to help you manage reminders, calendar events, notes, and opening apps on your phone. What would you like me to do?"}"""
+            lower.contains("cancel") || lower.contains("wrong") || lower.contains("fuck") ||
+            lower.contains("wtf") || lower.contains("not that") || lower.contains("shut up") ||
+            lower.contains("idiot") || lower.contains("stupid") || lower.contains("useless")) {
+            return """{"type": "message", "thought": "", "content": "My apologies if I didn't get that right! I am here to help you solve math, write code, check your schedule, create reminders, or take notes. What can I do for you?"}"""
         }
 
-        // 2. Greetings
+        // 2. Urgent / friendly plea for help ("bro please help me", "help me please")
+        if (lower.contains("please help") || lower.contains("help me bro") || lower.contains("bro please") ||
+            lower.contains("help me please") || lower.contains("i need help")) {
+            return """{"type": "message", "thought": "", "content": "I'm right here bro! Tell me what's going on or what you're working on—whether it's an assignment, math problem, coding question, or managing your phone—and we'll solve it together. What do you need help with?"}"""
+        }
+
+        // 3. Greetings
         if (lower == "hey" || lower == "hello" || lower == "hi" || lower == "yo" ||
-            lower.startsWith("hey ") || lower.startsWith("hello ") || lower.startsWith("hi ")) {
+            lower.startsWith("hey ") || lower.startsWith("hello ") || lower.startsWith("hi ") ||
+            lower == "hey bro" || lower == "hello bro") {
             return """{"type": "message", "thought": "", "content": "Hello! How can I help you today?"}"""
         }
 
-        // 3. Capabilities / Help (strictly limited to core features)
+        // 4. Capabilities / Specific Feature Inquiry
         if (lower.contains("what can you do") || lower.contains("what you can do") || lower.contains("any other thing") ||
-            lower.contains("what else") || lower.contains("features") || lower.contains("help")) {
+            lower.contains("what else") || lower.contains("features") || lower == "help") {
             return """{"type": "message", "thought": "", "content": "I can help you with these core offline tasks on your device:\n\n• Reminders: 'Remind me to study at 7 PM'\n• Calendar: 'What's my schedule for today?'\n• Notes: 'Take a note: BTP review on Monday'\n• Apps: 'Open WhatsApp' or 'Open Spotify'\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen."}"""
         }
 

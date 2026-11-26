@@ -483,19 +483,41 @@ Responses typically communicate using JSON with standard HTTP status codes (200 
             .replace(Regex("""[?!.]+$"""), "")
             .trim()
 
+        // Never echo profanity or negative words as a topic
+        val lowerClean = cleanTopic.lowercase()
+        if (lowerClean.contains("fuck") || lowerClean.contains("shit") || lowerClean.contains("idiot") ||
+            lowerClean.contains("stupid") || lowerClean.contains("useless") || lowerClean.contains("trash") ||
+            lowerClean.contains("hate you") || lowerClean.contains("shut up")) {
+            return "I apologize if I frustrated you or gave an unhelpful answer! How can I assist you with your tasks, math, coding, or device questions?"
+        }
+
         val capitalizedTopic = if (cleanTopic.length > 1) {
             cleanTopic.substring(0, 1).uppercase() + cleanTopic.substring(1)
         } else {
-            "that"
+            "that topic"
         }
 
-        return "That's an interesting point about **$capitalizedTopic**! As your on-device assistant powered by **$activeModel**, I can help you explore technical concepts, solve equations, write code, or organize your notes and reminders. Would you like a deeper explanation, or would you like to apply this to a specific task?"
+        return "I understand you're inquiring about **$capitalizedTopic**. As your on-device assistant powered by **$activeModel**, I can help you explore technical concepts, solve equations, write code, or organize your notes and reminders. Would you like a deeper explanation, or would you like to apply this to a specific task?"
     }
 
     // ------------------------------------------------------------------------
     // Conversational Dialogue, Chit-chat & Live Time/Date
     // ------------------------------------------------------------------------
     private fun solveConversationalDialog(lower: String, original: String, activeModel: String): String? {
+        // User frustration, profanity or anger
+        if (lower.contains("fuck") || lower.contains("wtf") || lower.contains("shut up") ||
+            lower.contains("idiot") || lower.contains("stupid") || lower.contains("useless") ||
+            lower.contains("hate you") || lower.contains("you suck") || lower.contains("trash") ||
+            lower.contains("bullshit") || lower.contains("nonsense")) {
+            return "I apologize if I frustrated you or gave an unhelpful answer! I am running 100% locally on your device to help you solve math, write code, check your schedule, create reminders, or take notes. Please let me know what specific task you'd like to work on, and I'll do my best to get it right."
+        }
+
+        // Friendly / urgent plea for help ("bro please help me", "help me please")
+        if (lower.contains("please help") || lower.contains("help me bro") || lower.contains("bro please") ||
+            lower.contains("help me please") || lower.contains("i need help")) {
+            return "I'm right here bro! Tell me what's going on or what you're working on—whether it's an assignment, math problem, coding question, or managing your phone—and we'll solve it together. What do you need help with?"
+        }
+
         // Live Real-Time Clock & Date
         if (lower.contains("what time is it") || lower.contains("what's the time") ||
             lower.contains("tell me the time") || lower == "time" || lower.contains("current time")) {

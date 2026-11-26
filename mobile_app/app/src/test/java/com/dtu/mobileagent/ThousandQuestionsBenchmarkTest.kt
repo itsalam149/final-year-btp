@@ -279,6 +279,16 @@ class ThousandQuestionsBenchmarkTest {
         // Test identity
         val whoReply = KnowledgeEngine.query("who created you")
         assertTrue("Must mention DTU: $whoReply", whoReply.contains("DTU") && whoReply.contains("GP159"))
+
+        // Test profanity de-escalation (never echo profanity!)
+        val profanityReply = KnowledgeEngine.query("fuck you")
+        assertTrue("Must be polite apology: $profanityReply", profanityReply.contains("apologize"))
+        assertFalse("Must never echo back profanity as topic: $profanityReply", profanityReply.contains("That's an interesting point about"))
+
+        // Test warm plea for help (never give sterile bullet list!)
+        val helpReply = KnowledgeEngine.query("bro please help me")
+        assertTrue("Must reply warmly: $helpReply", helpReply.contains("right here bro"))
+        assertFalse("Must not give sterile bullet list: $helpReply", helpReply.contains("• Reminders:"))
     }
 
     private fun assertNoParrotEchoing(reply: String) {

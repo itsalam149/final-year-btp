@@ -313,71 +313,78 @@ fun ModelCardItem(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Offline weights status indicator
                         if (isDownloaded) {
+                            // Offline weights status indicator
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = EmeraldOffline,
-                                    modifier = Modifier.size(13.dp)
+                                    modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "Weights on disk",
                                     fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
                                     color = EmeraldOffline
                                 )
                             }
+
+                            // Activate / Active Button
+                            if (!isActive) {
+                                Button(
+                                    onClick = onActivate,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldOffline),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Activate Model", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            } else {
+                                Surface(
+                                    color = EmeraldDark.copy(alpha = 0.25f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.4f))
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = EmeraldGlow,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Active Engine",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = EmeraldGlow
+                                        )
+                                    }
+                                }
+                            }
                         } else {
-                            OutlinedButton(
+                            // NOT DOWNLOADED: Strictly only allow downloading! Cannot switch without downloading!
+                            Text(
+                                text = "Not downloaded",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                            Button(
                                 onClick = onDownload,
                                 shape = RoundedCornerShape(8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(13.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Get GGUF (${spec.sizeMb} MB)", fontSize = 11.sp, color = TextSecondary)
-                            }
-                        }
-
-                        // Switch Engine Button
-                        if (!isActive) {
-                            Button(
-                                onClick = onActivate,
-                                shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8)),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Switch Engine", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        } else {
-                            Surface(
-                                color = EmeraldDark.copy(alpha = 0.25f),
-                                shape = RoundedCornerShape(8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldOffline.copy(alpha = 0.4f))
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = EmeraldGlow,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Active Engine",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = EmeraldGlow
-                                    )
-                                }
+                                Text("Download GGUF (${spec.sizeMb} MB)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

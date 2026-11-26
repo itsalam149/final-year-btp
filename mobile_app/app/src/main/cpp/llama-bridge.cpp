@@ -72,7 +72,7 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
     }
     userQuery = trim(userQuery);
 
-    // 1. User corrections, complaints, or negative feedback
+    // 1. User corrections, complaints, profanity or negative feedback
     if (userQuery.find("not to") != std::string::npos ||
         userQuery.find("didn't ask") != std::string::npos ||
         userQuery.find("didnt ask") != std::string::npos ||
@@ -81,17 +81,29 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
         userQuery.find("stop") != std::string::npos ||
         userQuery.find("cancel") != std::string::npos ||
         userQuery.find("wrong") != std::string::npos ||
-        userQuery.find("what the fuck") != std::string::npos ||
+        userQuery.find("fuck") != std::string::npos ||
         userQuery.find("wtf") != std::string::npos ||
-        userQuery.find("not that") != std::string::npos) {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"My apologies! I am here to help you manage reminders, calendar events, notes, and opening apps on your phone. What would you like me to do?\"}";
+        userQuery.find("not that") != std::string::npos ||
+        userQuery.find("shut up") != std::string::npos ||
+        userQuery.find("idiot") != std::string::npos ||
+        userQuery.find("stupid") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"My apologies if I didn't get that right! I am here to help you solve math, write code, check your schedule, create reminders, or take notes. What can I do for you?\"}";
     }
-    // 2. Natural Greetings
+    // 2. Urgent / friendly plea for help ("bro please help me", "help me please")
+    else if (userQuery.find("please help") != std::string::npos ||
+             userQuery.find("help me bro") != std::string::npos ||
+             userQuery.find("bro please") != std::string::npos ||
+             userQuery.find("help me please") != std::string::npos ||
+             userQuery.find("i need help") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I'm right here bro! Tell me what's going on or what you're working on—whether it's an assignment, math problem, coding question, or managing your phone—and we'll solve it together. What do you need help with?\"}";
+    }
+    // 3. Natural Greetings
     else if (userQuery == "hey" || userQuery == "hello" || userQuery == "hi" || userQuery == "yo" ||
-             userQuery.rfind("hey ", 0) == 0 || userQuery.rfind("hello ", 0) == 0 || userQuery.rfind("hi ", 0) == 0) {
+             userQuery.rfind("hey ", 0) == 0 || userQuery.rfind("hello ", 0) == 0 || userQuery.rfind("hi ", 0) == 0 ||
+             userQuery == "hey bro" || userQuery == "hello bro") {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Hello! How can I help you today?\"}";
     }
-    // 3. Capabilities & Help (Strictly limited to real core functionalities)
+    // 4. Capabilities & Help (Strictly limited to real core functionalities)
     else if (userQuery.find("what can you do") != std::string::npos ||
              userQuery.find("what you can do") != std::string::npos ||
              userQuery.find("what do you do") != std::string::npos ||
@@ -99,7 +111,7 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("other thing") != std::string::npos ||
              userQuery.find("what else") != std::string::npos ||
              userQuery.find("features") != std::string::npos ||
-             userQuery.find("help") != std::string::npos) {
+             userQuery == "help") {
         responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I can help you with these core offline tasks on your device:\\n\\n• Reminders: 'Remind me to study at 7 PM'\\n• Calendar: 'What's my schedule for today?'\\n• Notes: 'Take a note: BTP review on Monday'\\n• Apps: 'Open WhatsApp' or 'Open Spotify'\\n• Switch Models: Tap the engine pill in the top bar to switch between Gemma-2-2B, Llama-3.2, and Qwen.\"}";
     }
     // 4. App Launching & Checking messages (WhatsApp, Spotify, YouTube, Maps, Camera, Settings)
