@@ -7,9 +7,14 @@ import com.dtu.mobileagent.data.local.entities.ChatMessageEntity
 import com.dtu.mobileagent.data.local.entities.NoteEntity
 import com.dtu.mobileagent.data.local.entities.ReminderEntity
 import com.dtu.mobileagent.data.local.entities.AuditLogEntity
+import com.dtu.mobileagent.data.local.entities.UserMemoryEntity
+import com.dtu.mobileagent.data.local.entities.DocumentEntity
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +45,7 @@ class AgentController(
     private val gson = Gson()
     private val llamaBridge = LlamaBridge(context)
     private val toolExecutor = ToolExecutor(context, database)
+    private val documentIndexer = DocumentIndexer(context, database)
     val hardwareProfiler = HardwareProfiler(context)
     private var speechCallback: ((String) -> Unit)? = null
 
@@ -58,6 +64,8 @@ class AgentController(
     val messages: Flow<List<ChatMessageEntity>> = database.chatMessageDao().getAllMessages()
     val allNotes: Flow<List<NoteEntity>> = database.noteDao().getAllNotes()
     val activeReminders: Flow<List<ReminderEntity>> = database.reminderDao().getActiveReminders()
+    val allMemories: Flow<List<UserMemoryEntity>> = database.userMemoryDao().getAllMemoriesFlow()
+    val allDocuments: Flow<List<DocumentEntity>> = database.documentDao().getAllDocumentsFlow()
     val recentAuditLogs: Flow<List<AuditLogEntity>> = database.auditLogDao().getRecentLogs(50)
     val telemetry: StateFlow<HardwareTelemetry> = hardwareProfiler.telemetry
 
@@ -86,6 +94,15 @@ class AgentController(
             currentTokensPerSec = metrics.tokensPerSecond,
             currentMemoryMb = metrics.memoryFootprintMb
         )
+
+        // Asynchronously scan and index device files in background
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                documentIndexer.scanDeviceDocuments()
+            } catch (e: Exception) {
+                Log.w(TAG, "Background document indexing failed", e)
+            }
+        }
     }
 
     suspend fun switchModel(spec: ModelSpec) {
@@ -119,6 +136,22 @@ class AgentController(
         _uiState.value = _uiState.value.copy(isProcessing = true)
 
         try {
+            // Check direct memory storage, recall, or document indexing intents
+            val memoryOrDocResp = tryHandleMemoryOrDocIntent(text)
+            if (memoryOrDocResp != null) {
+                database.chatMessageDao().insertMessage(
+                    ChatMessageEntity(
+                        sender = "agent",
+                        content = memoryOrDocResp
+                    )
+                )
+                if (_uiState.value.isVoiceOutputEnabled) {
+                    speechCallback?.invoke(memoryOrDocResp)
+                }
+                _uiState.value = _uiState.value.copy(isProcessing = false)
+                return
+            }
+
             // 2. Build local ReAct prompt with system context & history budget
             val prompt = buildPrompt(text)
 
@@ -256,21 +289,160 @@ class AgentController(
         database.chatMessageDao().clearHistory()
     }
 
+    suspend fun rescanDocuments(): Int {
+        return documentIndexer.scanDeviceDocuments()
+    }
+
+    suspend fun clearMemories() {
+        database.userMemoryDao().clearMemories()
+    }
+
     private suspend fun buildPrompt(userText: String): String {
         val recent = database.chatMessageDao().getRecentMessages(6).reversed()
         val historyStr = recent.joinToString("\n") { "${it.sender.uppercase()}: ${it.content}" }
+
+        // Local RAG: inject top persistent memories and matching indexed documents
+        val memories = try {
+            database.userMemoryDao().getAllMemories().take(6)
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val memorySection = if (memories.isNotEmpty()) {
+            "\n[User Persistent Knowledge & Memory]:\n" + memories.joinToString("\n") { "• ${it.fact}" }
+        } else ""
+
+        val relevantDocs = try {
+            database.documentDao().searchDocuments(userText, 2)
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val docSection = if (relevantDocs.isNotEmpty()) {
+            "\n[Relevant Indexed Documents]:\n" + relevantDocs.joinToString("\n") { "• [${it.filename}]: ${it.summary.ifEmpty { it.content.take(120) }}" }
+        } else ""
 
         return """
             <|system|>
             You are an offline mobile AI assistant running locally on an Android device for DTU CSE GP159.
             You must output JSON matching the system GBNF schema.
             Permitted tools: create_reminder, search_calendar, manage_notes, open_app, search_local_docs, read_document_summary, draft_message.
+            $memorySection
+            $docSection
             <|history|>
             $historyStr
             <|user|>
             $userText
             <|assistant|>
         """.trimIndent()
+    }
+
+    private suspend fun tryHandleMemoryOrDocIntent(text: String): String? {
+        val lower = text.lowercase().trim()
+
+        // 1. Explicit Memory Storage: "remember that ...", "remember: ...", "remember ..."
+        val remMatch = Regex("""(?i)^(?:remember\s+that|remember\s*:|remember|note\s+that|keep\s+in\s+mind\s+that)\s+(.+)""").find(text.trim())
+        if (remMatch != null) {
+            val rawFact = remMatch.groupValues[1].trim()
+            val tag = if (rawFact.length > 20) rawFact.take(20) else rawFact
+            database.userMemoryDao().insertMemory(
+                UserMemoryEntity(
+                    category = "personal",
+                    keyTag = tag,
+                    fact = rawFact
+                )
+            )
+            return "I have saved that to your private on-device memory:\n• $rawFact"
+        }
+
+        // 2. Personal Fact Stated: "my [attribute] is [value]"
+        val myMatch = Regex("""(?i)^my\s+([a-zA-Z0-9_\s]{2,30}?)\s+is\s+(.+)""").find(text.trim())
+        if (myMatch != null) {
+            val key = myMatch.groupValues[1].trim()
+            val value = myMatch.groupValues[2].trim()
+            val lowerKey = key.lowercase()
+            if (lowerKey !in listOf("day", "schedule", "plan", "notes", "calendar", "reminder", "reminders", "files", "documents")) {
+                val fact = "${key.replaceFirstChar { it.uppercase() }} is $value"
+                database.userMemoryDao().insertMemory(
+                    UserMemoryEntity(
+                        category = "personal",
+                        keyTag = key,
+                        fact = fact
+                    )
+                )
+                return "Saved to persistent memory:\n• $fact"
+            }
+        }
+
+        // 3. User Memory Recall Inquiry
+        val isQueryMemory = lower.contains("what do you remember") || lower.contains("what do you know about me") ||
+                lower.contains("what's in your memory") || lower.contains("what is in your memory") ||
+                lower.contains("show memory") || lower.contains("list memories") ||
+                lower.contains("my memories") || lower == "memory"
+        if (isQueryMemory) {
+            val memories = database.userMemoryDao().getAllMemories()
+            return if (memories.isEmpty()) {
+                "I don't have any saved facts in your local memory yet. You can tell me 'Remember that my car number is DL4C1234' or 'My roll number is 2K20/CO/123'."
+            } else {
+                "Here is what I have stored in your private on-device memory (${memories.size} facts):\n" +
+                        memories.joinToString("\n") { "• ${it.fact}" }
+            }
+        }
+
+        // 4. Clear or delete memories
+        if (lower == "clear memory" || lower == "clear memories" || lower == "delete all memories" || lower == "forget all") {
+            database.userMemoryDao().clearMemories()
+            return "All persistent user memories have been cleared from local on-device storage."
+        }
+        if (lower.startsWith("forget ") || lower.startsWith("delete memory ")) {
+            val targetKey = text.replace(Regex("""(?i)^(?:forget\s+(?:that\s+)?|delete\s+memory\s+)"""), "").trim()
+            database.userMemoryDao().deleteMemoryByKey(targetKey)
+            return "Removed memory matching '$targetKey' from local storage."
+        }
+
+        // 5. Academic & DTU BTP Project Knowledge Recall
+        if (lower.contains("who is my guide") || lower.contains("who is my supervisor") ||
+            lower.contains("who is the guide") || lower.contains("project guide") || lower == "my guide") {
+            return "Your project supervisor is Ms. Gull Kaur (DTU Computer Science and Engineering Department)."
+        }
+        if (lower.contains("group id") || lower.contains("what is my group") || lower.contains("which group")) {
+            return "Your BTP Group ID is GP159. Team members: Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya."
+        }
+        if (lower.contains("team members") || lower.contains("who is in my team") ||
+            lower.contains("who are my teammates") || lower.contains("group members")) {
+            return "Your BTP team members for Group GP159 are Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya."
+        }
+        if (lower.contains("project topic") || lower.contains("what is my project") || lower.contains("my btp project")) {
+            return "Your major project topic is: Privacy-First Offline AI Mobile Agent Using LLM Quantization (DTU CSE 2026)."
+        }
+
+        // 6. Device Document & File Indexing Inquiries
+        if (lower.contains("what files") || lower.contains("list files") || lower.contains("list my files") ||
+            lower.contains("list documents") || lower.contains("list my documents") || lower.contains("show files") ||
+            lower.contains("show my files") || lower.contains("show documents") || lower == "files" || lower == "documents") {
+            val docs = database.documentDao().getRecentDocuments(15)
+            return if (docs.isEmpty()) {
+                "No indexed documents found on your device yet. You can say 'Rescan files' or place documents in your device's Documents folder."
+            } else {
+                "Indexed on-device documents (${docs.size}):\n" +
+                        docs.joinToString("\n") { "• ${it.filename}: ${it.summary.ifEmpty { it.content.take(80) }}" }
+            }
+        }
+        if (lower.contains("rescan files") || lower.contains("scan files") || lower.contains("scan documents") ||
+            lower.contains("index files") || lower.contains("update file index")) {
+            val count = documentIndexer.scanDeviceDocuments()
+            return "Scanned and indexed $count document(s) into local Room database for offline context retrieval."
+        }
+        if (lower.startsWith("search files for ") || lower.startsWith("search documents for ") || lower.startsWith("find in files ")) {
+            val q = text.replace(Regex("""(?i)^(?:search\s+files\s+for|search\s+documents\s+for|find\s+in\s+files)\s+"""), "").trim()
+            val docs = database.documentDao().searchDocuments(q, 5)
+            return if (docs.isEmpty()) {
+                "No indexed documents found matching '$q'."
+            } else {
+                "Found ${docs.size} matching document(s) for '$q':\n" +
+                        docs.joinToString("\n") { "• ${it.filename}:\n  ${it.summary.ifEmpty { it.content.take(150) }}" }
+            }
+        }
+
+        return null
     }
 
     private fun parseModelOutput(raw: String): ModelResponse {

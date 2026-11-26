@@ -1292,6 +1292,8 @@ fun EdgeQuickPromptChipsRow(
     modifier: Modifier = Modifier
 ) {
     val prompts = listOf(
+        "FILES" to "What files do I have?",
+        "MEMORY" to "What do you remember about me?",
         "HISAAB" to "Notes pr hisaab likho 200 sharukh, 500 kalli, 300 haaji aur total karo",
         "SPLIT" to "Split dinner bill of 1800 with 4 friends",
         "ALARM" to "Remind me to study at 7 PM",

@@ -341,10 +341,26 @@ std::string MobileLlamaEngine::generateWithGrammar(const std::string& prompt,
              userQuery.find("save note") != std::string::npos) {
         responseJson = "{\"type\": \"action\", \"thought\": \"Saving private note\", \"tool\": \"manage_notes\", \"parameters\": {\"action\": \"create\", \"title\": \"Captured Note\", \"content\": \"" + userQuery + "\"}}";
     }
-    // Project info
+    // Project info & Academic facts
+    else if (userQuery.find("who is my guide") != std::string::npos || userQuery.find("who is my supervisor") != std::string::npos ||
+             userQuery.find("who is the guide") != std::string::npos || userQuery.find("project guide") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Your project supervisor is Ms. Gull Kaur (DTU Computer Science and Engineering Department).\"}";
+    }
+    else if (userQuery.find("group id") != std::string::npos || userQuery.find("what is my group") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Your BTP Group ID is GP159. Team members: Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya.\"}";
+    }
+    else if (userQuery.find("team members") != std::string::npos || userQuery.find("who is in my team") != std::string::npos ||
+             userQuery.find("who are my teammates") != std::string::npos) {
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"Your BTP team members for Group GP159 are Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya.\"}";
+    }
+    else if (userQuery.find("what files") != std::string::npos || userQuery.find("list files") != std::string::npos ||
+             userQuery.find("list documents") != std::string::npos || userQuery.find("list my documents") != std::string::npos ||
+             userQuery == "files" || userQuery == "documents") {
+        responseJson = "{\"type\": \"action\", \"thought\": \"Searching indexed local files\", \"tool\": \"search_local_docs\", \"parameters\": {\"query\": \"\", \"max_results\": 10}}";
+    }
     else if (userQuery.find("who made you") != std::string::npos || userQuery.find("who created you") != std::string::npos ||
              userQuery.find("who are you") != std::string::npos || userQuery.find("dtu") != std::string::npos) {
-        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I am EdgeAgent, an autonomous on-device AI agent running locally on your phone for DTU CSE GP159 (Ms. Gull Kaur | Faqre Alam, Ekansh Agarwal, Guneet Toppo). I operate 100% offline with zero cloud telemetry.\"}";
+        responseJson = "{\"type\": \"message\", \"thought\": \"\", \"content\": \"I am EdgeAgent, an autonomous on-device AI agent running locally on your phone for DTU CSE GP159 (Guide: Ms. Gull Kaur | Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo, Bhawishya). I operate 100% offline with zero cloud telemetry.\"}";
     }
     // Conversational fallback
     else {

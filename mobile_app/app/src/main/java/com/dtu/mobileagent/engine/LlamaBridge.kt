@@ -276,9 +276,21 @@ class LlamaBridge(private val context: Context) {
             return """{"type": "action", "thought": "Saving private note", "tool": "manage_notes", "parameters": {"action": "create", "title": $escTitle, "content": $escContent}}"""
         }
 
-        // 8. Who made you / DTU project origin
+        // 8. Who made you / DTU project origin / Academic knowledge
         if (lower.contains("who made you") || lower.contains("who created you") || lower.contains("who are you") || lower.contains("dtu")) {
-            return """{"type": "message", "thought": "", "content": "I am an offline mobile AI agent developed for DTU CSE GP159 (Guide: Ms. Gull Kaur | Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo). I run 100% locally with zero cloud egress."}"""
+            return """{"type": "message", "thought": "", "content": "I am an offline mobile AI agent developed for DTU CSE GP159 (Guide: Ms. Gull Kaur | Authors: Faqre Alam, Ekansh Agarwal, Guneet Toppo, Bhawishya). I run 100% locally with zero cloud egress."}"""
+        }
+        if (lower.contains("who is my guide") || lower.contains("who is my supervisor") || lower.contains("who is the guide") || lower.contains("project guide")) {
+            return """{"type": "message", "thought": "", "content": "Your project supervisor is Ms. Gull Kaur (DTU Computer Science and Engineering Department)."}"""
+        }
+        if (lower.contains("group id") || lower.contains("what is my group") || lower.contains("which group")) {
+            return """{"type": "message", "thought": "", "content": "Your BTP Group ID is GP159. Team members: Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya."}"""
+        }
+        if (lower.contains("team members") || lower.contains("who is in my team") || lower.contains("who are my teammates")) {
+            return """{"type": "message", "thought": "", "content": "Your BTP team members for Group GP159 are Faqre Alam, Ekansh Agarwal, Guneet Toppo, and Bhawishya."}"""
+        }
+        if (lower.contains("what files") || lower.contains("list files") || lower.contains("list my files") || lower.contains("list documents") || lower.contains("list my documents")) {
+            return """{"type": "action", "thought": "Searching indexed local files", "tool": "search_local_docs", "parameters": {"query": "", "max_results": 10}}"""
         }
 
         // 9. Polite chat

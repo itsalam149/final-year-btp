@@ -18,9 +18,10 @@ import kotlinx.coroutines.launch
         CalendarEventEntity::class,
         DocumentEntity::class,
         AuditLogEntity::class,
-        ChatMessageEntity::class
+        ChatMessageEntity::class,
+        UserMemoryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -31,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
     abstract fun auditLogDao(): AuditLogDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun userMemoryDao(): UserMemoryDao
 
     companion object {
         @Volatile
@@ -119,6 +121,36 @@ abstract class AppDatabase : RoomDatabase() {
                         filepath = "/sdcard/Documents/quantization_specs.txt",
                         content = "Memory specifications: Llama-3.2-1B FP16 requires 2,460 MB RAM. Q4_K_M requires 804 MB RAM (67.3% reduction). ARM NEON 4-thread execution achieves 28.4 tokens/sec on Snapdragon 8 Gen 2.",
                         summary = "Empirical memory footprint and inference throughput for on-device quantized models."
+                    )
+                )
+
+                // Populate core user facts and memories
+                database.userMemoryDao().insertMemory(
+                    UserMemoryEntity(
+                        category = "project",
+                        keyTag = "guide",
+                        fact = "Project Supervisor is Ms. Gull Kaur (DTU Computer Science and Engineering Department)."
+                    )
+                )
+                database.userMemoryDao().insertMemory(
+                    UserMemoryEntity(
+                        category = "project",
+                        keyTag = "group",
+                        fact = "BTP Group ID is GP159. Team members: Faqre, Ekansh, Guneet, Bhawishya."
+                    )
+                )
+                database.userMemoryDao().insertMemory(
+                    UserMemoryEntity(
+                        category = "personal",
+                        keyTag = "institution",
+                        fact = "Institution: Delhi Technological University (DTU), B.Tech CSE Final Year 2026."
+                    )
+                )
+                database.userMemoryDao().insertMemory(
+                    UserMemoryEntity(
+                        category = "project",
+                        keyTag = "topic",
+                        fact = "Major Project Topic: Privacy-First Offline AI Mobile Agent Using LLM Quantization."
                     )
                 )
             }
